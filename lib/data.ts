@@ -1,0 +1,53 @@
+import { asc } from "drizzle-orm";
+import { db } from "@/db/client";
+import {
+  budgetItems,
+  checklistItems,
+  itineraryEvents,
+  lodging,
+  scenarios,
+  travelers,
+  votes,
+} from "@/db/schema";
+
+export async function getTravelers() {
+  return db.select().from(travelers).orderBy(asc(travelers.id));
+}
+
+export async function getBudgetItems() {
+  return db.select().from(budgetItems).orderBy(asc(budgetItems.id));
+}
+
+export async function getLodging() {
+  return db.select().from(lodging).orderBy(asc(lodging.checkIn));
+}
+
+export async function getItinerary() {
+  return db
+    .select()
+    .from(itineraryEvents)
+    .orderBy(asc(itineraryEvents.date), asc(itineraryEvents.sortOrder));
+}
+
+export async function getScenarios() {
+  return db.select().from(scenarios).orderBy(asc(scenarios.id));
+}
+
+export async function getVotes() {
+  return db.select().from(votes);
+}
+
+export async function getChecklist() {
+  return db
+    .select()
+    .from(checklistItems)
+    .orderBy(asc(checklistItems.sortOrder), asc(checklistItems.id));
+}
+
+export type Traveler = Awaited<ReturnType<typeof getTravelers>>[number];
+export type BudgetItem = Awaited<ReturnType<typeof getBudgetItems>>[number];
+export type LodgingStay = Awaited<ReturnType<typeof getLodging>>[number];
+export type ItineraryEvent = Awaited<ReturnType<typeof getItinerary>>[number];
+export type Scenario = Awaited<ReturnType<typeof getScenarios>>[number];
+export type Vote = Awaited<ReturnType<typeof getVotes>>[number];
+export type ChecklistItem = Awaited<ReturnType<typeof getChecklist>>[number];

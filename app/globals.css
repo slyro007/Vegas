@@ -1,0 +1,176 @@
+@import "tailwindcss";
+
+:root {
+  /* night desert base */
+  --bg: #120d1c;
+  --bg-elevated: #1a1428;
+  --surface: #161123;
+  --card: #1c1630;
+  --card-hover: #221a3a;
+  --border: rgba(244, 236, 226, 0.09);
+  --border-strong: rgba(244, 236, 226, 0.16);
+
+  /* ink */
+  --ink: #f4ece2;
+  --ink-secondary: #bfb1d1;
+  --ink-muted: #857a99;
+
+  /* validated data marks (dark surface #161123) */
+  --mark-orange: #ca6c34;
+  --mark-teal: #0ea5b5;
+  --mark-pink: #d34f8c;
+  --mark-amber: #b88931;
+  --mark-green: #4da06b;
+  --mark-purple: #8b73d1;
+
+  /* decorative brights — glows and gradients ONLY, never data */
+  --glow-sunset: #f0813f;
+  --glow-pink: #ff5ca8;
+  --glow-teal: #2ee6f6;
+  --glow-gold: #ffcf6b;
+
+  /* category marks */
+  --cat-lodging: var(--mark-purple);
+  --cat-food: var(--mark-amber);
+  --cat-gas: var(--mark-orange);
+  --cat-experience: var(--mark-pink);
+  --cat-gifts: var(--mark-green);
+  --cat-misc: var(--mark-teal);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+  --color-borderc: var(--border);
+  --color-borderc-strong: var(--border-strong);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-muted: var(--ink-muted);
+  --color-mark-orange: var(--mark-orange);
+  --color-mark-teal: var(--mark-teal);
+  --color-mark-pink: var(--mark-pink);
+  --color-mark-amber: var(--mark-amber);
+  --color-mark-green: var(--mark-green);
+  --color-mark-purple: var(--mark-purple);
+  --color-glow-sunset: var(--glow-sunset);
+  --color-glow-pink: var(--glow-pink);
+  --color-glow-teal: var(--glow-teal);
+  --color-glow-gold: var(--glow-gold);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fraunces);
+  --font-marquee: var(--font-monoton);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgba(211, 79, 140, 0.4);
+}
+
+/* ---------- neon + desert flourishes (decorative only) ---------- */
+
+.neon-text {
+  text-shadow:
+    0 0 6px rgba(255, 92, 168, 0.85),
+    0 0 18px rgba(255, 92, 168, 0.55),
+    0 0 42px rgba(255, 92, 168, 0.35),
+    0 0 82px rgba(211, 79, 140, 0.3);
+}
+
+.neon-text-teal {
+  text-shadow:
+    0 0 6px rgba(46, 230, 246, 0.8),
+    0 0 18px rgba(46, 230, 246, 0.45),
+    0 0 42px rgba(14, 165, 181, 0.35);
+}
+
+@keyframes neon-flicker {
+  0%, 100% { opacity: 1; }
+  3% { opacity: 0.6; }
+  5% { opacity: 1; }
+  7% { opacity: 0.7; }
+  9% { opacity: 1; }
+  46% { opacity: 1; }
+  48% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
+.neon-flicker {
+  animation: neon-flicker 7s linear infinite;
+}
+
+@keyframes sunset-pan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.sunset-gradient {
+  background: linear-gradient(
+    115deg,
+    #2b1130,
+    #4a1a35 22%,
+    #7a2d33 42%,
+    #b0512c 58%,
+    #4a1a35 80%,
+    #221033
+  );
+  background-size: 260% 260%;
+  animation: sunset-pan 22s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes marquee-chase {
+  0% { opacity: 0.35; }
+  50% { opacity: 1; }
+  100% { opacity: 0.35; }
+}
+
+@keyframes dash-flow {
+  to { stroke-dashoffset: -24; }
+}
+
+.dash-flow {
+  stroke-dasharray: 6 6;
+  animation: dash-flow 1.4s linear infinite;
+}
+
+/* desert-vs-vegas card accents */
+.card-desert {
+  border-color: rgba(202, 108, 52, 0.35);
+  background: linear-gradient(160deg, rgba(202, 108, 52, 0.12), rgba(28, 22, 48, 0.6) 55%);
+}
+
+.card-vegas {
+  border-color: rgba(211, 79, 140, 0.4);
+  background: linear-gradient(160deg, rgba(211, 79, 140, 0.13), rgba(28, 22, 48, 0.6) 55%);
+  box-shadow: 0 0 24px rgba(211, 79, 140, 0.12);
+}
+
+/* thin recessive scrollbars for horizontal scrollers */
+.scroll-thin::-webkit-scrollbar { height: 6px; }
+.scroll-thin::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+.scroll-thin::-webkit-scrollbar-track { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  .neon-flicker, .sunset-gradient, .dash-flow {
+    animation: none;
+  }
+}
