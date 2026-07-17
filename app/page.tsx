@@ -13,6 +13,7 @@ const QUICK_LINKS = [
   { href: "/itinerary", emoji: "🗺️", title: "Itinerary", desc: "10 days, stop by stop" },
   { href: "/scenarios", emoji: "🎲", title: "Decide", desc: "Drive, rent, or fly?" },
   { href: "/finances", emoji: "💵", title: "Finances", desc: "Who pays what" },
+  { href: "/expenses", emoji: "💸", title: "Spend", desc: "Log it in ten seconds" },
   { href: "/lodging", emoji: "🛏️", title: "Lodging", desc: "4 stays, all tracked" },
   { href: "/lists", emoji: "✅", title: "Lists", desc: "Cooler, packing, to-dos" },
 ];
@@ -181,7 +182,7 @@ export default async function Dashboard() {
         {/* ---------- route ---------- */}
         <section>
           <Reveal>
-            <h2 className="font-display text-lg text-ink-secondary">The route</h2>
+            <h2 className="font-display text-lg text-ink-secondary">The Route</h2>
             <div className="mt-3 rounded-2xl border border-borderc bg-card p-4">
               <RouteStrip />
             </div>
@@ -189,7 +190,7 @@ export default async function Dashboard() {
         </section>
 
         {/* ---------- quick links ---------- */}
-        <section className="grid grid-cols-2 gap-3 md:grid-cols-5 md:gap-4">
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
           {QUICK_LINKS.map((q, i) => (
             <Reveal key={q.href} delay={i * 0.06}>
               <Link

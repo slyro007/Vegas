@@ -140,7 +140,7 @@ export function ScenarioBoard({
                 className="mt-4 flex items-center gap-1.5 self-start rounded-full border border-borderc px-3 py-1 text-xs text-ink-secondary transition-colors hover:border-borderc-strong hover:text-ink"
                 aria-expanded={isOpen}
               >
-                cost breakdown
+                Cost Breakdown + The Week
                 <motion.span animate={{ rotate: isOpen ? 180 : 0 }} className="inline-block">
                   ▾
                 </motion.span>
@@ -183,6 +183,27 @@ export function ScenarioBoard({
                         </li>
                       ))}
                     </ul>
+
+                    {s.itineraryOutline.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-[10px] uppercase tracking-widest text-ink-muted">
+                          How the Week Plays Out
+                        </p>
+                        <ul className="mt-2 space-y-1.5">
+                          {s.itineraryOutline.map((entry) => (
+                            <li key={entry.day} className="flex gap-2 text-xs">
+                              <span
+                                className="w-12 shrink-0 font-medium tabular-nums"
+                                style={{ color: accent.mark }}
+                              >
+                                {entry.day}
+                              </span>
+                              <span className="text-ink-secondary">{entry.plan}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/itinerary", label: "Itinerary", emoji: "🗺️" },
   { href: "/scenarios", label: "Decide", emoji: "🎲" },
   { href: "/finances", label: "Finances", emoji: "💵" },
+  { href: "/expenses", label: "Spend", emoji: "💸" },
   { href: "/lodging", label: "Lodging", emoji: "🛏️" },
   { href: "/lists", label: "Lists", emoji: "✅" },
 ];
@@ -71,7 +72,7 @@ export function Nav() {
 
       {/* mobile bottom tab bar */}
       <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-borderc bg-bg-elevated/90 backdrop-blur-md md:hidden">
-        <div className="grid grid-cols-6">
+        <div className="grid grid-cols-7">
           {LINKS.map((link) => {
             const active = pathname === link.href;
             return (
@@ -91,7 +92,7 @@ export function Nav() {
                   {link.emoji}
                 </span>
                 <span
-                  className={`text-[10px] ${active ? "text-ink" : "text-ink-muted"}`}
+                  className={`text-[9px] ${active ? "text-ink" : "text-ink-muted"}`}
                 >
                   {link.label}
                 </span>

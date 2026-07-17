@@ -1,10 +1,50 @@
 "use server";
 
-import { eq } from "drizzle-orm";
+import { eq, sum } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/client";
-import { budgetItems, checklistItems, lodging, votes } from "@/db/schema";
+import { budgetItems, checklistItems, expenses, lodging, votes } from "@/db/schema";
 import { requireActor } from "@/lib/identity";
+
+/** A budget line with logged expenses always shows their sum as its actual. */
+async function recomputeActual(budgetItemId: number) {
+  const [row] = await db
+    .select({ total: sum(expenses.amountCents) })
+    .from(expenses)
+    .where(eq(expenses.budgetItemId, budgetItemId));
+  const total = row?.total == null ? null : Number(row.total);
+  await db.update(budgetItems).set({ actualCents: total }).where(eq(budgetItems.id, budgetItemId));
+}
+
+export async function addExpense(
+  travelerId: number,
+  budgetItemId: number,
+  amountCents: number,
+  note?: string,
+) {
+  await requireActor();
+  const amount = Math.round(amountCents);
+  if (!Number.isFinite(amount) || amount <= 0) return;
+  await db.insert(expenses).values({
+    travelerId,
+    budgetItemId,
+    amountCents: amount,
+    note: note?.trim().slice(0, 200) || null,
+  });
+  await recomputeActual(budgetItemId);
+  revalidatePath("/expenses");
+  revalidatePath("/finances");
+  revalidatePath("/");
+}
+
+export async function deleteExpense(id: number) {
+  await requireActor();
+  const [gone] = await db.delete(expenses).where(eq(expenses.id, id)).returning();
+  if (gone) await recomputeActual(gone.budgetItemId);
+  revalidatePath("/expenses");
+  revalidatePath("/finances");
+  revalidatePath("/");
+}
 
 export async function castVote(travelerId: number, scenarioId: number) {
   await requireActor();

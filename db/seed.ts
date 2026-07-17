@@ -1,3 +1,8 @@
+/**
+ * Full reseed — DESTRUCTIVE: wipes votes, expenses, checklist state, and edits.
+ * Reflects the round-2 (2026-07-17) corrected data. For targeted changes prefer
+ * a one-off migration like db/migrate-round2.ts.
+ */
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
@@ -6,6 +11,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import {
   budgetItems,
   checklistItems,
+  expenses,
   itineraryEvents,
   lodging,
   scenarios,
@@ -19,6 +25,7 @@ const db = drizzle(sql);
 async function seed() {
   console.log("Clearing existing data…");
   await db.delete(votes);
+  await db.delete(expenses);
   await db.delete(budgetItems);
   await db.delete(checklistItems);
   await db.delete(itineraryEvents);
@@ -33,7 +40,7 @@ async function seed() {
       {
         slug: "pithya",
         name: "Pithya",
-        clerkEmail: "danny@longhornhouses.com",
+        clerkEmail: "dansol6@gmail.com",
         budgetTotalCents: 165000,
         nonNegotiableCents: 125000,
         color: "#ca6c34",
@@ -42,6 +49,7 @@ async function seed() {
       {
         slug: "shy",
         name: "Shy",
+        clerkEmail: "shyannejohnsoncano@gmail.com",
         budgetTotalCents: 45000,
         nonNegotiableCents: 20000,
         color: "#b88931",
@@ -50,6 +58,7 @@ async function seed() {
       {
         slug: "bex",
         name: "Bex",
+        clerkEmail: "solomonrebecca@gmail.com",
         budgetTotalCents: 325000,
         color: "#d34f8c",
         emoji: "🎰",
@@ -57,6 +66,7 @@ async function seed() {
       {
         slug: "amma",
         name: "Amma",
+        clerkEmail: "kamakshi63@gmail.com",
         budgetTotalCents: 205000,
         color: "#4da06b",
         emoji: "🌸",
@@ -66,63 +76,68 @@ async function seed() {
 
   console.log("Seeding budget items…");
   await db.insert(budgetItems).values([
-    // Amma
-    { travelerId: amma.id, label: "Road trip gas", category: "gas", plannedCents: 60000 },
-    { travelerId: amma.id, label: "Road trip food", category: "food", plannedCents: 40000 },
-    { travelerId: amma.id, label: "Caesar gifts", category: "gifts", plannedCents: 15000 },
-    { travelerId: amma.id, label: "Misc spend", category: "misc", plannedCents: 25000 },
-    // Bex
-    {
-      travelerId: bex.id,
-      label: "Luxor all-inclusive experience",
-      category: "experience",
-      plannedCents: 160000,
-      actualCents: 36048,
-      notes:
-        "Pyramid Premier Two Queen, Aug 12–14 · $170.60 due now + $189.88 at resort · free cancellation until Aug 9 · includes vouchers worth up to $300",
-    },
-    { travelerId: bex.id, label: "Wynn buffet", category: "food", plannedCents: 40000 },
-    { travelerId: bex.id, label: "Misc spend", category: "misc", plannedCents: 25000 },
     // Pithya
     {
       travelerId: pithya.id,
-      label: "Flagstaff hotel (Aiden by Best Western)",
+      label: "All Best Western Stays",
       category: "lodging",
-      plannedCents: 15000,
-      actualCents: 8450,
-      notes: "2 queens, night of Aug 8 → 9 · John's employee rate",
+      plannedCents: 90000,
+      actualCents: 42850,
+      notes: "Flagstaff $84.50 + Henderson ~$200 + Sedona $144 — all on John's employee rate",
     },
     {
       travelerId: pithya.id,
       label: "Caesar / Ranch Adventure",
       category: "experience",
       plannedCents: 40000,
-      notes: "~4 hours of horses at the land in Valle · Amma is backup on this one",
+      notes: "~4 hours of horses at the land in Valle · Amma is backup if Pithya can't cover it",
+    },
+    { travelerId: pithya.id, label: "Spend Money", category: "misc", plannedCents: 25000 },
+    // Bex
+    {
+      travelerId: bex.id,
+      label: "Luxor All-Inclusive",
+      category: "experience",
+      plannedCents: 36048,
+      actualCents: 36048,
+      notes:
+        "Pyramid Premier Two Queen, Aug 12–14 · $170.60 due now + $189.88 at resort · vouchers worth up to $300 · was penciled at $1,600 — using the real number",
     },
     {
-      travelerId: pithya.id,
-      label: "Vegas Best Western, Sun–Wed",
-      category: "lodging",
-      plannedCents: 50000,
-      actualCents: 20000,
-      notes: "Henderson · 2 queens · ~$54/night via John — ~$200 for the whole stay",
+      travelerId: bex.id,
+      label: "Non-Resort / Non-Road-Trip Food",
+      category: "food",
+      plannedCents: 75000,
+      notes: "Everything that isn't the resort or the road: Vegas meals, snacks, coffee runs",
     },
     {
-      travelerId: pithya.id,
-      label: "Sedona Best Western (Red Rock balcony)",
-      category: "lodging",
+      travelerId: bex.id,
+      label: "Wynn Buffet",
+      category: "food",
+      plannedCents: 40000,
+      notes: "~$100 a head — Bex covers all four of us",
+    },
+    { travelerId: bex.id, label: "Spend Money", category: "misc", plannedCents: 25000 },
+    // Amma
+    { travelerId: amma.id, label: "Road Trip Gas", category: "gas", plannedCents: 60000 },
+    { travelerId: amma.id, label: "Road Trip Food", category: "food", plannedCents: 40000 },
+    {
+      travelerId: amma.id,
+      label: "Non-Resort / Non-Road-Trip Food",
+      category: "food",
       plannedCents: 25000,
-      actualCents: 14400,
-      notes: "2 queens with the balcony · John's rate",
     },
-    { travelerId: pithya.id, label: "Sunday night food", category: "food", plannedCents: 20000 },
-    { travelerId: pithya.id, label: "Monday food", category: "food", plannedCents: 40000 },
-    { travelerId: pithya.id, label: "Tuesday food", category: "food", plannedCents: 20000 },
-    { travelerId: pithya.id, label: "Sedona Friday dinner", category: "food", plannedCents: 10000 },
-    { travelerId: pithya.id, label: "Misc spend", category: "misc", plannedCents: 25000 },
+    { travelerId: amma.id, label: "Caesar Gifts", category: "gifts", plannedCents: 15000 },
+    { travelerId: amma.id, label: "Spend Money", category: "misc", plannedCents: 25000 },
     // Shy
-    { travelerId: shy.id, label: "Pre-Vegas trip", category: "misc", plannedCents: 20000 },
-    { travelerId: shy.id, label: "Misc spend", category: "misc", plannedCents: 25000 },
+    { travelerId: shy.id, label: "Pre-Vegas Trip", category: "misc", plannedCents: 20000 },
+    {
+      travelerId: shy.id,
+      label: "Spend Money",
+      category: "misc",
+      plannedCents: 25000,
+      notes: "Amma is backup if Shy can't cover it",
+    },
   ]);
 
   console.log("Seeding lodging…");
@@ -163,7 +178,7 @@ async function seed() {
         "Pyramid Premier Two Queen · $170.60 due now + $189.88 at resort · vouchers worth up to $300 · budgeted $1,600 — actual is way lower",
     },
     {
-      name: "Best Western — Red Rock balcony",
+      name: "Best Western — Red Rock Balcony",
       location: "Sedona, AZ",
       checkIn: "2026-08-14",
       checkOut: "2026-08-15",
@@ -181,8 +196,9 @@ async function seed() {
       date: "2026-08-07",
       sortOrder: 0,
       time: "Evening",
-      title: "Pick up Amma",
-      description: "Amma arrives in the evening — grab her from her apartment, final packing, load the cooler.",
+      title: "Pick Up Amma",
+      description:
+        "Amma arrives in the evening — grab her from her apartment, final packing, load the cooler.",
       location: "City View at the Park",
       theme: "desert",
     },
@@ -198,8 +214,8 @@ async function seed() {
     {
       date: "2026-08-08",
       sortOrder: 1,
-      time: "Late night",
-      title: "Check in at Flagstaff",
+      time: "Late Night",
+      title: "Check In at Flagstaff",
       description: "Aiden by Best Western · 2 queens · crash hard.",
       location: "Flagstaff, AZ",
       theme: "desert",
@@ -217,7 +233,7 @@ async function seed() {
       date: "2026-08-09",
       sortOrder: 1,
       time: "Midday",
-      title: "The land — horses with Caesar",
+      title: "The Land — Horses with Caesar",
       description: "About 4 hours riding and hanging with Caesar's horse-adventure crew on our land.",
       location: "287 S Victoria Dr, Valle, AZ",
       theme: "desert",
@@ -226,7 +242,7 @@ async function seed() {
       date: "2026-08-09",
       sortOrder: 2,
       time: "Evening",
-      title: "Drive to Vegas + check in",
+      title: "Drive to Vegas + Check In",
       description: "Best Western Henderson · 2 queens via John's rate.",
       location: "Henderson, NV",
       theme: "vegas",
@@ -234,7 +250,7 @@ async function seed() {
     {
       date: "2026-08-10",
       sortOrder: 0,
-      title: "Moapa Valley day",
+      title: "Moapa Valley Day",
       description: "Day trip to Shy's hometown.",
       location: "Moapa Valley, NV",
       theme: "vegas",
@@ -251,7 +267,7 @@ async function seed() {
       date: "2026-08-12",
       sortOrder: 0,
       time: "Morning",
-      title: "Check out → Wynn Buffet",
+      title: "Check Out → Wynn Buffet",
       description: "The legendary buffet, budgeted and non-negotiable.",
       location: "Wynn Las Vegas",
       theme: "vegas",
@@ -260,7 +276,7 @@ async function seed() {
       date: "2026-08-12",
       sortOrder: 1,
       time: "Afternoon",
-      title: "Check in: Luxor all-inclusive",
+      title: "Check In: Luxor All-Inclusive",
       description: "Pyramid Premier Two Queen · vouchers worth up to $300.",
       location: "Luxor, Las Vegas Strip",
       theme: "vegas",
@@ -268,16 +284,25 @@ async function seed() {
     {
       date: "2026-08-13",
       sortOrder: 0,
-      title: "All-inclusive day at the Luxor",
+      title: "All-Inclusive Day at the Luxor",
       description: "Pool, vouchers, wander the Strip. Zero obligations.",
       location: "Luxor, Las Vegas Strip",
+      theme: "vegas",
+    },
+    {
+      date: "2026-08-13",
+      sortOrder: 1,
+      time: "Night",
+      title: "Backstreet Boys at the Sphere",
+      description: "Bex's solo night 🎤 — everyone else holds down the Luxor.",
+      location: "Sphere, Las Vegas",
       theme: "vegas",
     },
     {
       date: "2026-08-14",
       sortOrder: 0,
       time: "Morning",
-      title: "Check out → drive to Sedona",
+      title: "Check Out → Drive to Sedona",
       description: "About 4.5 hours back into red-rock country.",
       location: "Sedona, AZ",
       theme: "desert",
@@ -286,7 +311,7 @@ async function seed() {
       date: "2026-08-14",
       sortOrder: 1,
       time: "Afternoon",
-      title: "Slide Rock + downtown Sedona",
+      title: "Slide Rock + Downtown Sedona",
       description: "Slide Rock State Park, then the shops downtown.",
       location: "Sedona, AZ",
       theme: "desert",
@@ -295,7 +320,7 @@ async function seed() {
       date: "2026-08-14",
       sortOrder: 2,
       time: "Evening",
-      title: "Dinner, groceries, pack the cooler",
+      title: "Dinner, Groceries, Pack the Cooler",
       description: "Amma-safe grocery run and a fully packed cooler for the drive home.",
       location: "Sedona, AZ",
       theme: "desert",
@@ -321,6 +346,18 @@ async function seed() {
   ]);
 
   console.log("Seeding scenarios…");
+  const roadOutline = [
+    { day: "Fri 7", plan: "Pick up Amma · pack the cooler" },
+    { day: "Sat 8", plan: "5 AM depart Muir Lake · ~15 hr · Flagstaff late night" },
+    { day: "Sun 9", plan: "Breakfast · horses with Caesar at the land · on to Vegas" },
+    { day: "Mon 10", plan: "Moapa Valley day" },
+    { day: "Tue 11", plan: "Old Vegas + Fremont Street" },
+    { day: "Wed 12", plan: "Wynn Buffet → Luxor All-Inclusive" },
+    { day: "Thu 13", plan: "Luxor day · Bex at the Backstreet Boys, Sphere" },
+    { day: "Fri 14", plan: "Drive to Sedona · Slide Rock + shops · grocery restock" },
+    { day: "Sat 15", plan: "5 AM depart Sedona" },
+    { day: "Sun 16", plan: "Home at Muir Lake, early morning" },
+  ];
   await db.insert(scenarios).values([
     {
       slug: "forester",
@@ -341,11 +378,12 @@ async function seed() {
         "Puts ~2,400 miles on the 2019 Forester",
       ],
       costLines: [
-        { label: "Gas (round trip)", cents: 60000 },
-        { label: "Road trip food", cents: 40000 },
-        { label: "Flagstaff night", cents: 8450 },
-        { label: "Sedona night", cents: 14400 },
+        { label: "Gas (Round Trip)", cents: 60000 },
+        { label: "Road Trip Food", cents: 40000 },
+        { label: "Flagstaff Night", cents: 8450 },
+        { label: "Sedona Night", cents: 14400 },
       ],
+      itineraryOutline: roadOutline,
     },
     {
       slug: "rental-suv",
@@ -365,69 +403,81 @@ async function seed() {
         "Still ~30 hours of driving",
       ],
       costLines: [
-        { label: "Enterprise full-size SUV (whole trip)", cents: 65000, estimate: true },
-        { label: "Gas (round trip)", cents: 60000, estimate: true },
-        { label: "Road trip food", cents: 40000 },
-        { label: "Flagstaff night", cents: 8450 },
-        { label: "Sedona night", cents: 14400 },
+        { label: "Enterprise Full-Size SUV (Whole Trip)", cents: 65000, estimate: true },
+        { label: "Gas (Round Trip)", cents: 60000, estimate: true },
+        { label: "Road Trip Food", cents: 40000 },
+        { label: "Flagstaff Night", cents: 8450 },
+        { label: "Sedona Night", cents: 14400 },
       ],
+      itineraryOutline: roadOutline,
     },
     {
       slug: "fly",
       name: "Fly · Delta Nonstop",
-      tagline: "Trade 30 hours of road for 6 in the air",
+      tagline: "Fly in, rent the SUV, keep every stop",
       travelSummary: "AUS→LAS Aug 8, 3:39–4:32 PM · LAS→AUS Aug 15, 5:15–10:05 PM",
       emoji: "✈️",
       pros: [
-        "~3 hours each way instead of ~15",
-        "No exhausting overnight drives — easiest on everyone",
+        "~3 hours in the air instead of ~15 on the road, each way",
+        "Still hits everything — the land, Moapa Valley, and Sedona",
+        "BMW X5-class rental with unlimited miles for the whole week",
         "Land Saturday evening with energy to spare",
-        "Full week in Vegas, Aug 8–15",
       ],
       cons: [
-        "Skips the land + horses with Caesar",
-        "Skips Flagstaff and Sedona entirely",
-        "No packed cooler — Amma's food needs get harder",
-        "Still need a rental car for Moapa Valley + getting around",
-        "Bags and airport logistics × 4 people",
+        "Long day trip to the land (~7 hr round trip driving)",
+        "Packing light — one checked bag for all four of us",
+        "No packed cooler from home — Amma's groceries get bought in Vegas",
+        "Airport logistics × 4 people",
       ],
       costLines: [
-        { label: "Delta round trip × 4", cents: 94800 },
-        { label: "Vegas rental car (week)", cents: 35000, estimate: true },
-        { label: "Checked bags × 4", cents: 28000, estimate: true },
-        { label: "Airport parking / rides", cents: 10000, estimate: true },
+        { label: "Delta Round Trip × 4", cents: 94800 },
+        { label: "Midsize Luxury SUV, Sat–Sat (quoted, unlimited miles)", cents: 65865 },
+        { label: "Checked Bag", cents: 9000 },
+        { label: "Extra Vegas Night (Sat Aug 8)", cents: 5400, estimate: true },
+        { label: "Sedona Night (BW Red Rock, John's Rate)", cents: 14400 },
+        { label: "Day-Trip Gas", cents: 18000, estimate: true },
+      ],
+      itineraryOutline: [
+        { day: "Sat 8", plan: "Land 4:32 PM · pick up the SUV 5 PM · check in Henderson" },
+        { day: "Sun 9", plan: "Early day trip to the land — horses with Caesar" },
+        { day: "Mon 10", plan: "Moapa Valley day" },
+        { day: "Tue 11", plan: "Old Vegas + Fremont Street" },
+        { day: "Wed 12", plan: "Wynn Buffet → Luxor All-Inclusive" },
+        { day: "Thu 13", plan: "Luxor day · Bex at the Backstreet Boys, Sphere" },
+        { day: "Fri 14", plan: "Drive to Sedona (~4.5 hr) · Slide Rock + downtown · overnight" },
+        { day: "Sat 15", plan: "Drive back · rental due 2:30 PM · fly out 5:15 PM" },
       ],
     },
   ]);
 
   console.log("Seeding checklists…");
   await db.insert(checklistItems).values([
-    // pre-trip
-    { list: "pre-trip", sortOrder: 0, label: "Decide: Forester vs rental vs fly", note: "Vote on the Scenarios page!" },
-    { list: "pre-trip", sortOrder: 1, label: "Confirm Caesar meetup at the land (Sun Aug 9)", assignee: "Pithya" },
-    { list: "pre-trip", sortOrder: 2, label: "Book Luxor all-inclusive", assignee: "Bex", note: "Free cancellation until Aug 9" },
-    { list: "pre-trip", sortOrder: 3, label: "Confirm John's BW rate — Flagstaff, Henderson, Sedona", assignee: "Pithya" },
-    { list: "pre-trip", sortOrder: 4, label: "Oil change + tire check on the Forester", note: "Skip if we rent or fly" },
-    { list: "pre-trip", sortOrder: 5, label: "Pick up Amma from City View at the Park (Fri Aug 7)" },
-    { list: "pre-trip", sortOrder: 6, label: "Download offline maps for the desert stretches" },
-    // groceries (Amma-safe cooler)
-    { list: "groceries", sortOrder: 0, label: "Amma's staples", note: "Her list — restrictions for health + age" },
-    { list: "groceries", sortOrder: 1, label: "Fruit + easy snacks" },
-    { list: "groceries", sortOrder: 2, label: "Water flats" },
-    { list: "groceries", sortOrder: 3, label: "Ice packs + ice for the cooler" },
-    { list: "groceries", sortOrder: 4, label: "Breakfast items" },
-    { list: "groceries", sortOrder: 5, label: "Road-lunch fixings" },
-    // sedona-restock
-    { list: "sedona-restock", sortOrder: 0, label: "Groceries for the drive home (Amma-safe)", note: "Friday night, Aug 14" },
-    { list: "sedona-restock", sortOrder: 1, label: "Re-ice + repack the cooler" },
-    { list: "sedona-restock", sortOrder: 2, label: "Gas up for the 5 AM start" },
-    // packing
-    { list: "packing", sortOrder: 0, label: "Chargers + car mounts" },
-    { list: "packing", sortOrder: 1, label: "Swimsuits — Luxor pool + Slide Rock" },
-    { list: "packing", sortOrder: 2, label: "Water shoes for Slide Rock" },
-    { list: "packing", sortOrder: 3, label: "Sun hats + sunscreen" },
-    { list: "packing", sortOrder: 4, label: "Amma's meds" },
-    { list: "packing", sortOrder: 5, label: "Jeans + closed shoes for the horses" },
+    // Pre-trip
+    { list: "pre-trip", sortOrder: 0, label: "Decide: Forester vs Rental vs Fly", note: "Vote on the Decide page!" },
+    { list: "pre-trip", sortOrder: 1, label: "Confirm Caesar Meetup at the Land (Sun Aug 9)", assignee: "Pithya" },
+    { list: "pre-trip", sortOrder: 2, label: "Book Luxor All-Inclusive", assignee: "Bex", note: "Free cancellation until Aug 9" },
+    { list: "pre-trip", sortOrder: 3, label: "Confirm John's BW Rate — Flagstaff, Henderson, Sedona", assignee: "Pithya" },
+    { list: "pre-trip", sortOrder: 4, label: "Oil Change + Tire Check on the Forester", note: "Skip if we rent or fly" },
+    { list: "pre-trip", sortOrder: 5, label: "Pick Up Amma from City View at the Park (Fri Aug 7)" },
+    { list: "pre-trip", sortOrder: 6, label: "Download Offline Maps for the Desert Stretches" },
+    // Groceries (Amma-safe cooler)
+    { list: "groceries", sortOrder: 0, label: "Amma's Staples", note: "Her list — restrictions for health + age" },
+    { list: "groceries", sortOrder: 1, label: "Fruit + Easy Snacks" },
+    { list: "groceries", sortOrder: 2, label: "Water Flats" },
+    { list: "groceries", sortOrder: 3, label: "Ice Packs + Ice for the Cooler" },
+    { list: "groceries", sortOrder: 4, label: "Breakfast Items" },
+    { list: "groceries", sortOrder: 5, label: "Road-Lunch Fixings" },
+    // Sedona restock
+    { list: "sedona-restock", sortOrder: 0, label: "Groceries for the Drive Home (Amma-Safe)", note: "Friday night, Aug 14" },
+    { list: "sedona-restock", sortOrder: 1, label: "Re-Ice + Repack the Cooler" },
+    { list: "sedona-restock", sortOrder: 2, label: "Gas Up for the 5 AM Start" },
+    // Packing
+    { list: "packing", sortOrder: 0, label: "Chargers + Car Mounts" },
+    { list: "packing", sortOrder: 1, label: "Swimsuits — Luxor Pool + Slide Rock" },
+    { list: "packing", sortOrder: 2, label: "Water Shoes for Slide Rock" },
+    { list: "packing", sortOrder: 3, label: "Sun Hats + Sunscreen" },
+    { list: "packing", sortOrder: 4, label: "Amma's Meds" },
+    { list: "packing", sortOrder: 5, label: "Jeans + Closed Shoes for the Horses" },
   ]);
 
   console.log("Seed complete ✅");
