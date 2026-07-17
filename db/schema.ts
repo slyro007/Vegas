@@ -73,6 +73,25 @@ export const scenarios = pgTable("scenarios", {
   pros: jsonb("pros").$type<string[]>().notNull().default([]),
   cons: jsonb("cons").$type<string[]>().notNull().default([]),
   costLines: jsonb("cost_lines").$type<CostLine[]>().notNull().default([]),
+  itineraryOutline: jsonb("itinerary_outline")
+    .$type<{ day: string; plan: string }[]>()
+    .notNull()
+    .default([]),
+});
+
+export const expenses = pgTable("expenses", {
+  id: serial("id").primaryKey(),
+  travelerId: integer("traveler_id")
+    .notNull()
+    .references(() => travelers.id),
+  // every expense must land on a budget line; the line's actual = SUM of its expenses
+  budgetItemId: integer("budget_item_id")
+    .notNull()
+    .references(() => budgetItems.id, { onDelete: "cascade" }),
+  amountCents: integer("amount_cents").notNull(),
+  note: text("note"),
+  spentOn: date("spent_on").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const votes = pgTable(

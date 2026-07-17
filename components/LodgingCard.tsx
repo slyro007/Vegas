@@ -69,7 +69,7 @@ export function LodgingCard({ stay, index }: { stay: LodgingStay; index: number 
         )}
         {saved !== null && saved > 0 && (
           <div className="rounded-full bg-mark-green/15 px-2.5 py-1 text-xs font-medium text-mark-green">
-            saves {fmtMoney(saved)}
+            Saves {fmtMoney(saved)}
           </div>
         )}
       </div>
@@ -84,10 +84,10 @@ export function LodgingCard({ stay, index }: { stay: LodgingStay; index: number 
         >
           ⏳{" "}
           {cancelDays > 0
-            ? `free cancellation for ${cancelDays} more day${cancelDays === 1 ? "" : "s"} (until ${fmtDay(stay.cancelBy!)})`
+            ? `Free cancellation for ${cancelDays} more day${cancelDays === 1 ? "" : "s"} (until ${fmtDay(stay.cancelBy!)})`
             : cancelDays === 0
-              ? "last day for free cancellation!"
-              : "free-cancellation window closed"}
+              ? "Last day for free cancellation!"
+              : "Free-cancellation window closed"}
         </div>
       )}
 

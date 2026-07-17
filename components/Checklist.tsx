@@ -188,7 +188,7 @@ export function Checklist({ items }: { items: ChecklistItem[] }) {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submit()}
-            placeholder={`Add to ${activeMeta.label.toLowerCase()}…`}
+            placeholder={`Add to ${activeMeta.label}…`}
             className="min-w-0 flex-1 rounded-xl border border-borderc bg-surface px-3 py-2 text-sm outline-none transition-colors focus:border-glow-pink/60"
           />
           <button

@@ -1,6 +1,7 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Fraunces, Geist, Geist_Mono, Monoton } from "next/font/google";
+import { FamilyGate } from "@/components/FamilyGate";
 import { Nav } from "@/components/Nav";
 import "./globals.css";
 
@@ -54,11 +55,13 @@ export default function RootLayout({
             },
           }}
         >
-          <Nav />
-          <main className="flex-1 pb-24 md:pb-10">{children}</main>
-          <footer className="hidden md:block border-t border-borderc px-6 py-4 text-center text-xs text-ink-muted">
-            Vegas 2026 · Pithya · Shy · Bex · Amma · built with 🌵 and 🎰
-          </footer>
+          <FamilyGate>
+            <Nav />
+            <main className="flex-1 pb-24 md:pb-10">{children}</main>
+            <footer className="hidden md:block border-t border-borderc px-6 py-4 text-center text-xs text-ink-muted">
+              Vegas 2026 · Pithya · Shy · Bex · Amma · Built with 🌵 and 🎰
+            </footer>
+          </FamilyGate>
         </ClerkProvider>
       </body>
     </html>

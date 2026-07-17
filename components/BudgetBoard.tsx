@@ -172,7 +172,7 @@ export function BudgetBoard({
                   )}
                 </span>
                 <span className="mt-0.5 block text-xs text-ink-muted">
-                  {own.length} line items · plan {fmtMoney(planned)} · budget{" "}
+                  {own.length} Line Items · Plan {fmtMoney(planned)} · Budget{" "}
                   {fmtMoney(traveler.budgetTotalCents)}
                 </span>
               </span>
@@ -184,7 +184,7 @@ export function BudgetBoard({
                 >
                   {over
                     ? `+${fmtMoney(planned - traveler.budgetTotalCents)}`
-                    : `${fmtMoney(traveler.budgetTotalCents - planned)} left`}
+                    : `${fmtMoney(traveler.budgetTotalCents - planned)} Left`}
                 </span>
                 <motion.span
                   animate={{ rotate: isOpen ? 180 : 0 }}
@@ -211,7 +211,7 @@ export function BudgetBoard({
               </div>
               {effective !== planned && (
                 <p className="mt-1.5 text-xs text-ink-muted">
-                  With booked actuals, {traveler.name} is really at{" "}
+                  With actuals in, {traveler.name} is really at{" "}
                   <span className="text-mark-green">{fmtMoney(effective)}</span>.
                 </p>
               )}
@@ -229,9 +229,9 @@ export function BudgetBoard({
                 >
                   <div className="p-4 md:p-5">
                     <div className="mb-1 hidden grid-cols-[1fr_auto_auto_auto] gap-2 text-[10px] uppercase tracking-widest text-ink-muted md:grid">
-                      <span>item</span>
-                      <span className="w-20 text-right">planned</span>
-                      <span className="w-20 text-right">actual</span>
+                      <span>Item</span>
+                      <span className="w-20 text-right">Planned</span>
+                      <span className="w-20 text-right">Actual</span>
                       <span className="w-6" />
                     </div>
                     <ul className="divide-y divide-borderc">
@@ -313,7 +313,7 @@ export function BudgetBoard({
                         onClick={() => setAdding(traveler.id)}
                         className="mt-3 rounded-full border border-dashed border-borderc-strong px-3 py-1.5 text-xs text-ink-secondary transition-colors hover:border-glow-pink/50 hover:text-ink"
                       >
-                        + add line item
+                        + Add Line Item
                       </button>
                     )}
                   </div>

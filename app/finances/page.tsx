@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { BudgetBoard } from "@/components/BudgetBoard";
 import { Reveal } from "@/components/Reveal";
-import { getBudgetItems, getTravelers } from "@/lib/data";
+import { getBudgetItems, getExpenses, getTravelers } from "@/lib/data";
 import { CATEGORY_META, fmtMoney } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +10,12 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Finances · Vegas 2026" };
 
 export default async function FinancesPage() {
-  const [travelers, items] = await Promise.all([getTravelers(), getBudgetItems()]);
+  const [travelers, items, expenses] = await Promise.all([
+    getTravelers(),
+    getBudgetItems(),
+    getExpenses(),
+  ]);
+  const loggedTotal = expenses.reduce((s, e) => s + e.amountCents, 0);
 
   const budgetTotal = travelers.reduce((s, t) => s + t.budgetTotalCents, 0);
   const plannedTotal = items.reduce((s, i) => s + i.plannedCents, 0);
@@ -31,10 +37,10 @@ export default async function FinancesPage() {
   const maxCat = Math.max(...byCategory.map((c) => c.planned));
 
   const stats = [
-    { label: "per-person budgets", cents: budgetTotal, hint: "the yellow-pad totals" },
-    { label: "planned line items", cents: plannedTotal, hint: "everything itemized below" },
-    { label: "actuals locked in", cents: actualTotal, hint: `${withActuals.length} items priced` },
-    { label: "under plan so far", cents: savedTotal, hint: "cheaper than budgeted 🎉", accent: true },
+    { label: "Per-Person Budgets", cents: budgetTotal, hint: "The yellow-pad totals" },
+    { label: "Planned Line Items", cents: plannedTotal, hint: "Everything itemized below" },
+    { label: "Actuals Locked In", cents: actualTotal, hint: `${withActuals.length} items priced` },
+    { label: "Under Plan So Far", cents: savedTotal, hint: "Cheaper than budgeted 🎉", accent: true },
   ];
 
   return (
@@ -43,8 +49,14 @@ export default async function FinancesPage() {
         <p className="text-xs uppercase tracking-widest text-ink-muted">from the yellow pad</p>
         <h1 className="mt-1 font-display text-3xl font-semibold md:text-5xl">Trip Finances</h1>
         <p className="mt-3 max-w-2xl text-sm text-ink-secondary md:text-base">
-          Straight off the handwritten notes — who covers what, planned vs. what things actually
-          cost. Tap any amount to edit it, and add lines as plans firm up.
+          Who covers what, planned vs. what things actually cost. Tap any amount to edit it, add
+          lines as plans firm up — and once the trip starts,{" "}
+          <Link href="/expenses" className="text-glow-pink hover:underline">
+            log expenses on the Spend page
+          </Link>{" "}
+          ({expenses.length > 0
+            ? `${fmtMoney(loggedTotal)} logged so far`
+            : "nothing logged yet"}) and the actuals here update live.
         </p>
       </Reveal>
 
@@ -109,9 +121,10 @@ export default async function FinancesPage() {
       </div>
 
       <p className="mt-6 text-xs text-ink-muted">
-        Note: the yellow-pad per-person totals ({fmtMoney(budgetTotal)}) and the itemized lines
-        ({fmtMoney(plannedTotal)}) don&apos;t perfectly agree — that&apos;s how the notes were.
-        Edit anything above to reconcile.
+        Note: the yellow-pad per-person totals ({fmtMoney(budgetTotal)}) and the itemized lines (
+        {fmtMoney(plannedTotal)}) don&apos;t perfectly agree — that&apos;s how the notes were.
+        Edit anything above to reconcile. Lines with logged expenses always show the logged sum
+        as their actual.
       </p>
     </div>
   );
