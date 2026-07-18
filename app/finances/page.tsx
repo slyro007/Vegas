@@ -28,6 +28,11 @@ export default async function FinancesPage() {
 
   const budgetTotal = travelers.reduce((s, t) => s + t.budgetTotalCents, 0);
   const plannedTotal = items.reduce((s, i) => s + i.plannedCents, 0);
+
+  // Finances board ordered by top spender (most projected first) — BeX leads.
+  const projectedFor = (id: number) =>
+    items.filter((i) => i.travelerId === id).reduce((s, i) => s + i.plannedCents, 0);
+  const orderedTravelers = [...travelers].sort((a, b) => projectedFor(b.id) - projectedFor(a.id));
   const withActuals = items.filter((i) => i.actualCents !== null);
   const actualTotal = withActuals.reduce((s, i) => s + (i.actualCents ?? 0), 0);
 
@@ -149,7 +154,7 @@ export default async function FinancesPage() {
 
       {/* per-person board */}
       <div className="mt-8">
-        <BudgetBoard travelers={travelers} items={items} />
+        <BudgetBoard travelers={orderedTravelers} items={items} />
       </div>
 
       <p className="mt-6 text-xs text-ink-muted">

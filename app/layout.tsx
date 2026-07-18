@@ -64,7 +64,7 @@ export default async function RootLayout({
             <main className="flex-1 pb-24 md:pb-10">{children}</main>
             <AmbientPlayer />
             <footer className="hidden md:block border-t border-borderc px-6 py-4 text-center text-xs text-ink-muted">
-              Vegas 2026 · Pithya · Shy · Bex · Amma · Built with 🌵 and 🎰
+              Vegas 2026 · Pithya · Shy · BeX · Amma · Built with 🌵 and 🎰
             </footer>
           </FamilyGate>
         </ClerkProvider>

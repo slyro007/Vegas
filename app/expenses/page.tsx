@@ -21,6 +21,11 @@ export default async function ExpensesPage() {
     (t) => t.clerkEmail && userEmails.includes(t.clerkEmail.toLowerCase()),
   );
 
+  // top spender first, to match the Finances board
+  const projectedFor = (id: number) =>
+    budgetItems.filter((i) => i.travelerId === id).reduce((s, i) => s + i.plannedCents, 0);
+  const orderedTravelers = [...travelers].sort((a, b) => projectedFor(b.id) - projectedFor(a.id));
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 md:px-6 md:py-14">
       <Reveal>
@@ -28,7 +33,7 @@ export default async function ExpensesPage() {
           Live · Every Entry Updates Finances
         </p>
         <h1 className="mt-1 font-display text-3xl font-semibold md:text-5xl">
-          Spend{me ? ` · Hey ${me.name} ${me.emoji}` : ""}
+          Spend{me ? ` · Hey ${me.name}` : ""}
         </h1>
         <p className="mt-3 max-w-xl text-sm text-ink-secondary md:text-base">
           Booked something? Paid for dinner? Log it in ten seconds — pick the budget line, punch
@@ -38,7 +43,7 @@ export default async function ExpensesPage() {
 
       <div className="mt-8">
         <ExpenseLogger
-          travelers={travelers}
+          travelers={orderedTravelers}
           budgetItems={budgetItems}
           expenses={expenses}
           defaultTravelerId={me?.id ?? null}
