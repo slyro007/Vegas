@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { addBudgetItem, deleteBudgetItem, updateBudgetItem } from "@/app/actions";
 import type { BudgetItem, Traveler } from "@/lib/data";
+import type { Estimate } from "@/lib/estimate";
 import { CATEGORY_META, fmtMoney } from "@/lib/format";
 import { TravelerAvatar } from "@/lib/icons";
 
@@ -137,9 +138,13 @@ function AddItemForm({ travelerId, onDone }: { travelerId: number; onDone: () =>
 export function BudgetBoard({
   travelers,
   items,
+  estimate,
+  accentMark = "var(--mark-green)",
 }: {
   travelers: Traveler[];
   items: BudgetItem[];
+  estimate?: Estimate;
+  accentMark?: string;
 }) {
   const [openId, setOpenId] = useState<number | null>(travelers[0]?.id ?? null);
   const [adding, setAdding] = useState<number | null>(null);
@@ -150,12 +155,13 @@ export function BudgetBoard({
     <div className="space-y-4">
       {travelers.map((traveler, idx) => {
         const own = items.filter((i) => i.travelerId === traveler.id);
-        const projected = own.reduce((s, i) => s + i.plannedCents, 0);
-        const spent = own.reduce((s, i) => s + (i.actualCents ?? 0), 0);
-        const budget = traveler.budgetTotalCents;
-        // "Left" = budget you haven't actually spent yet. Nothing spent → whole budget.
-        const left = budget - spent;
-        const overSpent = spent > budget;
+        const pe = estimate?.perPerson.find((p) => p.traveler.id === traveler.id);
+        const yellow = pe?.yellow ?? own.reduce((s, i) => s + i.yellowPadCents, 0);
+        const projected = pe?.projected ?? own.reduce((s, i) => s + i.plannedCents, 0);
+        const estimated = pe?.estimated ?? projected;
+        const spent = pe?.spent ?? own.reduce((s, i) => s + (i.actualCents ?? 0), 0);
+        // + = this plan lands under their original yellow-pad share
+        const vsYellow = yellow - estimated;
         const isOpen = openId === traveler.id;
 
         return (
@@ -181,19 +187,18 @@ export function BudgetBoard({
               <span className="min-w-0 flex-1">
                 <span className="font-display text-lg font-semibold">{traveler.name}</span>
                 <span className="mt-0.5 block text-xs text-ink-muted">
-                  {own.length} Line Items · Projected {fmtMoney(projected)} · Budget{" "}
-                  {fmtMoney(budget)}
+                  {own.length} Lines · Yellow Pad {fmtMoney(yellow)} · Projected {fmtMoney(projected)}
                 </span>
               </span>
               <span className="text-right">
                 <span
-                  className={`block font-display text-lg font-semibold tabular-nums ${
-                    overSpent ? "text-mark-pink" : "text-mark-green"
-                  }`}
+                  className="block font-display text-lg font-semibold tabular-nums"
+                  style={{ color: accentMark }}
                 >
-                  {overSpent
-                    ? `+${fmtMoney(spent - budget)} Over`
-                    : `${fmtMoney(left)} Left`}
+                  {fmtMoney(estimated)}
+                </span>
+                <span className="block text-[11px] uppercase tracking-wider text-ink-muted">
+                  Est · This Plan
                 </span>
                 <motion.span
                   animate={{ rotate: isOpen ? 180 : 0 }}
@@ -204,29 +209,22 @@ export function BudgetBoard({
               </span>
             </button>
 
-            {/* spend bar: faint projected footprint + solid actually-spent */}
+            {/* estimated-vs-yellow bar */}
             <div className="px-4 pb-4 md:px-5">
               <div className="relative h-2 overflow-hidden rounded-full bg-surface">
-                <div
-                  className="absolute inset-y-0 left-0 rounded-full opacity-30"
-                  style={{
-                    width: `${Math.min(100, (projected / budget) * 100)}%`,
-                    background: traveler.color,
-                  }}
-                />
                 <motion.div
                   className="absolute inset-y-0 left-0 rounded-full"
-                  style={{ background: overSpent ? "var(--mark-pink)" : traveler.color }}
+                  style={{ background: vsYellow >= 0 ? traveler.color : "var(--mark-pink)" }}
                   initial={{ width: 0 }}
-                  whileInView={{ width: `${Math.min(100, (spent / budget) * 100)}%` }}
-                  viewport={{ once: true }}
+                  animate={{ width: `${Math.min(100, yellow ? (estimated / yellow) * 100 : 0)}%` }}
                   transition={{ type: "spring", stiffness: 70, damping: 20 }}
                 />
               </div>
               <p className="mt-1.5 text-xs text-ink-muted">
-                {spent > 0
-                  ? `${fmtMoney(spent)} spent · plans to spend ${fmtMoney(projected)}`
-                  : `Nothing spent yet · plans to spend ${fmtMoney(projected)} of ${fmtMoney(budget)}`}
+                {vsYellow >= 0
+                  ? `${fmtMoney(vsYellow)} under their yellow-pad share`
+                  : `${fmtMoney(-vsYellow)} over their yellow-pad share`}
+                {spent > 0 && ` · ${fmtMoney(spent)} spent`}
               </p>
             </div>
 
@@ -241,93 +239,94 @@ export function BudgetBoard({
                   className="overflow-hidden border-t border-borderc"
                 >
                   <div className="p-4 md:p-5">
-                    <div className="mb-1 hidden grid-cols-[1fr_5rem_5rem_1.5rem] gap-2 text-[11px] uppercase tracking-widest text-ink-muted md:grid">
-                      <span>Item</span>
-                      <span className="text-right">Projected</span>
-                      <span className="text-right">Actual</span>
-                      <span />
-                    </div>
                     <ul className="divide-y divide-borderc">
                       {own.map((item) => {
                         const meta = CATEGORY_META[item.category] ?? CATEGORY_META.misc;
                         return (
-                          <li
-                            key={item.id}
-                            className="grid grid-cols-[1fr_auto] items-center gap-x-2 gap-y-0.5 py-2.5 text-sm md:grid-cols-[1fr_5rem_5rem_1.5rem]"
-                          >
-                            <span className="min-w-0">
-                              <span className="flex items-center gap-2">
+                          <li key={item.id} className="py-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="flex min-w-0 items-center gap-2 text-sm">
                                 <span
                                   className="h-2.5 w-2.5 shrink-0 rounded-sm"
                                   style={{ background: meta.cssVar }}
                                   title={meta.label}
                                 />
                                 <span className="truncate">{item.label}</span>
+                                {item.shared && (
+                                  <span className="shrink-0 rounded bg-surface px-1 py-px text-[10px] uppercase tracking-wide text-ink-muted">
+                                    shared
+                                  </span>
+                                )}
                               </span>
-                              {item.notes && (
-                                <span className="mt-0.5 block pl-[18px] text-xs text-ink-muted">
-                                  {item.notes}
-                                </span>
-                              )}
-                            </span>
-                            <span className="col-start-2 row-start-1 flex items-center justify-end gap-1 md:col-start-auto md:row-start-auto">
-                              <span className="text-[11px] uppercase text-ink-muted md:hidden">
-                                projected
-                              </span>
-                              <MoneyCell
-                                cents={item.plannedCents}
-                                onSave={(cents) =>
-                                  startTransition(() =>
-                                    updateBudgetItem(item.id, { plannedCents: cents ?? 0 }),
-                                  )
+                              <button
+                                onClick={() => {
+                                  if (confirmDelete !== item.id) {
+                                    setConfirmDelete(item.id);
+                                    setTimeout(() => setConfirmDelete(null), 3000);
+                                    return;
+                                  }
+                                  setConfirmDelete(null);
+                                  startTransition(() => deleteBudgetItem(item.id));
+                                }}
+                                className={`flex shrink-0 items-center text-xs transition-colors ${
+                                  confirmDelete === item.id
+                                    ? "font-semibold text-mark-pink"
+                                    : "text-ink-muted/50 hover:text-mark-pink"
+                                }`}
+                                title={
+                                  confirmDelete === item.id
+                                    ? "Tap again to delete this line and its logged expenses"
+                                    : "Delete item"
                                 }
-                              />
-                            </span>
-                            <span className="col-start-2 row-start-2 flex items-center justify-end gap-1 md:col-start-auto md:row-start-auto">
-                              <span className="text-[11px] uppercase text-ink-muted md:hidden">
-                                actual
-                              </span>
-                              <MoneyCell
-                                cents={item.actualCents}
-                                placeholder="—"
-                                clearable
-                                onSave={(cents) =>
-                                  startTransition(() =>
-                                    updateBudgetItem(item.id, { actualCents: cents }),
-                                  )
-                                }
-                                className={
-                                  item.actualCents !== null &&
-                                  item.actualCents < item.plannedCents
-                                    ? "text-mark-green"
-                                    : ""
-                                }
-                              />
-                            </span>
-                            <button
-                              onClick={() => {
-                                if (confirmDelete !== item.id) {
-                                  setConfirmDelete(item.id);
-                                  setTimeout(() => setConfirmDelete(null), 3000);
-                                  return;
-                                }
-                                setConfirmDelete(null);
-                                startTransition(() => deleteBudgetItem(item.id));
-                              }}
-                              className={`col-start-1 row-start-2 flex items-center justify-self-start pl-[18px] text-xs transition-colors md:col-start-auto md:row-start-auto md:justify-end md:justify-self-auto md:pl-0 ${
-                                confirmDelete === item.id
-                                  ? "font-semibold text-mark-pink"
-                                  : "text-ink-muted hover:text-mark-pink"
-                              }`}
-                              title={
-                                confirmDelete === item.id
-                                  ? "Tap again to delete this line and its logged expenses"
-                                  : "Delete item"
-                              }
-                              aria-label={`Delete ${item.label}`}
-                            >
-                              {confirmDelete === item.id ? "Delete?" : <X className="h-4 w-4" />}
-                            </button>
+                                aria-label={`Delete ${item.label}`}
+                              >
+                                {confirmDelete === item.id ? "Delete?" : <X className="h-4 w-4" />}
+                              </button>
+                            </div>
+                            {item.notes && (
+                              <p className="mt-0.5 pl-[18px] text-xs text-ink-muted">{item.notes}</p>
+                            )}
+                            <div className="mt-2 grid grid-cols-3 gap-2 pl-[18px]">
+                              <div>
+                                <div className="text-[10px] uppercase tracking-wide text-ink-muted">
+                                  Yellow Pad
+                                </div>
+                                <div className="tabular-nums text-ink-secondary">
+                                  {fmtMoney(item.yellowPadCents)}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase tracking-wide text-ink-muted">
+                                  Projected
+                                </div>
+                                <MoneyCell
+                                  cents={item.plannedCents}
+                                  className={
+                                    item.plannedCents < item.yellowPadCents ? "text-mark-green" : ""
+                                  }
+                                  onSave={(cents) =>
+                                    startTransition(() =>
+                                      updateBudgetItem(item.id, { plannedCents: cents ?? 0 }),
+                                    )
+                                  }
+                                />
+                              </div>
+                              <div>
+                                <div className="text-[10px] uppercase tracking-wide text-ink-muted">
+                                  Actual
+                                </div>
+                                <MoneyCell
+                                  cents={item.actualCents}
+                                  placeholder="—"
+                                  clearable
+                                  onSave={(cents) =>
+                                    startTransition(() =>
+                                      updateBudgetItem(item.id, { actualCents: cents }),
+                                    )
+                                  }
+                                />
+                              </div>
+                            </div>
                           </li>
                         );
                       })}

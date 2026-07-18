@@ -42,9 +42,14 @@ const VIEWS = [
 type ViewKey = (typeof VIEWS)[number]["key"];
 const VIEW_STORAGE_KEY = "itinerary-view";
 
-function buildDays(events: ItineraryEvent[], plan: TimelineAccent): TimelineDay[] {
+const FLY_VARIANTS = [
+  { key: "fly" as const, label: "Sedona · One Night" },
+  { key: "flyb" as const, label: "Sedona · The Weekend" },
+];
+
+function buildDays(events: ItineraryEvent[], filterKey: string): TimelineDay[] {
   const filtered = events.filter(
-    (e) => e.plan === "all" || e.plan.split(" ").includes(plan),
+    (e) => e.plan === "all" || e.plan.split(" ").includes(filterKey),
   );
   const byDate = new Map<string, ItineraryEvent[]>();
   for (const event of filtered) {
@@ -70,6 +75,7 @@ export function ItineraryView({
   defaultPlan?: TimelineAccent;
 }) {
   const [plan, setPlan] = useState<TimelineAccent>(defaultPlan);
+  const [flyVariant, setFlyVariant] = useState<"fly" | "flyb">("fly");
   const [view, setView] = useState<ViewKey>("timeline");
 
   // hydrate the saved view choice after mount (SSR-safe)
@@ -83,7 +89,8 @@ export function ItineraryView({
   };
 
   const meta = PLANS.find((p) => p.key === plan)!;
-  const days = buildDays(events, plan);
+  const filterKey = plan === "fly" ? flyVariant : plan;
+  const days = buildDays(events, filterKey);
 
   return (
     <div>
@@ -154,13 +161,49 @@ export function ItineraryView({
         </div>
       </div>
 
+      {/* fly-only sub-toggle: one Sedona night vs the whole weekend */}
+      {plan === "fly" && (
+        <div className="mt-3 inline-flex rounded-full border border-borderc bg-card p-1">
+          {FLY_VARIANTS.map((v) => {
+            const active = flyVariant === v.key;
+            return (
+              <button
+                key={v.key}
+                onClick={() => setFlyVariant(v.key)}
+                className={`relative rounded-full px-3 py-1.5 text-xs font-medium transition-colors md:text-sm ${
+                  active ? "text-ink" : "text-ink-muted hover:text-ink-secondary"
+                }`}
+                aria-pressed={active}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="fly-variant-pill"
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background: "color-mix(in srgb, var(--mark-teal) 26%, transparent)",
+                      border: "1px solid var(--mark-teal)",
+                    }}
+                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                  />
+                )}
+                <span className="relative">{v.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <motion.div
-        key={`${plan}-${view}`}
+        key={`${filterKey}-${view}`}
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 200, damping: 26 }}
       >
-        <p className="mt-4 max-w-xl text-sm text-ink-secondary md:text-base">{meta.blurb}</p>
+        <p className="mt-4 max-w-xl text-sm text-ink-secondary md:text-base">
+          {plan === "fly" && flyVariant === "flyb"
+            ? "Same Friday fly-in, but two nights in Sedona — a slow red-rock weekend — then Moapa Valley on the Monday drive back before settling into Vegas for the week."
+            : meta.blurb}
+        </p>
         <div className="mt-8">
           {view === "grid" ? (
             <DayGrid days={days} accent={plan} />
