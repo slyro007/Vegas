@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { addBudgetItem, deleteBudgetItem, updateBudgetItem } from "@/app/actions";
 import type { BudgetItem, Traveler } from "@/lib/data";
-import type { Estimate } from "@/lib/estimate";
 import { CATEGORY_META, fmtMoney } from "@/lib/format";
 import { TravelerAvatar } from "@/lib/icons";
 
@@ -138,13 +137,9 @@ function AddItemForm({ travelerId, onDone }: { travelerId: number; onDone: () =>
 export function BudgetBoard({
   travelers,
   items,
-  estimate,
-  accentMark = "var(--mark-green)",
 }: {
   travelers: Traveler[];
   items: BudgetItem[];
-  estimate?: Estimate;
-  accentMark?: string;
 }) {
   const [openId, setOpenId] = useState<number | null>(travelers[0]?.id ?? null);
   const [adding, setAdding] = useState<number | null>(null);
@@ -155,13 +150,12 @@ export function BudgetBoard({
     <div className="space-y-4">
       {travelers.map((traveler, idx) => {
         const own = items.filter((i) => i.travelerId === traveler.id);
-        const pe = estimate?.perPerson.find((p) => p.traveler.id === traveler.id);
-        const yellow = pe?.yellow ?? own.reduce((s, i) => s + i.yellowPadCents, 0);
-        const projected = pe?.projected ?? own.reduce((s, i) => s + i.plannedCents, 0);
-        const estimated = pe?.estimated ?? projected;
-        const spent = pe?.spent ?? own.reduce((s, i) => s + (i.actualCents ?? 0), 0);
-        // + = this plan lands under their original yellow-pad share
-        const vsYellow = yellow - estimated;
+        // each person's own responsibility — fixed, not split with the shared travel pool
+        const yellow = own.reduce((s, i) => s + i.yellowPadCents, 0);
+        const projected = own.reduce((s, i) => s + i.plannedCents, 0);
+        const spent = own.reduce((s, i) => s + (i.actualCents ?? 0), 0);
+        // + = real deals came in under what they planned on the yellow pad
+        const savedVsYellow = yellow - projected;
         const isOpen = openId === traveler.id;
 
         return (
@@ -189,18 +183,19 @@ export function BudgetBoard({
               <span className="min-w-0 flex-1">
                 <span className="font-display text-lg font-semibold">{traveler.name}</span>
                 <span className="mt-0.5 block text-xs text-ink-muted">
-                  {own.length} Lines · Yellow Pad {fmtMoney(yellow)} · Projected {fmtMoney(projected)}
+                  {own.length} Lines · Yellow Pad {fmtMoney(yellow)}
                 </span>
               </span>
               <span className="text-right">
                 <span
-                  className="block font-display text-lg font-semibold tabular-nums"
-                  style={{ color: accentMark }}
+                  className={`block font-display text-lg font-semibold tabular-nums ${
+                    savedVsYellow > 0 ? "text-mark-green" : ""
+                  }`}
                 >
-                  {fmtMoney(estimated)}
+                  {fmtMoney(projected)}
                 </span>
                 <span className="block text-[11px] uppercase tracking-wider text-ink-muted">
-                  Est · This Plan
+                  Projected
                 </span>
                 <motion.span
                   animate={{ rotate: isOpen ? 180 : 0 }}
@@ -211,21 +206,23 @@ export function BudgetBoard({
               </span>
             </button>
 
-            {/* estimated-vs-yellow bar */}
+            {/* projected-vs-yellow-pad bar (their own responsibility) */}
             <div className="px-4 pb-4 md:px-5">
               <div className="relative h-2 overflow-hidden rounded-full bg-surface">
                 <motion.div
                   className="absolute inset-y-0 left-0 rounded-full"
-                  style={{ background: vsYellow >= 0 ? traveler.color : "var(--mark-pink)" }}
+                  style={{ background: traveler.color }}
                   initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(100, yellow ? (estimated / yellow) * 100 : 0)}%` }}
+                  animate={{ width: `${Math.min(100, yellow ? (projected / yellow) * 100 : 0)}%` }}
                   transition={{ type: "spring", stiffness: 70, damping: 20 }}
                 />
               </div>
               <p className="mt-1.5 text-xs text-ink-muted">
-                {vsYellow >= 0
-                  ? `${fmtMoney(vsYellow)} under their yellow-pad share`
-                  : `${fmtMoney(-vsYellow)} over their yellow-pad share`}
+                {savedVsYellow > 0
+                  ? `${fmtMoney(savedVsYellow)} under the yellow-pad plan`
+                  : savedVsYellow < 0
+                    ? `${fmtMoney(-savedVsYellow)} over the yellow-pad plan`
+                    : "Right on the yellow-pad plan"}
                 {spent > 0 && ` · ${fmtMoney(spent)} spent`}
               </p>
             </div>
