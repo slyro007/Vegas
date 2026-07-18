@@ -174,8 +174,9 @@ export function PlanCompare({
         })}
       </div>
       <p className="mt-4 text-xs text-ink-muted">
-        Travel-specific costs only — Vegas lodging, food, and spending money are the same in every
-        plan. Hatched "est." lines are estimates, not quotes. Tap a plan for the line-by-line.
+        Everything it takes to get there and sleep there — travel plus every hotel night. Food and
+        personal spending money live on the Finances board. Hatched "est." lines are estimates, not
+        quotes. Tap a plan for the line-by-line.
       </p>
     </section>
   );
