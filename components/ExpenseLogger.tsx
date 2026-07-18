@@ -1,10 +1,12 @@
 "use client";
 
+import { Receipt, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { addExpense, deleteExpense } from "@/app/actions";
 import type { BudgetItem, Expense, Traveler } from "@/lib/data";
 import { CATEGORY_META, fmtDay, fmtMoney } from "@/lib/format";
+import { TravelerAvatar } from "@/lib/icons";
 
 function parseDollars(input: string): number | null {
   const cleaned = input.replace(/[$,\s]/g, "");
@@ -78,7 +80,7 @@ export function ExpenseLogger({
                   setTravelerId(active ? null : t.id);
                   setBudgetItemId(null);
                 }}
-                className="rounded-full border px-4 py-2 text-sm font-medium transition-colors"
+                className="flex items-center gap-1.5 rounded-full border py-1.5 pl-1.5 pr-4 text-sm font-medium transition-colors"
                 style={{
                   borderColor: active ? t.color : "var(--border)",
                   background: active
@@ -87,7 +89,8 @@ export function ExpenseLogger({
                   color: active ? "var(--ink)" : "var(--ink-secondary)",
                 }}
               >
-                {t.emoji} {t.name}
+                <TravelerAvatar name={t.name} color={t.color} className="h-6 w-6 text-xs" />
+                {t.name}
               </motion.button>
             );
           })}
@@ -196,8 +199,9 @@ export function ExpenseLogger({
           const planLeft = plannedSum - logged;
           return (
             <div key={t.id} className="rounded-2xl border border-borderc bg-card p-4">
-              <div className="text-sm text-ink-secondary">
-                {t.emoji} {t.name}
+              <div className="flex items-center gap-1.5 text-sm text-ink-secondary">
+                <TravelerAvatar name={t.name} color={t.color} className="h-5 w-5 text-[11px]" />
+                {t.name}
               </div>
               <div className="mt-1 font-display text-xl font-semibold tabular-nums">
                 {fmtMoney(logged)}
@@ -249,17 +253,17 @@ export function ExpenseLogger({
                           exit={{ opacity: 0, x: -16 }}
                           className="group flex items-center gap-3 py-3"
                         >
-                          <span
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm"
-                            style={{
-                              background: traveler
-                                ? `color-mix(in srgb, ${traveler.color} 25%, transparent)`
-                                : "var(--surface)",
-                            }}
-                            title={traveler?.name}
-                          >
-                            {traveler?.emoji ?? "💸"}
-                          </span>
+                          {traveler ? (
+                            <TravelerAvatar
+                              name={traveler.name}
+                              color={traveler.color}
+                              className="h-8 w-8 text-sm"
+                            />
+                          ) : (
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface text-ink-muted">
+                              <Receipt className="h-[1.15rem] w-[1.15rem]" aria-hidden />
+                            </span>
+                          )}
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm">
                               {line?.label ?? "(Deleted Line)"}
@@ -276,11 +280,11 @@ export function ExpenseLogger({
                           </span>
                           <button
                             onClick={() => startTransition(() => deleteExpense(e.id))}
-                            className="text-xs text-transparent transition-colors group-hover:text-ink-muted hover:!text-mark-pink"
+                            className="flex text-ink-muted/40 transition-colors group-hover:text-ink-muted hover:!text-mark-pink"
                             title="Delete entry"
                             aria-label="Delete expense entry"
                           >
-                            ✕
+                            <X className="h-4 w-4" />
                           </button>
                         </motion.li>
                       );

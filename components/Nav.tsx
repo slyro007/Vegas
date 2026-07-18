@@ -4,15 +4,16 @@ import { Show, SignInButton, UserButton } from "@clerk/nextjs";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { NAV_ICON } from "@/lib/icons";
 
 const LINKS = [
-  { href: "/", label: "Home", emoji: "🏠" },
-  { href: "/itinerary", label: "Itinerary", emoji: "🗺️" },
-  { href: "/scenarios", label: "Decide", emoji: "🎲" },
-  { href: "/finances", label: "Finances", emoji: "💵" },
-  { href: "/expenses", label: "Spend", emoji: "💸" },
-  { href: "/lodging", label: "Lodging", emoji: "🛏️" },
-  { href: "/lists", label: "Lists", emoji: "✅" },
+  { href: "/", label: "Home" },
+  { href: "/itinerary", label: "Itinerary" },
+  { href: "/scenarios", label: "Decide" },
+  { href: "/finances", label: "Finances" },
+  { href: "/expenses", label: "Spend" },
+  { href: "/lodging", label: "Lodging" },
+  { href: "/lists", label: "Lists" },
 ];
 
 export function Nav({ showDecide = true }: { showDecide?: boolean }) {
@@ -26,11 +27,13 @@ export function Nav({ showDecide = true }: { showDecide?: boolean }) {
       {/* top bar */}
       <header className="sticky top-0 z-40 border-b border-borderc bg-bg/80 backdrop-blur-md">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 md:px-6">
-          <Link href="/" className="flex items-baseline gap-2">
+          <Link href="/" className="flex items-baseline gap-1.5">
             <span className="font-marquee text-lg text-glow-pink neon-text leading-none">
               VEGAS
             </span>
-            <span className="font-display text-sm italic text-ink-secondary">’26</span>
+            <span className="font-marquee text-[0.7rem] leading-none text-glow-teal neon-text-teal">
+              ’26
+            </span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
@@ -77,11 +80,13 @@ export function Nav({ showDecide = true }: { showDecide?: boolean }) {
         <div className={`grid ${links.length === 7 ? "grid-cols-7" : "grid-cols-6"}`}>
           {links.map((link) => {
             const active = pathname === link.href;
+            const Icon = NAV_ICON[link.href];
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className="relative flex flex-col items-center gap-0.5 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]"
+                aria-current={active ? "page" : undefined}
+                className="relative flex flex-col items-center gap-1 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]"
               >
                 {active && (
                   <motion.span
@@ -90,12 +95,15 @@ export function Nav({ showDecide = true }: { showDecide?: boolean }) {
                     transition={{ type: "spring", stiffness: 400, damping: 32 }}
                   />
                 )}
-                <span className={`text-lg leading-none ${active ? "" : "opacity-60 grayscale"}`}>
-                  {link.emoji}
-                </span>
-                <span
-                  className={`text-[10px] ${active ? "text-ink" : "text-ink-muted"}`}
-                >
+                {Icon && (
+                  <Icon
+                    className={`h-[1.4rem] w-[1.4rem] transition-colors ${
+                      active ? "text-glow-pink" : "text-ink-muted"
+                    }`}
+                    aria-hidden
+                  />
+                )}
+                <span className={`text-[11px] ${active ? "text-ink" : "text-ink-muted"}`}>
                   {link.label}
                 </span>
               </Link>

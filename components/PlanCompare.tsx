@@ -1,11 +1,13 @@
 "use client";
 
+import { ChevronDown, Lock } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { unlockScenario } from "@/app/actions";
 import { scenarioAccent } from "@/lib/accents";
 import type { Scenario, TripSettings } from "@/lib/data";
 import { fmtMoney } from "@/lib/format";
+import { PlanIcon } from "@/lib/icons";
 
 const total = (s: Scenario) => s.costLines.reduce((sum, l) => sum + l.cents, 0);
 
@@ -38,13 +40,18 @@ export function PlanCompare({
         className="flex flex-wrap items-center gap-3 rounded-2xl border p-4 md:p-5"
         style={{ borderColor: accent.mark, background: accent.soft, boxShadow: `0 0 24px ${accent.glow}` }}
       >
-        <span className="text-2xl">🔒</span>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ background: accent.soft, color: accent.mark }}>
+          <Lock className="h-5 w-5" aria-hidden />
+        </span>
         <div className="min-w-0 flex-1">
           <div className="text-xs uppercase tracking-widest text-ink-secondary">
             The Decision Is Made
           </div>
-          <div className="font-display text-lg font-semibold md:text-xl">
-            {locked.emoji} {locked.name} · {fmtMoney(total(locked))}
+          <div className="flex items-center gap-2 font-display text-lg font-semibold md:text-xl">
+            <span style={{ color: accent.mark }}>
+              <PlanIcon plan={locked.slug} className="h-5 w-5" />
+            </span>
+            {locked.name} · {fmtMoney(total(locked))}
           </div>
         </div>
         <button
@@ -91,15 +98,18 @@ export function PlanCompare({
               >
                 <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 text-sm">
                   <span className="flex items-center gap-2">
-                    {s.emoji} {s.name}
-                    <motion.span animate={{ rotate: isOpen ? 180 : 0 }} className="text-[11px] text-ink-muted">
-                      ▾
+                    <span style={{ color: accent.mark }}>
+                      <PlanIcon plan={s.slug} className="h-[1.15rem] w-[1.15rem]" />
+                    </span>
+                    {s.name}
+                    <motion.span animate={{ rotate: isOpen ? 180 : 0 }} className="text-ink-muted">
+                      <ChevronDown className="h-4 w-4" />
                     </motion.span>
                   </span>
                   <span className="flex items-baseline gap-2">
                     {delta === 0 ? (
                       <span className="rounded-full bg-mark-green/15 px-2 py-0.5 text-xs font-medium text-mark-green">
-                        Cheapest ✓
+                        Cheapest
                       </span>
                     ) : (
                       <span className="rounded-full bg-mark-pink/10 px-2 py-0.5 text-xs font-medium text-mark-pink">

@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, ChevronDown, Crown, Lock } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useOptimistic, useState, useTransition } from "react";
 import { castVote, lockScenario } from "@/app/actions";
@@ -7,6 +8,7 @@ import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { scenarioAccent } from "@/lib/accents";
 import type { Scenario, Traveler, TripSettings, Vote } from "@/lib/data";
 import { fmtMoney } from "@/lib/format";
+import { PlanIcon, TravelerAvatar } from "@/lib/icons";
 
 const total = (s: Scenario) => s.costLines.reduce((sum, l) => sum + l.cents, 0);
 
@@ -79,14 +81,24 @@ export function ScenarioBoard({
             >
               {(isLocked || leading) && (
                 <div
-                  className="absolute -top-3 right-4 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider text-bg"
+                  className="absolute -top-3 right-4 flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider text-bg"
                   style={{ background: accent.mark }}
                 >
-                  {isLocked ? "🔒 Locked In" : "👑 Leading"}
+                  {isLocked ? (
+                    <>
+                      <Lock className="h-3.5 w-3.5" aria-hidden /> Locked In
+                    </>
+                  ) : (
+                    <>
+                      <Crown className="h-3.5 w-3.5" aria-hidden /> Leading
+                    </>
+                  )}
                 </div>
               )}
 
-              <div className="text-3xl">{s.emoji}</div>
+              <div style={{ color: accent.mark }}>
+                <PlanIcon plan={s.slug} className="h-8 w-8" />
+              </div>
               <h3 className="mt-2 font-display text-xl font-semibold">{s.name}</h3>
               <p className="text-sm italic text-ink-secondary">{s.tagline}</p>
 
@@ -105,8 +117,8 @@ export function ScenarioBoard({
                 aria-expanded={isOpen}
               >
                 Cost Breakdown + The Week
-                <motion.span animate={{ rotate: isOpen ? 180 : 0 }} className="inline-block">
-                  ▾
+                <motion.span animate={{ rotate: isOpen ? 180 : 0 }} className="inline-flex">
+                  <ChevronDown className="h-4 w-4" />
                 </motion.span>
               </button>
               <AnimatePresence initial={false}>
@@ -213,7 +225,7 @@ export function ScenarioBoard({
                         whileTap={{ scale: 0.92 }}
                         disabled={pending}
                         onClick={() => handleVote(traveler.id, s.id)}
-                        className="rounded-full border px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-60"
+                        className="flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-2.5 text-xs font-medium transition-colors disabled:opacity-60"
                         style={{
                           borderColor: votedHere ? traveler.color : "var(--border)",
                           background: votedHere ? accent.soft : "transparent",
@@ -225,8 +237,13 @@ export function ScenarioBoard({
                             : `Vote as ${traveler.name}`
                         }
                       >
-                        {traveler.emoji} {traveler.name}
-                        {votedHere && " ✓"}
+                        <TravelerAvatar
+                          name={traveler.name}
+                          color={traveler.color}
+                          className="h-5 w-5 text-[11px]"
+                        />
+                        {traveler.name}
+                        {votedHere && <Check className="h-4 w-4" aria-hidden />}
                       </motion.button>
                     );
                   })}

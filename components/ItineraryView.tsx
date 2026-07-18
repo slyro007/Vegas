@@ -1,15 +1,17 @@
 "use client";
 
+import { CalendarDays, ScrollText } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { DayGrid } from "@/components/DayGrid";
 import { Timeline, type TimelineAccent, type TimelineDay } from "@/components/Timeline";
 import type { ItineraryEvent } from "@/lib/data";
+import { PlanIcon } from "@/lib/icons";
 
 const PLANS = [
   {
     key: "drive" as const,
-    label: "🚙 Drive Plan",
+    label: "Drive Plan",
     color: "var(--mark-orange)",
     blurb:
       "Ten days: two big hauls, horses on our land in Valle, five nights of Vegas, and a red-rock finale in Sedona. The rail turns neon when the trip does.",
@@ -17,7 +19,7 @@ const PLANS = [
   },
   {
     key: "fly" as const,
-    label: "✈️ Fly Plan",
+    label: "Fly Plan",
     color: "var(--mark-teal)",
     blurb:
       "Nine days, zero overnight hauls: fly in Saturday, SUV out of Harry Reid, day-trip to the land, and a Sedona overnight before the Saturday evening flight home.",
@@ -25,7 +27,7 @@ const PLANS = [
   },
   {
     key: "hybrid" as const,
-    label: "🚙✈️ Split Plan",
+    label: "Split Plan",
     color: "var(--mark-purple)",
     blurb:
       "Shy, Bex & Pithya road-trip it while Amma flies in Sunday afternoon and home Friday evening — zero 15-hour hauls for her, full adventure for the trio.",
@@ -34,8 +36,8 @@ const PLANS = [
 ];
 
 const VIEWS = [
-  { key: "timeline" as const, label: "📜 Timeline" },
-  { key: "grid" as const, label: "🗓️ Day Grid" },
+  { key: "timeline" as const, label: "Timeline", Icon: ScrollText },
+  { key: "grid" as const, label: "Day Grid", Icon: CalendarDays },
 ];
 type ViewKey = (typeof VIEWS)[number]["key"];
 const VIEW_STORAGE_KEY = "itinerary-view";
@@ -113,7 +115,10 @@ export function ItineraryView({
                     transition={{ type: "spring", stiffness: 400, damping: 32 }}
                   />
                 )}
-                <span className="relative">{p.label}</span>
+                <span className="relative flex items-center gap-1.5">
+                  <PlanIcon plan={p.key} className="h-[1.15rem] w-[1.15rem]" />
+                  {p.label}
+                </span>
               </button>
             );
           })}
@@ -139,7 +144,10 @@ export function ItineraryView({
                     transition={{ type: "spring", stiffness: 400, damping: 32 }}
                   />
                 )}
-                <span className="relative">{v.label}</span>
+                <span className="relative flex items-center gap-1.5">
+                  <v.Icon className="h-[1.15rem] w-[1.15rem]" aria-hidden />
+                  {v.label}
+                </span>
               </button>
             );
           })}
