@@ -30,7 +30,6 @@ export default async function FinancesPage() {
   const plannedTotal = items.reduce((s, i) => s + i.plannedCents, 0);
   const withActuals = items.filter((i) => i.actualCents !== null);
   const actualTotal = withActuals.reduce((s, i) => s + (i.actualCents ?? 0), 0);
-  const savedTotal = withActuals.reduce((s, i) => s + i.plannedCents - (i.actualCents ?? 0), 0);
 
   const byCategory = Object.entries(CATEGORY_META)
     .map(([key, meta]) => {
@@ -45,9 +44,16 @@ export default async function FinancesPage() {
     .sort((a, b) => b.planned - a.planned);
   const maxCat = Math.max(...byCategory.map((c) => c.planned));
 
+  const cushion = budgetTotal - plannedTotal;
   const stats = [
     { label: "Per-Person Budgets", cents: budgetTotal, hint: "What everyone is bringing" },
-    { label: "Projected Line Items", cents: plannedTotal, hint: "Everything itemized below" },
+    { label: "Projected Spend", cents: plannedTotal, hint: "Everything itemized below" },
+    {
+      label: cushion >= 0 ? "Budget Cushion" : "Over Budget",
+      cents: Math.abs(cushion),
+      hint: cushion >= 0 ? "Budgets minus what's projected" : "Projected past the budgets",
+      accent: cushion >= 0,
+    },
     {
       label: "Actually Spent",
       cents: actualTotal,
@@ -55,12 +61,6 @@ export default async function FinancesPage() {
         withActuals.length > 0
           ? `${withActuals.length} line${withActuals.length === 1 ? "" : "s"} with real money down`
           : "Nothing yet — it's all projected",
-    },
-    {
-      label: "Under Projection",
-      cents: savedTotal,
-      hint: withActuals.length > 0 ? "Cheaper than projected 🎉" : "Updates as spending starts",
-      accent: true,
     },
   ];
 

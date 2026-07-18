@@ -195,6 +195,24 @@ body {
   animation: eq-bounce 0.9s ease-in-out infinite;
 }
 
+/* --- crafted mirror-ball for the ambient player (SVG in components/DiscoBall) --- */
+@keyframes dball-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(255, 92, 168, 0.45), 0 0 22px rgba(46, 230, 246, 0.28); }
+  50% { box-shadow: 0 0 22px rgba(255, 92, 168, 0.75), 0 0 44px rgba(46, 230, 246, 0.5); }
+}
+/* facet texture drifts one tile-width horizontally → the ball reads as spinning */
+@keyframes dball-drift {
+  to { transform: translateX(-12px); }
+}
+@keyframes dball-twinkle {
+  0%, 100% { opacity: 0.12; }
+  50% { opacity: 1; }
+}
+.dball-facets { animation: dball-drift 2.6s linear infinite; will-change: transform; }
+.dball-tw { animation: dball-twinkle 1.7s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.dball-halo { box-shadow: 0 0 12px rgba(255, 92, 168, 0.4), 0 0 22px rgba(46, 230, 246, 0.24); border-radius: 9999px; }
+.dball-halo-playing { animation: dball-pulse 1.9s ease-in-out infinite; }
+
 @keyframes float-away {
   0% { transform: translateY(0) scale(1); opacity: 1; }
   100% { transform: translateY(-70px) scale(1.4); opacity: 0; }
@@ -205,7 +223,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .disco-chip, .disco-ball, .eq-bar, .float-away {
+  .disco-chip, .disco-ball, .eq-bar, .float-away,
+  .dball-facets, .dball-tw, .dball-halo-playing {
     animation: none;
   }
 }

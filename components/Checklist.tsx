@@ -1,33 +1,42 @@
 "use client";
 
+import {
+  Backpack,
+  ClipboardList,
+  type LucideIcon,
+  Mountain,
+  Snowflake,
+  User,
+  X,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useOptimistic, useState, useTransition } from "react";
 import { addChecklistItem, deleteChecklistItem, toggleChecklistItem } from "@/app/actions";
 import type { ChecklistItem } from "@/lib/data";
 
-const LISTS: { key: string; label: string; emoji: string; blurb: string }[] = [
+const LISTS: { key: string; label: string; Icon: LucideIcon; blurb: string }[] = [
   {
     key: "pre-trip",
     label: "Pre-trip",
-    emoji: "📋",
+    Icon: ClipboardList,
     blurb: "Everything that has to happen before Aug 7.",
   },
   {
     key: "groceries",
     label: "Cooler run",
-    emoji: "🧊",
+    Icon: Snowflake,
     blurb: "Amma-safe groceries — pack the cooler before we roll.",
   },
   {
     key: "sedona-restock",
     label: "Sedona restock",
-    emoji: "🌵",
+    Icon: Mountain,
     blurb: "Friday night, Aug 14 — reload for the drive home.",
   },
   {
     key: "packing",
     label: "Packing",
-    emoji: "🎒",
+    Icon: Backpack,
     blurb: "Swimsuits for Slide Rock, jeans for the horses.",
   },
 ];
@@ -92,18 +101,23 @@ function CheckRow({ item }: { item: ChecklistItem }) {
         </span>
         {(item.assignee || item.note) && (
           <span className="mt-0.5 flex flex-wrap gap-x-2 text-xs text-ink-muted">
-            {item.assignee && <span>👤 {item.assignee}</span>}
+            {item.assignee && (
+              <span className="flex items-center gap-1">
+                <User className="h-3.5 w-3.5" aria-hidden />
+                {item.assignee}
+              </span>
+            )}
             {item.note && <span>{item.note}</span>}
           </span>
         )}
       </div>
       <button
         onClick={() => startTransition(() => deleteChecklistItem(item.id))}
-        className="text-xs text-transparent transition-colors group-hover:text-ink-muted hover:!text-mark-pink"
+        className="mt-0.5 flex text-ink-muted/40 transition-colors group-hover:text-ink-muted hover:!text-mark-pink"
         title="Delete"
         aria-label={`Delete ${item.label}`}
       >
-        ✕
+        <X className="h-4 w-4" />
       </button>
     </motion.li>
   );
@@ -150,9 +164,10 @@ export function Checklist({ items }: { items: ChecklistItem[] }) {
                   transition={{ type: "spring", stiffness: 400, damping: 32 }}
                 />
               )}
-              <span className="relative">
-                {list.emoji} {list.label}
-                <span className="ml-1.5 text-xs text-ink-muted">
+              <span className="relative flex items-center gap-1.5">
+                <list.Icon className="h-[1.15rem] w-[1.15rem]" aria-hidden />
+                {list.label}
+                <span className="ml-0.5 text-xs text-ink-muted">
                   {done}/{count.length}
                 </span>
               </span>

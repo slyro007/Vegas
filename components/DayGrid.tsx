@@ -1,5 +1,6 @@
 "use client";
 
+import { MapPin } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import type { TimelineAccent, TimelineDay } from "@/components/Timeline";
@@ -47,15 +48,15 @@ export function DayGrid({
                 {day.dayNumber}
               </span>
               <span className="min-w-0">
-                <span className="block text-[11px] uppercase tracking-widest text-ink-muted">
+                <span className="block text-xs uppercase tracking-widest text-ink-muted">
                   {d.toLocaleDateString("en-US", { weekday: "short" })}
                 </span>
-                <span className="block text-xs font-medium">
+                <span className="block text-sm font-medium">
                   {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 </span>
               </span>
               {vegas && (
-                <span className="neon-text-teal ml-auto text-[10px] uppercase tracking-widest text-glow-teal">
+                <span className="neon-text-teal ml-auto text-[11px] uppercase tracking-widest text-glow-teal">
                   vegas
                 </span>
               )}
@@ -64,10 +65,10 @@ export function DayGrid({
             {/* compact: time-chipped titles only */}
             <motion.ul layout="position" className="mt-2.5 space-y-1.5">
               {day.events.map((event) => (
-                <li key={event.id} className="text-xs leading-snug">
+                <li key={event.id} className="text-sm leading-snug">
                   {event.time && (
                     <span
-                      className={`mr-1.5 rounded-full px-1.5 py-px text-[10px] font-medium uppercase tracking-wider ${
+                      className={`mr-1.5 rounded-full px-1.5 py-px text-[11px] font-medium uppercase tracking-wider ${
                         event.theme === "vegas"
                           ? "bg-mark-pink/20 text-glow-pink"
                           : "bg-mark-orange/20 text-glow-sunset"
@@ -94,8 +95,9 @@ export function DayGrid({
                           </span>
                         )}
                         {event.location && (
-                          <span className="mt-0.5 block text-[11px] text-ink-muted">
-                            📍 {event.location}
+                          <span className="mt-0.5 flex items-center gap-1 text-xs text-ink-muted">
+                            <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                            {event.location}
                           </span>
                         )}
                       </motion.span>

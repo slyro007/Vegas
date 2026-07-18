@@ -1,5 +1,6 @@
 "use client";
 
+import { MapPin } from "lucide-react";
 import { motion, useScroll, useSpring } from "motion/react";
 import { useRef } from "react";
 import type { ItineraryEvent } from "@/lib/data";
@@ -143,7 +144,10 @@ export function Timeline({
                       <p className="mt-1.5 text-sm text-ink-secondary">{event.description}</p>
                     )}
                     {event.location && (
-                      <p className="mt-2 text-xs text-ink-muted">📍 {event.location}</p>
+                      <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-muted">
+                        <MapPin className="h-4 w-4 shrink-0" aria-hidden />
+                        {event.location}
+                      </p>
                     )}
                   </motion.article>
                 ))}

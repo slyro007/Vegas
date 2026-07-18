@@ -1,10 +1,12 @@
 "use client";
 
+import { ChevronDown, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { addBudgetItem, deleteBudgetItem, updateBudgetItem } from "@/app/actions";
 import type { BudgetItem, Traveler } from "@/lib/data";
 import { CATEGORY_META, fmtMoney } from "@/lib/format";
+import { TravelerAvatar } from "@/lib/icons";
 
 function parseDollars(input: string): number | null {
   const cleaned = input.replace(/[$,\s]/g, "");
@@ -168,12 +170,11 @@ export function BudgetBoard({
               className="flex w-full items-center gap-3 p-4 text-left md:p-5"
               aria-expanded={isOpen}
             >
-              <span
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg"
-                style={{ background: `color-mix(in srgb, ${traveler.color} 25%, transparent)` }}
-              >
-                {traveler.emoji}
-              </span>
+              <TravelerAvatar
+                name={traveler.name}
+                color={traveler.color}
+                className="h-10 w-10 text-lg"
+              />
               <span className="min-w-0 flex-1">
                 <span className="flex items-baseline gap-2">
                   <span className="font-display text-lg font-semibold">{traveler.name}</span>
@@ -200,9 +201,9 @@ export function BudgetBoard({
                 </span>
                 <motion.span
                   animate={{ rotate: isOpen ? 180 : 0 }}
-                  className="inline-block text-ink-muted"
+                  className="mt-0.5 inline-flex justify-end text-ink-muted"
                 >
-                  ▾
+                  <ChevronDown className="h-4 w-4" />
                 </motion.span>
               </span>
             </button>
@@ -240,11 +241,11 @@ export function BudgetBoard({
                   className="overflow-hidden border-t border-borderc"
                 >
                   <div className="p-4 md:p-5">
-                    <div className="mb-1 hidden grid-cols-[1fr_auto_auto_auto] gap-2 text-[11px] uppercase tracking-widest text-ink-muted md:grid">
+                    <div className="mb-1 hidden grid-cols-[1fr_5rem_5rem_1.5rem] gap-2 text-[11px] uppercase tracking-widest text-ink-muted md:grid">
                       <span>Item</span>
-                      <span className="w-24 text-right">Projected</span>
-                      <span className="w-24 text-right">Actual</span>
-                      <span className="w-6" />
+                      <span className="text-right">Projected</span>
+                      <span className="text-right">Actual</span>
+                      <span />
                     </div>
                     <ul className="divide-y divide-borderc">
                       {own.map((item) => {
@@ -252,7 +253,7 @@ export function BudgetBoard({
                         return (
                           <li
                             key={item.id}
-                            className="grid grid-cols-[1fr_auto] items-center gap-x-2 gap-y-0.5 py-2.5 text-sm md:grid-cols-[1fr_auto_auto_auto]"
+                            className="grid grid-cols-[1fr_auto] items-center gap-x-2 gap-y-0.5 py-2.5 text-sm md:grid-cols-[1fr_5rem_5rem_1.5rem]"
                           >
                             <span className="min-w-0">
                               <span className="flex items-center gap-2">
@@ -313,7 +314,7 @@ export function BudgetBoard({
                                 setConfirmDelete(null);
                                 startTransition(() => deleteBudgetItem(item.id));
                               }}
-                              className={`col-start-1 row-start-2 justify-self-start pl-[18px] text-xs transition-colors md:col-start-auto md:row-start-auto md:justify-self-auto md:pl-0 ${
+                              className={`col-start-1 row-start-2 flex items-center justify-self-start pl-[18px] text-xs transition-colors md:col-start-auto md:row-start-auto md:justify-end md:justify-self-auto md:pl-0 ${
                                 confirmDelete === item.id
                                   ? "font-semibold text-mark-pink"
                                   : "text-ink-muted hover:text-mark-pink"
@@ -325,7 +326,7 @@ export function BudgetBoard({
                               }
                               aria-label={`Delete ${item.label}`}
                             >
-                              {confirmDelete === item.id ? "Delete?" : "✕"}
+                              {confirmDelete === item.id ? "Delete?" : <X className="h-4 w-4" />}
                             </button>
                           </li>
                         );

@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, Clock, MapPin } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { updateLodgingBooking } from "@/app/actions";
@@ -63,22 +64,24 @@ export function LodgingCard({ stay, index }: { stay: LodgingStay; index: number 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="font-display text-lg font-semibold md:text-xl">{stay.name}</h2>
-          <p className="mt-0.5 text-sm text-ink-secondary">
-            📍 {stay.location} · {fmtDay(stay.checkIn)} → {fmtDay(stay.checkOut)} · {nights}{" "}
+          <p className="mt-0.5 flex flex-wrap items-center gap-1 text-sm text-ink-secondary">
+            <MapPin className="h-4 w-4 shrink-0" aria-hidden />
+            {stay.location} · {fmtDay(stay.checkIn)} → {fmtDay(stay.checkOut)} · {nights}{" "}
             night{nights === 1 ? "" : "s"}
           </p>
         </div>
         <button
           disabled={pending}
           onClick={() => (formOpen ? setFormOpen(false) : openForm())}
-          className={`rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-wider transition-colors ${
+          className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-wider transition-colors ${
             booked
               ? "border-mark-green/60 bg-mark-green/15 text-mark-green"
               : "border-borderc-strong text-ink-muted hover:text-ink"
           }`}
           title={booked ? "Tap to edit the booking details" : "Tap to mark as booked"}
         >
-          {booked ? "✓ Booked" : "Not Booked Yet"}
+          {booked && <Check className="h-4 w-4" aria-hidden />}
+          {booked ? "Booked" : "Not Booked Yet"}
         </button>
       </div>
 
@@ -173,11 +176,11 @@ export function LodgingCard({ stay, index }: { stay: LodgingStay; index: number 
 
       {cancelDays !== null && (
         <div
-          className={`mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${
+          className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
             cancelDays >= 0 ? "bg-mark-amber/15 text-glow-gold" : "bg-surface text-ink-muted"
           }`}
         >
-          ⏳{" "}
+          <Clock className="h-4 w-4 shrink-0" aria-hidden />
           {cancelDays > 0
             ? `Free cancellation for ${cancelDays} more day${cancelDays === 1 ? "" : "s"} (until ${fmtDay(stay.cancelBy!)})`
             : cancelDays === 0
