@@ -120,11 +120,14 @@ export async function addBudgetItem(
   const trimmed = label.trim().slice(0, 200);
   if (!trimmed) return;
   const allowed = ["lodging", "food", "gas", "experience", "gifts", "misc"];
+  const planned = Math.max(0, Math.round(plannedCents));
   await db.insert(budgetItems).values({
     travelerId,
     label: trimmed,
     category: allowed.includes(category) ? category : "misc",
-    plannedCents: Math.max(0, Math.round(plannedCents)),
+    // a new line's yellow-pad baseline is whatever it's first planned at
+    yellowPadCents: planned,
+    plannedCents: planned,
     actualCents: actualCents === null ? null : Math.max(0, Math.round(actualCents)),
   });
   revalidatePath("/finances");
@@ -157,6 +160,12 @@ export async function updateLodgingBooking(
   await db.update(lodging).set(set).where(eq(lodging.id, id));
   revalidatePath("/lodging");
   revalidatePath("/");
+}
+
+export async function updateShortfallNote(note: string) {
+  await requireActor();
+  await db.update(tripSettings).set({ shortfallNote: note.trim().slice(0, 400) || null });
+  revalidatePath("/finances");
 }
 
 const scenarioPaths = ["/scenarios", "/finances", "/itinerary", "/"];

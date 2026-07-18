@@ -29,8 +29,13 @@ export const budgetItems = pgTable("budget_items", {
   label: text("label").notNull(),
   // lodging | food | gas | experience | gifts | misc
   category: text("category").notNull().default("misc"),
+  // yellow pad = the original hand-planned budget; planned = the refined/real number
+  yellowPadCents: integer("yellow_pad_cents").notNull().default(0),
   plannedCents: integer("planned_cents").notNull().default(0),
   actualCents: integer("actual_cents"),
+  // shared trip cost (transport/lodging/road food) — the Estimated column splits
+  // these evenly 4 ways per scenario; personal lines stay with the person
+  shared: boolean("shared").notNull().default(false),
   notes: text("notes"),
 });
 
@@ -55,6 +60,8 @@ export const tripSettings = pgTable("trip_settings", {
   id: serial("id").primaryKey(),
   lockedScenarioId: integer("locked_scenario_id").references(() => scenarios.id),
   lockedAt: timestamp("locked_at"),
+  // free-text note for "we're short $X — here's where the rest comes from"
+  shortfallNote: text("shortfall_note"),
 });
 
 export const itineraryEvents = pgTable("itinerary_events", {

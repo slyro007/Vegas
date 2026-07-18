@@ -48,7 +48,7 @@ export async function getChecklist() {
 
 export async function getTripSettings() {
   const rows = await db.select().from(tripSettings);
-  return rows[0] ?? { id: 0, lockedScenarioId: null, lockedAt: null };
+  return rows[0] ?? { id: 0, lockedScenarioId: null, lockedAt: null, shortfallNote: null };
 }
 
 export async function getExpenses() {
