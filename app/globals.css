@@ -69,6 +69,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* comfortable 17px base — every rem-based size scales with it */
+  font-size: 106.25%;
 }
 
 body {

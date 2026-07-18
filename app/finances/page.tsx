@@ -46,26 +46,39 @@ export default async function FinancesPage() {
   const maxCat = Math.max(...byCategory.map((c) => c.planned));
 
   const stats = [
-    { label: "Per-Person Budgets", cents: budgetTotal, hint: "The yellow-pad totals" },
-    { label: "Planned Line Items", cents: plannedTotal, hint: "Everything itemized below" },
-    { label: "Actuals Locked In", cents: actualTotal, hint: `${withActuals.length} items priced` },
-    { label: "Under Plan So Far", cents: savedTotal, hint: "Cheaper than budgeted 🎉", accent: true },
+    { label: "Per-Person Budgets", cents: budgetTotal, hint: "What everyone is bringing" },
+    { label: "Projected Line Items", cents: plannedTotal, hint: "Everything itemized below" },
+    {
+      label: "Actually Spent",
+      cents: actualTotal,
+      hint:
+        withActuals.length > 0
+          ? `${withActuals.length} line${withActuals.length === 1 ? "" : "s"} with real money down`
+          : "Nothing yet — it's all projected",
+    },
+    {
+      label: "Under Projection",
+      cents: savedTotal,
+      hint: withActuals.length > 0 ? "Cheaper than projected 🎉" : "Updates as spending starts",
+      accent: true,
+    },
   ];
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 md:px-6 md:py-14">
       <Reveal>
-        <p className="text-xs uppercase tracking-widest text-ink-muted">from the yellow pad</p>
+        <p className="text-xs uppercase tracking-widest text-ink-muted">the money plan</p>
         <h1 className="mt-1 font-display text-3xl font-semibold md:text-5xl">Trip Finances</h1>
         <p className="mt-3 max-w-2xl text-sm text-ink-secondary md:text-base">
-          Who covers what, planned vs. what things actually cost. Tap any amount to edit it, add
-          lines as plans firm up — and once the trip starts,{" "}
+          Everything here is <span className="font-medium text-ink">projected</span> until real
+          money moves. Actuals only appear when someone{" "}
           <Link href="/expenses" className="text-glow-pink hover:underline">
-            log expenses on the Spend page
+            logs an expense on the Spend page
           </Link>{" "}
           ({expenses.length > 0
             ? `${fmtMoney(loggedTotal)} logged so far`
-            : "nothing logged yet"}) and the actuals here update live.
+            : "nothing logged yet"}) or marks a hotel as booked. Tap any amount to edit it, and
+          add lines as plans firm up.
         </p>
       </Reveal>
 
@@ -86,10 +99,10 @@ export default async function FinancesPage() {
               >
                 <AnimatedNumber value={stat.cents / 100} prefix="$" />
               </div>
-              <div className="mt-1 text-[11px] uppercase tracking-wider text-ink-muted">
+              <div className="mt-1 text-xs uppercase tracking-wider text-ink-muted">
                 {stat.label}
               </div>
-              <div className="text-[11px] text-ink-muted/70">{stat.hint}</div>
+              <div className="text-xs text-ink-muted/70">{stat.hint}</div>
             </div>
           </Reveal>
         ))}
@@ -99,7 +112,7 @@ export default async function FinancesPage() {
       <Reveal className="mt-8">
         <section className="rounded-2xl border border-borderc bg-card p-5">
           <h2 className="text-xs uppercase tracking-widest text-ink-muted">
-            planned spend by category
+            projected spend by category
           </h2>
           <div className="mt-4 space-y-2.5">
             {byCategory.map((cat) => (
@@ -135,10 +148,9 @@ export default async function FinancesPage() {
       </div>
 
       <p className="mt-6 text-xs text-ink-muted">
-        Note: the yellow-pad per-person totals ({fmtMoney(budgetTotal)}) and the itemized lines (
-        {fmtMoney(plannedTotal)}) don&apos;t perfectly agree — that&apos;s how the notes were.
-        Edit anything above to reconcile. Lines with logged expenses always show the logged sum
-        as their actual.
+        Note: the per-person budgets ({fmtMoney(budgetTotal)}) and the itemized projections (
+        {fmtMoney(plannedTotal)}) don&apos;t perfectly agree yet — edit anything above to
+        reconcile. Lines with logged expenses always show the logged sum as their actual.
       </p>
     </div>
   );

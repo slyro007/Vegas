@@ -114,6 +114,7 @@ export async function addBudgetItem(
   label: string,
   category: string,
   plannedCents: number,
+  actualCents: number | null = null,
 ) {
   await requireActor();
   const trimmed = label.trim().slice(0, 200);
@@ -124,6 +125,7 @@ export async function addBudgetItem(
     label: trimmed,
     category: allowed.includes(category) ? category : "misc",
     plannedCents: Math.max(0, Math.round(plannedCents)),
+    actualCents: actualCents === null ? null : Math.max(0, Math.round(actualCents)),
   });
   revalidatePath("/finances");
   revalidatePath("/");
@@ -140,13 +142,15 @@ export async function updateLodgingBooking(
   id: number,
   patch: {
     bookingStatus: "planned" | "booked";
-    actualCents?: number;
+    actualCents?: number | null;
     confirmationNumber?: string | null;
   },
 ) {
   await requireActor();
   const set: Record<string, unknown> = { bookingStatus: patch.bookingStatus };
-  if (patch.actualCents !== undefined) set.actualCents = Math.max(0, Math.round(patch.actualCents));
+  if (patch.actualCents !== undefined) {
+    set.actualCents = patch.actualCents === null ? null : Math.max(0, Math.round(patch.actualCents));
+  }
   if (patch.confirmationNumber !== undefined) {
     set.confirmationNumber = patch.confirmationNumber?.trim().slice(0, 60) || null;
   }

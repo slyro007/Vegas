@@ -126,7 +126,7 @@ export function ExpenseLogger({
                         {line.label}
                       </span>
                       <span className="mt-1 block text-xs text-ink-muted">
-                        Planned {fmtMoney(line.plannedCents)}
+                        Projected {fmtMoney(line.plannedCents)}
                         {logged > 0 && (
                           <span className="text-mark-teal"> · Logged {fmtMoney(logged)}</span>
                         )}
@@ -202,14 +202,14 @@ export function ExpenseLogger({
               <div className="mt-1 font-display text-xl font-semibold tabular-nums">
                 {fmtMoney(logged)}
               </div>
-              <div className="text-[11px] uppercase tracking-wider text-ink-muted">Logged</div>
-              <div className="mt-2 space-y-0.5 text-[11px]">
+              <div className="text-xs uppercase tracking-wider text-ink-muted">Logged</div>
+              <div className="mt-2 space-y-0.5 text-xs">
                 <div className={budgetLeft < 0 ? "text-mark-pink" : "text-ink-secondary"}>
                   Budget: <span className="tabular-nums">{fmtMoney(Math.abs(budgetLeft))}</span>{" "}
                   {budgetLeft < 0 ? "Over" : "Left"}
                 </div>
                 <div className={planLeft < 0 ? "text-mark-pink" : "text-ink-secondary"}>
-                  Plan: <span className="tabular-nums">{fmtMoney(Math.abs(planLeft))}</span>{" "}
+                  Projected: <span className="tabular-nums">{fmtMoney(Math.abs(planLeft))}</span>{" "}
                   {planLeft < 0 ? "Over" : "Left"}
                 </div>
               </div>

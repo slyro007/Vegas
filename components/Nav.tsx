@@ -94,7 +94,7 @@ export function Nav({ showDecide = true }: { showDecide?: boolean }) {
                   {link.emoji}
                 </span>
                 <span
-                  className={`text-[9px] ${active ? "text-ink" : "text-ink-muted"}`}
+                  className={`text-[10px] ${active ? "text-ink" : "text-ink-muted"}`}
                 >
                   {link.label}
                 </span>

@@ -44,9 +44,12 @@ export function LodgingCard({ stay, index }: { stay: LodgingStay; index: number 
     );
   };
 
+  // un-booking wipes the actual — nothing is really spent anymore, back to projected
   const unbook = () => {
     setFormOpen(false);
-    startTransition(() => updateLodgingBooking(stay.id, { bookingStatus: "planned" }));
+    startTransition(() =>
+      updateLodgingBooking(stay.id, { bookingStatus: "planned", actualCents: null }),
+    );
   };
 
   return (
@@ -131,14 +134,22 @@ export function LodgingCard({ stay, index }: { stay: LodgingStay; index: number 
 
       <div className="mt-4 flex flex-wrap items-end gap-x-6 gap-y-2">
         <div>
-          <div className="text-[10px] uppercase tracking-widest text-ink-muted">Planned</div>
-          <div className="font-display text-lg tabular-nums text-ink-secondary line-through decoration-ink-muted/50">
+          <div className="text-[11px] uppercase tracking-widest text-ink-muted">Projected</div>
+          <div
+            className={`font-display tabular-nums ${
+              stay.actualCents !== null
+                ? "text-lg text-ink-secondary line-through decoration-ink-muted/50"
+                : "text-2xl font-semibold"
+            }`}
+          >
             {fmtMoney(stay.plannedCents)}
           </div>
         </div>
         {stay.actualCents !== null && (
           <div>
-            <div className="text-[10px] uppercase tracking-widest text-ink-muted">Actual</div>
+            <div className="text-[11px] uppercase tracking-widest text-ink-muted">
+              Booked At
+            </div>
             <div className="font-display text-2xl font-semibold tabular-nums">
               {fmtMoney(stay.actualCents)}
             </div>

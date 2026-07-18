@@ -102,7 +102,7 @@ function SphereEgg() {
           <span className="block text-xs font-semibold tracking-wide">
             Backstreet&apos;s Back — The Sphere
           </span>
-          <span className="block text-[11px] text-ink-secondary">
+          <span className="block text-xs text-ink-secondary">
             Thu Aug 13 · Night · Bex&apos;s Solo Show 🎤
           </span>
         </span>
@@ -254,7 +254,7 @@ export function RouteStrip() {
           </motion.div>
         )}
       </AnimatePresence>
-      <p className="mt-2 text-center text-[10px] uppercase tracking-widest text-ink-muted">
+      <p className="mt-2 text-center text-[11px] uppercase tracking-widest text-ink-muted">
         Hover or Tap a Stop
       </p>
     </div>

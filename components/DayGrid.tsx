@@ -47,7 +47,7 @@ export function DayGrid({
                 {day.dayNumber}
               </span>
               <span className="min-w-0">
-                <span className="block text-[10px] uppercase tracking-widest text-ink-muted">
+                <span className="block text-[11px] uppercase tracking-widest text-ink-muted">
                   {d.toLocaleDateString("en-US", { weekday: "short" })}
                 </span>
                 <span className="block text-xs font-medium">
@@ -55,7 +55,7 @@ export function DayGrid({
                 </span>
               </span>
               {vegas && (
-                <span className="neon-text-teal ml-auto text-[9px] uppercase tracking-widest text-glow-teal">
+                <span className="neon-text-teal ml-auto text-[10px] uppercase tracking-widest text-glow-teal">
                   vegas
                 </span>
               )}
@@ -67,7 +67,7 @@ export function DayGrid({
                 <li key={event.id} className="text-xs leading-snug">
                   {event.time && (
                     <span
-                      className={`mr-1.5 rounded-full px-1.5 py-px text-[9px] font-medium uppercase tracking-wider ${
+                      className={`mr-1.5 rounded-full px-1.5 py-px text-[10px] font-medium uppercase tracking-wider ${
                         event.theme === "vegas"
                           ? "bg-mark-pink/20 text-glow-pink"
                           : "bg-mark-orange/20 text-glow-sunset"
@@ -94,7 +94,7 @@ export function DayGrid({
                           </span>
                         )}
                         {event.location && (
-                          <span className="mt-0.5 block text-[10px] text-ink-muted">
+                          <span className="mt-0.5 block text-[11px] text-ink-muted">
                             📍 {event.location}
                           </span>
                         )}
@@ -111,7 +111,7 @@ export function DayGrid({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="mt-2.5 text-[10px] uppercase tracking-widest text-ink-muted"
+                  className="mt-2.5 text-[11px] uppercase tracking-widest text-ink-muted"
                 >
                   {fmtDayLong(day.date)} · Tap to Close
                 </motion.p>

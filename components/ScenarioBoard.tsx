@@ -79,7 +79,7 @@ export function ScenarioBoard({
             >
               {(isLocked || leading) && (
                 <div
-                  className="absolute -top-3 right-4 rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-bg"
+                  className="absolute -top-3 right-4 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider text-bg"
                   style={{ background: accent.mark }}
                 >
                   {isLocked ? "🔒 Locked In" : "👑 Leading"}
@@ -125,7 +125,7 @@ export function ScenarioBoard({
                             <span className="text-ink-secondary">
                               {line.label}
                               {line.estimate && (
-                                <span className="ml-1.5 rounded bg-surface px-1 py-px text-[10px] uppercase tracking-wide text-ink-muted">
+                                <span className="ml-1.5 rounded bg-surface px-1 py-px text-[11px] uppercase tracking-wide text-ink-muted">
                                   est.
                                 </span>
                               )}
@@ -150,7 +150,7 @@ export function ScenarioBoard({
 
                     {s.itineraryOutline.length > 0 && (
                       <div className="mt-4">
-                        <p className="text-[10px] uppercase tracking-widest text-ink-muted">
+                        <p className="text-[11px] uppercase tracking-widest text-ink-muted">
                           How the Week Plays Out
                         </p>
                         <ul className="mt-2 space-y-1.5">
