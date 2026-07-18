@@ -27,7 +27,6 @@ export function FinancesEstimator({
     "";
   const [slug, setSlug] = useState(initial);
   const scenario = scenarios.find((s) => s.slug === slug);
-  const accent = scenarioAccent(slug);
 
   const est = useMemo(
     () => estimateForScenario(travelers, items, scenario),
@@ -118,7 +117,7 @@ export function FinancesEstimator({
       <section className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         {[
           { label: "Yellow-Pad Budget", cents: est.yellowPool, hint: "The original plan for all four" },
-          { label: "Estimated · This Plan", cents: est.familyEstimate, hint: "Personal lines + travel split 4 ways" },
+          { label: "Estimated · This Plan", cents: est.familyEstimate, hint: "Everyone's lines + the plan's shared travel" },
           {
             label: under ? "Under Budget" : "Short By",
             cents: Math.abs(est.delta),
@@ -137,9 +136,13 @@ export function FinancesEstimator({
         ))}
       </section>
 
-      {/* per-person board, estimate-aware */}
+      {/* per-person board — each person's own responsibility, scenario-independent */}
       <div className="mt-8">
-        <BudgetBoard travelers={travelers} items={items} estimate={est} accentMark={accent.mark} />
+        <p className="mb-3 text-xs text-ink-muted">
+          Below is what each person is on the hook for — their own yellow-pad plan, fixed. The
+          plan&apos;s shared travel is pooled up top, not split onto anyone.
+        </p>
+        <BudgetBoard travelers={travelers} items={items} />
       </div>
 
       <AnimatePresence>

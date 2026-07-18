@@ -45,11 +45,12 @@ export default async function FinancesPage() {
         <p className="text-xs uppercase tracking-widest text-ink-muted">the money plan</p>
         <h1 className="mt-1 font-display text-3xl font-semibold md:text-5xl">Trip Finances</h1>
         <p className="mt-3 max-w-2xl text-sm text-ink-secondary md:text-base">
-          The <span className="font-medium text-ink">yellow pad</span> is what we planned for
-          everyone. <span className="font-medium text-ink">Projected</span> is the refined number
-          (the real Luxor + Best Western deals came in cheaper). Toggle a scenario below to see the{" "}
-          <span className="font-medium text-ink">estimate</span> — the travel split four ways — and
-          whether it fits the budget. Log real spend on the{" "}
+          The <span className="font-medium text-ink">yellow pad</span> is what each person planned
+          to cover. <span className="font-medium text-ink">Projected</span> is the refined number
+          (the real Luxor + Best Western deals came in cheaper). Toggle a scenario to see whether
+          the whole trip still <span className="font-medium text-ink">fits the budget</span> — each
+          person&apos;s own responsibility stays put; the shared travel is pooled. Log real spend on
+          the{" "}
           <Link href="/expenses" className="text-glow-pink hover:underline">
             Spend page
           </Link>
