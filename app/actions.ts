@@ -3,7 +3,14 @@
 import { eq, sum } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/client";
-import { budgetItems, checklistItems, expenses, lodging, votes } from "@/db/schema";
+import {
+  budgetItems,
+  checklistItems,
+  expenses,
+  lodging,
+  tripSettings,
+  votes,
+} from "@/db/schema";
 import { requireActor } from "@/lib/identity";
 
 /** A budget line with logged expenses always shows their sum as its actual. */
@@ -123,9 +130,35 @@ export async function deleteBudgetItem(id: number) {
   revalidatePath("/");
 }
 
-export async function setLodgingStatus(id: number, status: "planned" | "booked") {
+export async function updateLodgingBooking(
+  id: number,
+  patch: {
+    bookingStatus: "planned" | "booked";
+    actualCents?: number;
+    confirmationNumber?: string | null;
+  },
+) {
   await requireActor();
-  await db.update(lodging).set({ bookingStatus: status }).where(eq(lodging.id, id));
+  const set: Record<string, unknown> = { bookingStatus: patch.bookingStatus };
+  if (patch.actualCents !== undefined) set.actualCents = Math.max(0, Math.round(patch.actualCents));
+  if (patch.confirmationNumber !== undefined) {
+    set.confirmationNumber = patch.confirmationNumber?.trim().slice(0, 60) || null;
+  }
+  await db.update(lodging).set(set).where(eq(lodging.id, id));
   revalidatePath("/lodging");
   revalidatePath("/");
+}
+
+const scenarioPaths = ["/scenarios", "/finances", "/itinerary", "/"];
+
+export async function lockScenario(scenarioId: number) {
+  await requireActor();
+  await db.update(tripSettings).set({ lockedScenarioId: scenarioId, lockedAt: new Date() });
+  for (const p of scenarioPaths) revalidatePath(p);
+}
+
+export async function unlockScenario() {
+  await requireActor();
+  await db.update(tripSettings).set({ lockedScenarioId: null, lockedAt: null });
+  for (const p of scenarioPaths) revalidatePath(p);
 }

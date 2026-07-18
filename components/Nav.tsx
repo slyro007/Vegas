@@ -15,9 +15,11 @@ const LINKS = [
   { href: "/lists", label: "Lists", emoji: "✅" },
 ];
 
-export function Nav() {
+export function Nav({ showDecide = true }: { showDecide?: boolean }) {
   const pathname = usePathname();
   if (pathname.startsWith("/sign-")) return null;
+
+  const links = showDecide ? LINKS : LINKS.filter((l) => l.href !== "/scenarios");
 
   return (
     <>
@@ -32,7 +34,7 @@ export function Nav() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
-            {LINKS.map((link) => {
+            {links.map((link) => {
               const active = pathname === link.href;
               return (
                 <Link
@@ -72,8 +74,8 @@ export function Nav() {
 
       {/* mobile bottom tab bar */}
       <nav className="fixed bottom-0 inset-x-0 z-40 border-t border-borderc bg-bg-elevated/90 backdrop-blur-md md:hidden">
-        <div className="grid grid-cols-7">
-          {LINKS.map((link) => {
+        <div className={`grid ${links.length === 7 ? "grid-cols-7" : "grid-cols-6"}`}>
+          {links.map((link) => {
             const active = pathname === link.href;
             return (
               <Link

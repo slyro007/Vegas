@@ -1,8 +1,15 @@
 import Link from "next/link";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { BudgetBoard } from "@/components/BudgetBoard";
+import { PlanCompare } from "@/components/PlanCompare";
 import { Reveal } from "@/components/Reveal";
-import { getBudgetItems, getExpenses, getTravelers } from "@/lib/data";
+import {
+  getBudgetItems,
+  getExpenses,
+  getScenarios,
+  getTravelers,
+  getTripSettings,
+} from "@/lib/data";
 import { CATEGORY_META, fmtMoney } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -10,10 +17,12 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Finances · Vegas 2026" };
 
 export default async function FinancesPage() {
-  const [travelers, items, expenses] = await Promise.all([
+  const [travelers, items, expenses, scenarios, settings] = await Promise.all([
     getTravelers(),
     getBudgetItems(),
     getExpenses(),
+    getScenarios(),
+    getTripSettings(),
   ]);
   const loggedTotal = expenses.reduce((s, e) => s + e.amountCents, 0);
 
@@ -58,6 +67,11 @@ export default async function FinancesPage() {
             ? `${fmtMoney(loggedTotal)} logged so far`
             : "nothing logged yet"}) and the actuals here update live.
         </p>
+      </Reveal>
+
+      {/* drive vs fly — the money story */}
+      <Reveal className="mt-8" delay={0.05}>
+        <PlanCompare scenarios={scenarios} settings={settings} travelerCount={travelers.length} />
       </Reveal>
 
       {/* stat row */}

@@ -4,8 +4,15 @@ import { Countdown } from "@/components/Countdown";
 import { Reveal } from "@/components/Reveal";
 import { RouteStrip } from "@/components/RouteStrip";
 import { Stars } from "@/components/Stars";
-import { getBudgetItems, getLodging, getScenarios, getTravelers, getVotes } from "@/lib/data";
-import { daysUntil } from "@/lib/format";
+import {
+  getBudgetItems,
+  getLodging,
+  getScenarios,
+  getTravelers,
+  getTripSettings,
+  getVotes,
+} from "@/lib/data";
+import { daysUntil, fmtMoney } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -19,13 +26,15 @@ const QUICK_LINKS = [
 ];
 
 export default async function Dashboard() {
-  const [travelers, items, lodging, scenarios, votes] = await Promise.all([
+  const [travelers, items, lodging, scenarios, votes, settings] = await Promise.all([
     getTravelers(),
     getBudgetItems(),
     getLodging(),
     getScenarios(),
     getVotes(),
+    getTripSettings(),
   ]);
+  const lockedScenario = scenarios.find((s) => s.id === settings.lockedScenarioId) ?? null;
 
   const totalBudget = travelers.reduce((sum, t) => sum + t.budgetTotalCents, 0);
   const plannedWithActuals = items.filter((i) => i.actualCents !== null);
@@ -134,25 +143,44 @@ export default async function Dashboard() {
         {/* ---------- decision + deadline callouts ---------- */}
         <section className="grid gap-3 md:grid-cols-2 md:gap-4">
           <Reveal>
-            <Link
-              href="/scenarios"
-              className="group block h-full rounded-2xl border border-borderc bg-card p-5 transition-colors hover:bg-card-hover hover:border-glow-pink/40"
-            >
-              <div className="text-xs uppercase tracking-widest text-ink-muted">
-                the big decision
-              </div>
-              <div className="mt-2 font-display text-xl md:text-2xl">
-                {leader
-                  ? `${leader.emoji} ${leader.name} is leading (${tally.get(leader.id)}/${travelers.length} votes)`
-                  : "🎲 Drive the Forester, rent an SUV, or fly?"}
-              </div>
-              <div className="mt-2 text-sm text-ink-secondary">
-                {votes.length === 0
-                  ? "Nobody has voted yet — be the first."
-                  : `${votes.length} of ${travelers.length} have voted.`}{" "}
-                <span className="text-glow-pink group-hover:underline">Cast yours →</span>
-              </div>
-            </Link>
+            {lockedScenario ? (
+              <Link
+                href="/finances"
+                className="group block h-full rounded-2xl border border-mark-green/50 bg-card p-5 transition-colors hover:bg-card-hover"
+              >
+                <div className="text-xs uppercase tracking-widest text-mark-green">
+                  🔒 Locked In
+                </div>
+                <div className="mt-2 font-display text-xl md:text-2xl">
+                  {lockedScenario.emoji} {lockedScenario.name} ·{" "}
+                  {fmtMoney(lockedScenario.costLines.reduce((s, l) => s + l.cents, 0))}
+                </div>
+                <div className="mt-2 text-sm text-ink-secondary">
+                  The decision is made — Finances is now the money page.{" "}
+                  <span className="text-glow-pink group-hover:underline">See It →</span>
+                </div>
+              </Link>
+            ) : (
+              <Link
+                href="/scenarios"
+                className="group block h-full rounded-2xl border border-borderc bg-card p-5 transition-colors hover:bg-card-hover hover:border-glow-pink/40"
+              >
+                <div className="text-xs uppercase tracking-widest text-ink-muted">
+                  The Big Decision
+                </div>
+                <div className="mt-2 font-display text-xl md:text-2xl">
+                  {leader
+                    ? `${leader.emoji} ${leader.name} is leading (${tally.get(leader.id)}/${travelers.length} votes)`
+                    : "🎲 Drive the Forester, rent an SUV, or fly?"}
+                </div>
+                <div className="mt-2 text-sm text-ink-secondary">
+                  {votes.length === 0
+                    ? "Nobody has voted yet — be the first."
+                    : `${votes.length} of ${travelers.length} have voted.`}{" "}
+                  <span className="text-glow-pink group-hover:underline">Cast Yours →</span>
+                </div>
+              </Link>
+            )}
           </Reveal>
           {luxor && cancelDays !== null && (
             <Reveal delay={0.1}>

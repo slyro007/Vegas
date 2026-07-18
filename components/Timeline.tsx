@@ -12,13 +12,20 @@ export type TimelineDay = {
   events: ItineraryEvent[];
 };
 
-export function Timeline({ days }: { days: TimelineDay[] }) {
+export function Timeline({
+  days,
+  accent = "drive",
+}: {
+  days: TimelineDay[];
+  accent?: "drive" | "fly";
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start 0.7", "end 0.9"],
   });
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 28 });
+  const fly = accent === "fly";
 
   return (
     <div ref={ref} className="relative">
@@ -27,14 +34,17 @@ export function Timeline({ days }: { days: TimelineDay[] }) {
         className="absolute left-[15px] top-2 bottom-2 w-0.5 rounded bg-borderc-strong md:left-[19px]"
         aria-hidden
       />
-      {/* lit rail — fills with scroll, desert orange fading into neon pink */}
+      {/* lit rail — fills with scroll; desert orange for the drive, jet-stream teal for the fly */}
       <motion.div
         className="absolute left-[15px] top-2 bottom-2 w-0.5 origin-top rounded md:left-[19px]"
         style={{
           scaleY: progress,
-          background:
-            "linear-gradient(to bottom, var(--glow-sunset) 0%, var(--glow-sunset) 20%, var(--glow-pink) 45%, var(--glow-pink) 72%, var(--glow-sunset) 100%)",
-          boxShadow: "0 0 8px rgba(240, 129, 63, 0.5)",
+          background: fly
+            ? "linear-gradient(to bottom, var(--glow-teal) 0%, var(--glow-teal) 25%, var(--glow-pink) 50%, var(--glow-pink) 75%, var(--glow-teal) 100%)"
+            : "linear-gradient(to bottom, var(--glow-sunset) 0%, var(--glow-sunset) 20%, var(--glow-pink) 45%, var(--glow-pink) 72%, var(--glow-sunset) 100%)",
+          boxShadow: fly
+            ? "0 0 8px rgba(46, 230, 246, 0.5)"
+            : "0 0 8px rgba(240, 129, 63, 0.5)",
         }}
         aria-hidden
       />
@@ -53,12 +63,16 @@ export function Timeline({ days }: { days: TimelineDay[] }) {
                 className={`absolute left-0 top-0.5 flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-semibold md:h-10 md:w-10 md:text-sm ${
                   vegas
                     ? "border-glow-pink bg-card text-glow-pink"
-                    : "border-glow-sunset bg-card text-glow-sunset"
+                    : fly
+                      ? "border-glow-teal bg-card text-glow-teal"
+                      : "border-glow-sunset bg-card text-glow-sunset"
                 }`}
                 style={{
                   boxShadow: vegas
                     ? "0 0 14px rgba(255, 92, 168, 0.45)"
-                    : "0 0 10px rgba(240, 129, 63, 0.35)",
+                    : fly
+                      ? "0 0 10px rgba(46, 230, 246, 0.35)"
+                      : "0 0 10px rgba(240, 129, 63, 0.35)",
                 }}
               >
                 {day.dayNumber}

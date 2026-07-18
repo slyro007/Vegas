@@ -18,12 +18,14 @@ export function ExpenseLogger({
   travelers,
   budgetItems,
   expenses,
+  defaultTravelerId = null,
 }: {
   travelers: Traveler[];
   budgetItems: BudgetItem[];
   expenses: Expense[];
+  defaultTravelerId?: number | null;
 }) {
-  const [travelerId, setTravelerId] = useState<number | null>(null);
+  const [travelerId, setTravelerId] = useState<number | null>(defaultTravelerId);
   const [budgetItemId, setBudgetItemId] = useState<number | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -128,6 +130,16 @@ export function ExpenseLogger({
                         {logged > 0 && (
                           <span className="text-mark-teal"> · Logged {fmtMoney(logged)}</span>
                         )}
+                        <span
+                          className={
+                            line.plannedCents - logged < 0 ? "text-mark-pink" : "text-mark-green"
+                          }
+                        >
+                          {" "}
+                          · {line.plannedCents - logged < 0 ? "+" : ""}
+                          {fmtMoney(Math.abs(line.plannedCents - logged))}{" "}
+                          {line.plannedCents - logged < 0 ? "Over" : "Left"}
+                        </span>
                       </span>
                     </button>
                   );
@@ -175,17 +187,35 @@ export function ExpenseLogger({
 
       {/* ---------- per-person totals ---------- */}
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {travelers.map((t) => (
-          <div key={t.id} className="rounded-2xl border border-borderc bg-card p-4">
-            <div className="text-sm text-ink-secondary">
-              {t.emoji} {t.name}
+        {travelers.map((t) => {
+          const logged = loggedByTraveler.get(t.id) ?? 0;
+          const plannedSum = budgetItems
+            .filter((i) => i.travelerId === t.id)
+            .reduce((s, i) => s + i.plannedCents, 0);
+          const budgetLeft = t.budgetTotalCents - logged;
+          const planLeft = plannedSum - logged;
+          return (
+            <div key={t.id} className="rounded-2xl border border-borderc bg-card p-4">
+              <div className="text-sm text-ink-secondary">
+                {t.emoji} {t.name}
+              </div>
+              <div className="mt-1 font-display text-xl font-semibold tabular-nums">
+                {fmtMoney(logged)}
+              </div>
+              <div className="text-[11px] uppercase tracking-wider text-ink-muted">Logged</div>
+              <div className="mt-2 space-y-0.5 text-[11px]">
+                <div className={budgetLeft < 0 ? "text-mark-pink" : "text-ink-secondary"}>
+                  Budget: <span className="tabular-nums">{fmtMoney(Math.abs(budgetLeft))}</span>{" "}
+                  {budgetLeft < 0 ? "Over" : "Left"}
+                </div>
+                <div className={planLeft < 0 ? "text-mark-pink" : "text-ink-secondary"}>
+                  Plan: <span className="tabular-nums">{fmtMoney(Math.abs(planLeft))}</span>{" "}
+                  {planLeft < 0 ? "Over" : "Left"}
+                </div>
+              </div>
             </div>
-            <div className="mt-1 font-display text-xl font-semibold tabular-nums">
-              {fmtMoney(loggedByTraveler.get(t.id) ?? 0)}
-            </div>
-            <div className="text-[11px] uppercase tracking-wider text-ink-muted">Logged</div>
-          </div>
-        ))}
+          );
+        })}
       </section>
 
       {/* ---------- feed ---------- */}
