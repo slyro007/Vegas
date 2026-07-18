@@ -103,7 +103,7 @@ function SphereEgg() {
             Backstreet&apos;s Back — The Sphere
           </span>
           <span className="block text-xs text-ink-secondary">
-            Thu Aug 13 · Night · Bex&apos;s Solo Show 🎤
+            Thu Aug 13 · Night · BeX&apos;s Solo Show 🎤
           </span>
         </span>
         <span className="flex items-end gap-[3px]" aria-hidden>

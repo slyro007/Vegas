@@ -22,7 +22,7 @@ const PLANS = [
     label: "Fly Plan",
     color: "var(--mark-teal)",
     blurb:
-      "Nine days, zero overnight hauls: fly in Saturday, SUV out of Harry Reid, day-trip to the land, and a Sedona overnight before the Saturday evening flight home.",
+      "All four fly in Friday afternoon and knock out the land + Sedona the first weekend — then a full, unhurried Vegas week before the Saturday evening flight home.",
     dates: "Aug 7 – 15, 2026",
   },
   {
@@ -30,7 +30,7 @@ const PLANS = [
     label: "Split Plan",
     color: "var(--mark-purple)",
     blurb:
-      "Shy, Bex & Pithya road-trip it while Amma flies in Sunday afternoon and home Friday evening — zero 15-hour hauls for her, full adventure for the trio.",
+      "Shy, BeX & Pithya road-trip it while Amma flies in Sunday afternoon and home Friday evening — zero 15-hour hauls for her, full adventure for the trio.",
     dates: "Aug 7 – 16, 2026",
   },
 ];

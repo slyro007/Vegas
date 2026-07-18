@@ -18,7 +18,7 @@ export async function FamilyGate({ children }: { children: ReactNode }) {
           <p className="font-marquee neon-text text-4xl text-glow-pink">VEGAS</p>
           <h1 className="mt-6 font-display text-2xl font-semibold">Family Only 🌵</h1>
           <p className="mt-3 max-w-sm text-sm text-ink-secondary">
-            This trip planner is just for Pithya, Shy, Bex, and Amma. If that&apos;s you, sign in
+            This trip planner is just for Pithya, Shy, BeX, and Amma. If that&apos;s you, sign in
             with the email your invite was sent to.
           </p>
           <SignOutButton>

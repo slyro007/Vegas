@@ -96,7 +96,7 @@ export default async function Dashboard() {
           <Reveal delay={0.2}>
             <p className="mt-3 max-w-xl text-sm text-ink-secondary md:text-base">
               The family trip · <span className="text-ink font-medium">Aug 7 – 16, 2026</span> ·
-              Pithya, Shy, Bex &amp; Amma — horses in Valle, Moapa Valley, old Vegas, the Luxor,
+              Pithya, Shy, BeX &amp; Amma — horses in Valle, Moapa Valley, old Vegas, the Luxor,
               and Slide Rock on the way home.
             </p>
           </Reveal>
