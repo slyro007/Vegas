@@ -1,3 +1,4 @@
+import { Clock, Dices, Lock } from "lucide-react";
 import Link from "next/link";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { Countdown } from "@/components/Countdown";
@@ -13,16 +14,17 @@ import {
   getVotes,
 } from "@/lib/data";
 import { daysUntil, fmtMoney } from "@/lib/format";
+import { NAV_ICON, PlanIcon } from "@/lib/icons";
 
 export const dynamic = "force-dynamic";
 
 const QUICK_LINKS = [
-  { href: "/itinerary", emoji: "🗺️", title: "Itinerary", desc: "10 days, stop by stop" },
-  { href: "/scenarios", emoji: "🎲", title: "Decide", desc: "Drive, rent, fly — or split?" },
-  { href: "/finances", emoji: "💵", title: "Finances", desc: "Who pays what" },
-  { href: "/expenses", emoji: "💸", title: "Spend", desc: "Log it in ten seconds" },
-  { href: "/lodging", emoji: "🛏️", title: "Lodging", desc: "4 stays, all tracked" },
-  { href: "/lists", emoji: "✅", title: "Lists", desc: "Cooler, packing, to-dos" },
+  { href: "/itinerary", title: "Itinerary", desc: "10 days, stop by stop" },
+  { href: "/scenarios", title: "Decide", desc: "Drive, rent, fly — or split?" },
+  { href: "/finances", title: "Finances", desc: "Who pays what" },
+  { href: "/expenses", title: "Spend", desc: "Log it in ten seconds" },
+  { href: "/lodging", title: "Lodging", desc: "4 stays, all tracked" },
+  { href: "/lists", title: "Lists", desc: "Cooler, packing, to-dos" },
 ];
 
 export default async function Dashboard() {
@@ -148,11 +150,12 @@ export default async function Dashboard() {
                 href="/finances"
                 className="group block h-full rounded-2xl border border-mark-green/50 bg-card p-5 transition-colors hover:bg-card-hover"
               >
-                <div className="text-xs uppercase tracking-widest text-mark-green">
-                  🔒 Locked In
+                <div className="flex items-center gap-1.5 text-xs uppercase tracking-widest text-mark-green">
+                  <Lock className="h-3.5 w-3.5" aria-hidden /> Locked In
                 </div>
-                <div className="mt-2 font-display text-xl md:text-2xl">
-                  {lockedScenario.emoji} {lockedScenario.name} ·{" "}
+                <div className="mt-2 flex items-center gap-2 font-display text-xl md:text-2xl">
+                  <PlanIcon plan={lockedScenario.slug} className="h-5 w-5 shrink-0" />
+                  {lockedScenario.name} ·{" "}
                   {fmtMoney(lockedScenario.costLines.reduce((s, l) => s + l.cents, 0))}
                 </div>
                 <div className="mt-2 text-sm text-ink-secondary">
@@ -168,10 +171,18 @@ export default async function Dashboard() {
                 <div className="text-xs uppercase tracking-widest text-ink-muted">
                   The Big Decision
                 </div>
-                <div className="mt-2 font-display text-xl md:text-2xl">
-                  {leader
-                    ? `${leader.emoji} ${leader.name} is leading (${tally.get(leader.id)}/${travelers.length} votes)`
-                    : "🎲 Drive, rent, fly — or split it with Amma in the air?"}
+                <div className="mt-2 flex items-center gap-2 font-display text-xl md:text-2xl">
+                  {leader ? (
+                    <>
+                      <PlanIcon plan={leader.slug} className="h-5 w-5 shrink-0" />
+                      {leader.name} is leading ({tally.get(leader.id)}/{travelers.length} votes)
+                    </>
+                  ) : (
+                    <>
+                      <Dices className="h-5 w-5 shrink-0" aria-hidden />
+                      Drive, rent, fly — or split it with Amma in the air?
+                    </>
+                  )}
                 </div>
                 <div className="mt-2 text-sm text-ink-secondary">
                   {votes.length === 0
@@ -188,8 +199,8 @@ export default async function Dashboard() {
                 href="/lodging"
                 className="group block h-full rounded-2xl border border-mark-amber/40 bg-card p-5 transition-colors hover:bg-card-hover"
               >
-                <div className="text-xs uppercase tracking-widest text-mark-amber">
-                  ⏳ deadline watch
+                <div className="flex items-center gap-1.5 text-xs uppercase tracking-widest text-mark-amber">
+                  <Clock className="h-3.5 w-3.5" aria-hidden /> Deadline Watch
                 </div>
                 <div className="mt-2 font-display text-xl md:text-2xl">
                   Luxor free cancellation ends Aug 9
@@ -225,7 +236,12 @@ export default async function Dashboard() {
                 href={q.href}
                 className="group flex h-full flex-col rounded-2xl border border-borderc bg-card p-4 transition-all hover:bg-card-hover hover:border-borderc-strong hover:-translate-y-0.5"
               >
-                <span className="text-2xl">{q.emoji}</span>
+                {(() => {
+                  const Icon = NAV_ICON[q.href];
+                  return (
+                    <Icon className="h-6 w-6 text-ink-secondary transition-colors group-hover:text-glow-pink" />
+                  );
+                })()}
                 <span className="mt-2 font-medium">{q.title}</span>
                 <span className="mt-0.5 text-xs text-ink-muted">{q.desc}</span>
               </Link>
