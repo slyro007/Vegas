@@ -204,6 +204,7 @@ async function seed() {
         "Amma arrives in the evening — grab her from her apartment, final packing, load the cooler.",
       location: "City View at the Park",
       theme: "desert",
+      plan: "drive fly", // in the split plans she flies solo on Sunday instead
     },
     {
       date: "2026-08-08",
@@ -243,7 +244,7 @@ async function seed() {
     },
     {
       date: "2026-08-09",
-      sortOrder: 2,
+      sortOrder: 4, // 2–3 are Amma's hybrid flight + Uber, which land mid-afternoon
       time: "Evening",
       title: "Drive to Vegas + Check In",
       description: "Best Western Henderson · 2 queens via John's rate.",
@@ -321,7 +322,7 @@ async function seed() {
     },
     {
       date: "2026-08-14",
-      sortOrder: 2,
+      sortOrder: 3, // 2 is Amma's 5:15 PM hybrid flight home
       time: "Evening",
       title: "Dinner, Groceries, Pack the Cooler",
       description: "Amma-safe grocery run and a fully packed cooler for the drive home.",
@@ -348,11 +349,11 @@ async function seed() {
     },
   ]);
 
-  // plan tags + fly-plan events (kept in sync with db/migrate-round3.ts)
-  console.log("Tagging plans + fly events…");
+  // plan tags + fly/hybrid events (kept in sync with db/migrate-round3.ts + db/migrate-round4.ts)
+  console.log("Tagging plans + fly/hybrid events…");
   await db
     .update(itineraryEvents)
-    .set({ plan: "drive" })
+    .set({ plan: "drive hybrid" })
     .where(
       inArray(itineraryEvents.title, [
         "Depart Muir Lake",
@@ -374,12 +375,28 @@ async function seed() {
     { date: "2026-08-15", sortOrder: 0, time: "Morning", title: "Drive Back to Vegas", description: "~4.5 hours from Sedona back to Harry Reid.", location: "Sedona → Las Vegas", theme: "desert", plan: "fly" },
     { date: "2026-08-15", sortOrder: 1, time: "2:30 PM", title: "Return the Rental", description: "SUV back at Harry Reid by 2:30 PM sharp.", location: "Harry Reid Intl, Las Vegas", theme: "vegas", plan: "fly" },
     { date: "2026-08-15", sortOrder: 2, time: "5:15 PM", title: "Fly LAS → AUS", description: "Delta nonstop home — lands 10:05 PM, in bed by midnight.", location: "Harry Reid Intl → Austin-Bergstrom", theme: "vegas", plan: "fly" },
+    { date: "2026-08-07", sortOrder: 0, time: "Evening", title: "Pack the Car — Party of Three", description: "Final packing at Muir Lake — cooler for three · Amma packs a carry-on for Sunday's flight.", location: "Muir Lake, TX", theme: "desert", plan: "hybrid" },
+    { date: "2026-08-09", sortOrder: 2, time: "3:39 PM", title: "Amma Flies AUS → LAS", description: "Delta nonstop — wheels down at 4:32 PM, right as the trio rolls in from the land.", location: "Austin-Bergstrom → Harry Reid Intl", theme: "vegas", plan: "hybrid" },
+    { date: "2026-08-09", sortOrder: 3, time: "5:00 PM", title: "Amma Ubers to the Hotel", description: "Straight from Harry Reid to Best Western Henderson — checked in before the trio pulls up.", location: "Henderson, NV", theme: "vegas", plan: "hybrid" },
+    { date: "2026-08-14", sortOrder: 2, time: "5:15 PM", title: "Amma Flies Home", description: "Delta nonstop LAS → AUS — lands 10:05 PM, Uber home · the trio drives on to Sedona.", location: "Harry Reid Intl → Austin-Bergstrom", theme: "vegas", plan: "hybrid" },
   ]);
 
   console.log("Seeding trip settings…");
   await db.insert(tripSettings).values({ lockedScenarioId: null, lockedAt: null });
 
   console.log("Seeding scenarios…");
+  const hybridOutline = [
+    { day: "Fri 7", plan: "Trio packs the car · cooler prep for three · Amma packs a carry-on" },
+    { day: "Sat 8", plan: "Trio departs 5 AM → Flagstaff overnight · Amma home in Austin" },
+    { day: "Sun 9", plan: "Trio: horses with Caesar → Vegas · Amma lands 4:32 PM, Ubers to the hotel" },
+    { day: "Mon 10", plan: "Moapa Valley day — all four back together" },
+    { day: "Tue 11", plan: "Old Vegas + Fremont Street" },
+    { day: "Wed 12", plan: "Wynn Buffet → Luxor All-Inclusive" },
+    { day: "Thu 13", plan: "Luxor day · Bex at the Backstreet Boys, Sphere" },
+    { day: "Fri 14", plan: "Amma flies home 5:15 PM · trio drives to Sedona" },
+    { day: "Sat 15", plan: "5 AM depart Sedona" },
+    { day: "Sun 16", plan: "Trio home at Muir Lake, early morning" },
+  ];
   const roadOutline = [
     { day: "Fri 7", plan: "Pick up Amma · pack the cooler" },
     { day: "Sat 8", plan: "5 AM depart Muir Lake · ~15 hr · Flagstaff late night" },
@@ -481,6 +498,63 @@ async function seed() {
         { day: "Fri 14", plan: "Drive to Sedona (~4.5 hr) · Slide Rock + downtown · overnight" },
         { day: "Sat 15", plan: "Drive back · rental due 2:30 PM · fly out 5:15 PM" },
       ],
+    },
+    {
+      slug: "hybrid-forester",
+      name: "Split · Forester + Amma Flies",
+      tagline: "The road trip lives on — Amma takes the sky",
+      travelSummary: "3 drive ~15 hr each way · Amma flies Sun Aug 9 → Fri Aug 14",
+      emoji: "🚙✈️",
+      pros: [
+        "Amma skips both 15-hour hauls entirely",
+        "The road trip still happens — Flagstaff, the land, and Sedona",
+        "She lands 4:32 PM Sunday, right as the trio rolls in from the land",
+        "Only $353 + Ubers more than the all-drive plan",
+      ],
+      cons: [
+        "Amma travels alone both ways",
+        "She misses Flagstaff, the horses, and Sedona",
+        "She flies home Friday and skips the Sedona finale",
+        "More room in the car, but the cooler only feeds three",
+      ],
+      costLines: [
+        { label: "Gas (Round Trip)", cents: 60000 },
+        { label: "Road Trip Food", cents: 40000 },
+        { label: "Flagstaff Night", cents: 8450 },
+        { label: "Sedona Night", cents: 14400 },
+        { label: "Amma's Flight, Sun–Fri (Quoted)", cents: 35300 },
+        { label: "Amma's Ubers", cents: 8000, estimate: true },
+      ],
+      itineraryOutline: hybridOutline,
+    },
+    {
+      slug: "hybrid-rental",
+      name: "Split · Rental + Amma Flies",
+      tagline: "Same split, way more room for the trio",
+      travelSummary: "3 drive ~15 hr each way · Amma flies Sun Aug 9 → Fri Aug 14",
+      emoji: "🚐✈️",
+      pros: [
+        "Amma skips both 15-hour hauls entirely",
+        "Rental SUV gives the trio real stretch-out room",
+        "Zero wear on the Forester",
+        "Full road itinerary for the trio — land, Flagstaff, Sedona",
+      ],
+      cons: [
+        "Amma travels alone both ways",
+        "She misses Flagstaff, the horses, and Sedona",
+        "+$650 for the rental on top of her flight",
+        "Pickup and drop-off logistics on a 5 AM departure day",
+      ],
+      costLines: [
+        { label: "Enterprise Full-Size SUV (Whole Trip)", cents: 65000, estimate: true },
+        { label: "Gas (Round Trip)", cents: 60000, estimate: true },
+        { label: "Road Trip Food", cents: 40000 },
+        { label: "Flagstaff Night", cents: 8450 },
+        { label: "Sedona Night", cents: 14400 },
+        { label: "Amma's Flight, Sun–Fri (Quoted)", cents: 35300 },
+        { label: "Amma's Ubers", cents: 8000, estimate: true },
+      ],
+      itineraryOutline: hybridOutline,
     },
   ]);
 

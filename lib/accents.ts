@@ -18,6 +18,16 @@ export const SCENARIO_ACCENT: Record<
     soft: "rgba(14,165,181,0.16)",
     glow: "rgba(46,230,246,0.3)",
   },
+  "hybrid-forester": {
+    mark: "var(--mark-green)",
+    soft: "rgba(77,160,107,0.16)",
+    glow: "rgba(77,160,107,0.4)",
+  },
+  "hybrid-rental": {
+    mark: "var(--mark-amber)",
+    soft: "rgba(184,137,49,0.16)",
+    glow: "rgba(184,137,49,0.4)",
+  },
 };
 
 export const scenarioAccent = (slug: string) => SCENARIO_ACCENT[slug] ?? SCENARIO_ACCENT.forester;

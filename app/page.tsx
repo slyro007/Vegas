@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 
 const QUICK_LINKS = [
   { href: "/itinerary", emoji: "🗺️", title: "Itinerary", desc: "10 days, stop by stop" },
-  { href: "/scenarios", emoji: "🎲", title: "Decide", desc: "Drive, rent, or fly?" },
+  { href: "/scenarios", emoji: "🎲", title: "Decide", desc: "Drive, rent, fly — or split?" },
   { href: "/finances", emoji: "💵", title: "Finances", desc: "Who pays what" },
   { href: "/expenses", emoji: "💸", title: "Spend", desc: "Log it in ten seconds" },
   { href: "/lodging", emoji: "🛏️", title: "Lodging", desc: "4 stays, all tracked" },
@@ -171,7 +171,7 @@ export default async function Dashboard() {
                 <div className="mt-2 font-display text-xl md:text-2xl">
                   {leader
                     ? `${leader.emoji} ${leader.name} is leading (${tally.get(leader.id)}/${travelers.length} votes)`
-                    : "🎲 Drive the Forester, rent an SUV, or fly?"}
+                    : "🎲 Drive, rent, fly — or split it with Amma in the air?"}
                 </div>
                 <div className="mt-2 text-sm text-ink-secondary">
                   {votes.length === 0

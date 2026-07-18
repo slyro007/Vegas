@@ -12,12 +12,39 @@ export type TimelineDay = {
   events: ItineraryEvent[];
 };
 
+export type TimelineAccent = "drive" | "fly" | "hybrid";
+
+/* desert orange for the drive, jet-stream teal for the fly, twilight purple for the split */
+const ACCENTS: Record<
+  TimelineAccent,
+  { rail: string; railShadow: string; node: string; nodeShadow: string }
+> = {
+  drive: {
+    rail: "linear-gradient(to bottom, var(--glow-sunset) 0%, var(--glow-sunset) 20%, var(--glow-pink) 45%, var(--glow-pink) 72%, var(--glow-sunset) 100%)",
+    railShadow: "0 0 8px rgba(240, 129, 63, 0.5)",
+    node: "border-glow-sunset bg-card text-glow-sunset",
+    nodeShadow: "0 0 10px rgba(240, 129, 63, 0.35)",
+  },
+  fly: {
+    rail: "linear-gradient(to bottom, var(--glow-teal) 0%, var(--glow-teal) 25%, var(--glow-pink) 50%, var(--glow-pink) 75%, var(--glow-teal) 100%)",
+    railShadow: "0 0 8px rgba(46, 230, 246, 0.5)",
+    node: "border-glow-teal bg-card text-glow-teal",
+    nodeShadow: "0 0 10px rgba(46, 230, 246, 0.35)",
+  },
+  hybrid: {
+    rail: "linear-gradient(to bottom, var(--glow-purple) 0%, var(--glow-purple) 25%, var(--glow-pink) 50%, var(--glow-pink) 75%, var(--glow-purple) 100%)",
+    railShadow: "0 0 8px rgba(167, 139, 250, 0.5)",
+    node: "border-glow-purple bg-card text-glow-purple",
+    nodeShadow: "0 0 10px rgba(167, 139, 250, 0.35)",
+  },
+};
+
 export function Timeline({
   days,
   accent = "drive",
 }: {
   days: TimelineDay[];
-  accent?: "drive" | "fly";
+  accent?: TimelineAccent;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -25,7 +52,7 @@ export function Timeline({
     offset: ["start 0.7", "end 0.9"],
   });
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 28 });
-  const fly = accent === "fly";
+  const tone = ACCENTS[accent];
 
   return (
     <div ref={ref} className="relative">
@@ -34,17 +61,13 @@ export function Timeline({
         className="absolute left-[15px] top-2 bottom-2 w-0.5 rounded bg-borderc-strong md:left-[19px]"
         aria-hidden
       />
-      {/* lit rail — fills with scroll; desert orange for the drive, jet-stream teal for the fly */}
+      {/* lit rail — fills with scroll, tinted per plan */}
       <motion.div
         className="absolute left-[15px] top-2 bottom-2 w-0.5 origin-top rounded md:left-[19px]"
         style={{
           scaleY: progress,
-          background: fly
-            ? "linear-gradient(to bottom, var(--glow-teal) 0%, var(--glow-teal) 25%, var(--glow-pink) 50%, var(--glow-pink) 75%, var(--glow-teal) 100%)"
-            : "linear-gradient(to bottom, var(--glow-sunset) 0%, var(--glow-sunset) 20%, var(--glow-pink) 45%, var(--glow-pink) 72%, var(--glow-sunset) 100%)",
-          boxShadow: fly
-            ? "0 0 8px rgba(46, 230, 246, 0.5)"
-            : "0 0 8px rgba(240, 129, 63, 0.5)",
+          background: tone.rail,
+          boxShadow: tone.railShadow,
         }}
         aria-hidden
       />
@@ -61,18 +84,10 @@ export function Timeline({
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ type: "spring", stiffness: 300, damping: 16 }}
                 className={`absolute left-0 top-0.5 flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-semibold md:h-10 md:w-10 md:text-sm ${
-                  vegas
-                    ? "border-glow-pink bg-card text-glow-pink"
-                    : fly
-                      ? "border-glow-teal bg-card text-glow-teal"
-                      : "border-glow-sunset bg-card text-glow-sunset"
+                  vegas ? "border-glow-pink bg-card text-glow-pink" : tone.node
                 }`}
                 style={{
-                  boxShadow: vegas
-                    ? "0 0 14px rgba(255, 92, 168, 0.45)"
-                    : fly
-                      ? "0 0 10px rgba(46, 230, 246, 0.35)"
-                      : "0 0 10px rgba(240, 129, 63, 0.35)",
+                  boxShadow: vegas ? "0 0 14px rgba(255, 92, 168, 0.45)" : tone.nodeShadow,
                 }}
               >
                 {day.dayNumber}

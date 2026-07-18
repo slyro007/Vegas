@@ -73,7 +73,7 @@ export function PlanCompare({
   return (
     <section className="rounded-2xl border border-borderc bg-card p-5 md:p-6">
       <h2 className="text-xs uppercase tracking-widest text-ink-muted">
-        Drive vs Rent vs Fly — The Money
+        Drive · Rent · Fly · Split — The Money
       </h2>
       <div className="mt-4 space-y-4">
         {scenarios.map((s) => {
