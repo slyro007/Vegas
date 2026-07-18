@@ -18,6 +18,11 @@ export const SCENARIO_ACCENT: Record<
     soft: "rgba(14,165,181,0.16)",
     glow: "rgba(46,230,246,0.3)",
   },
+  flyb: {
+    mark: "var(--mark-teal)",
+    soft: "rgba(14,165,181,0.16)",
+    glow: "rgba(46,230,246,0.3)",
+  },
   "hybrid-forester": {
     mark: "var(--mark-green)",
     soft: "rgba(77,160,107,0.16)",
