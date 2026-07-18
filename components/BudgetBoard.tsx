@@ -150,9 +150,12 @@ export function BudgetBoard({
     <div className="space-y-4">
       {travelers.map((traveler, idx) => {
         const own = items.filter((i) => i.travelerId === traveler.id);
-        const planned = own.reduce((s, i) => s + i.plannedCents, 0);
-        const effective = own.reduce((s, i) => s + (i.actualCents ?? i.plannedCents), 0);
-        const over = planned > traveler.budgetTotalCents;
+        const projected = own.reduce((s, i) => s + i.plannedCents, 0);
+        const spent = own.reduce((s, i) => s + (i.actualCents ?? 0), 0);
+        const budget = traveler.budgetTotalCents;
+        // "Left" = budget you haven't actually spent yet. Nothing spent → whole budget.
+        const left = budget - spent;
+        const overSpent = spent > budget;
         const isOpen = openId === traveler.id;
 
         return (
@@ -176,28 +179,21 @@ export function BudgetBoard({
                 className="h-10 w-10 text-lg"
               />
               <span className="min-w-0 flex-1">
-                <span className="flex items-baseline gap-2">
-                  <span className="font-display text-lg font-semibold">{traveler.name}</span>
-                  {traveler.nonNegotiableCents && (
-                    <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] uppercase tracking-wider text-ink-muted">
-                      {fmtMoney(traveler.nonNegotiableCents)} non-neg
-                    </span>
-                  )}
-                </span>
+                <span className="font-display text-lg font-semibold">{traveler.name}</span>
                 <span className="mt-0.5 block text-xs text-ink-muted">
-                  {own.length} Line Items · Projected {fmtMoney(planned)} · Budget{" "}
-                  {fmtMoney(traveler.budgetTotalCents)}
+                  {own.length} Line Items · Projected {fmtMoney(projected)} · Budget{" "}
+                  {fmtMoney(budget)}
                 </span>
               </span>
               <span className="text-right">
                 <span
                   className={`block font-display text-lg font-semibold tabular-nums ${
-                    over ? "text-mark-pink" : "text-mark-green"
+                    overSpent ? "text-mark-pink" : "text-mark-green"
                   }`}
                 >
-                  {over
-                    ? `+${fmtMoney(planned - traveler.budgetTotalCents)}`
-                    : `${fmtMoney(traveler.budgetTotalCents - planned)} Left`}
+                  {overSpent
+                    ? `+${fmtMoney(spent - budget)} Over`
+                    : `${fmtMoney(left)} Left`}
                 </span>
                 <motion.span
                   animate={{ rotate: isOpen ? 180 : 0 }}
@@ -208,26 +204,30 @@ export function BudgetBoard({
               </span>
             </button>
 
-            {/* plan-vs-budget bar */}
+            {/* spend bar: faint projected footprint + solid actually-spent */}
             <div className="px-4 pb-4 md:px-5">
-              <div className="h-2 overflow-hidden rounded-full bg-surface">
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ background: over ? "var(--mark-pink)" : traveler.color }}
-                  initial={{ width: 0 }}
-                  whileInView={{
-                    width: `${Math.min(100, (planned / Math.max(planned, traveler.budgetTotalCents)) * 100)}%`,
+              <div className="relative h-2 overflow-hidden rounded-full bg-surface">
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full opacity-30"
+                  style={{
+                    width: `${Math.min(100, (projected / budget) * 100)}%`,
+                    background: traveler.color,
                   }}
+                />
+                <motion.div
+                  className="absolute inset-y-0 left-0 rounded-full"
+                  style={{ background: overSpent ? "var(--mark-pink)" : traveler.color }}
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${Math.min(100, (spent / budget) * 100)}%` }}
                   viewport={{ once: true }}
                   transition={{ type: "spring", stiffness: 70, damping: 20 }}
                 />
               </div>
-              {effective !== planned && (
-                <p className="mt-1.5 text-xs text-ink-muted">
-                  With actuals in, {traveler.name} is really at{" "}
-                  <span className="text-mark-green">{fmtMoney(effective)}</span>.
-                </p>
-              )}
+              <p className="mt-1.5 text-xs text-ink-muted">
+                {spent > 0
+                  ? `${fmtMoney(spent)} spent · plans to spend ${fmtMoney(projected)}`
+                  : `Nothing spent yet · plans to spend ${fmtMoney(projected)} of ${fmtMoney(budget)}`}
+              </p>
             </div>
 
             {/* items */}
