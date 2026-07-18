@@ -70,12 +70,14 @@ function buildDays(events: ItineraryEvent[], filterKey: string): TimelineDay[] {
 export function ItineraryView({
   events,
   defaultPlan = "drive",
+  defaultFlyVariant = "fly",
 }: {
   events: ItineraryEvent[];
   defaultPlan?: TimelineAccent;
+  defaultFlyVariant?: "fly" | "flyb";
 }) {
   const [plan, setPlan] = useState<TimelineAccent>(defaultPlan);
-  const [flyVariant, setFlyVariant] = useState<"fly" | "flyb">("fly");
+  const [flyVariant, setFlyVariant] = useState<"fly" | "flyb">(defaultFlyVariant);
   const [view, setView] = useState<ViewKey>("timeline");
 
   // hydrate the saved view choice after mount (SSR-safe)

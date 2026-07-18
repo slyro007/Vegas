@@ -112,6 +112,8 @@ export function ScenarioBoard({
 
               {/* breakdown toggle */}
               <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => setExpanded(isOpen ? null : s.slug)}
                 className="mt-4 flex items-center gap-1.5 self-start rounded-full border border-borderc px-3 py-1 text-xs text-ink-secondary transition-colors hover:border-borderc-strong hover:text-ink"
                 aria-expanded={isOpen}

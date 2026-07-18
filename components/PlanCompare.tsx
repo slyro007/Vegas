@@ -91,6 +91,8 @@ export function PlanCompare({
           return (
             <div key={s.id}>
               <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={() => setExpanded(isOpen ? null : s.slug)}
                 className="block w-full text-left"
                 aria-expanded={isOpen}
@@ -174,9 +176,9 @@ export function PlanCompare({
         })}
       </div>
       <p className="mt-4 text-xs text-ink-muted">
-        Everything it takes to get there and sleep there — travel plus every hotel night. Food and
-        personal spending money live on the Finances board. Hatched "est." lines are estimates, not
-        quotes. Tap a plan for the line-by-line.
+        Getting there plus the shared hotel nights (the Best Westerns). The Luxor all-inclusive is
+        BeX&apos;s, and personal food + spending money live on the Finances board. Hatched
+        &quot;est.&quot; lines are estimates, not quotes. Tap a plan for the line-by-line.
       </p>
     </section>
   );

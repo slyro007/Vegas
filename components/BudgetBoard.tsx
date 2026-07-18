@@ -175,6 +175,8 @@ export function BudgetBoard({
           >
             {/* header */}
             <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => setOpenId(isOpen ? null : traveler.id)}
               className="flex w-full items-center gap-3 p-4 text-left md:p-5"
               aria-expanded={isOpen}
