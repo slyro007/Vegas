@@ -45,9 +45,16 @@ export const lodging = pgTable("lodging", {
   // planned | booked
   bookingStatus: text("booking_status").notNull().default("planned"),
   cancelBy: date("cancel_by"),
+  confirmationNumber: text("confirmation_number"),
   // desert | vegas — drives the section theming
   theme: text("theme").notNull().default("desert"),
   notes: text("notes"),
+});
+
+export const tripSettings = pgTable("trip_settings", {
+  id: serial("id").primaryKey(),
+  lockedScenarioId: integer("locked_scenario_id").references(() => scenarios.id),
+  lockedAt: timestamp("locked_at"),
 });
 
 export const itineraryEvents = pgTable("itinerary_events", {
@@ -59,6 +66,8 @@ export const itineraryEvents = pgTable("itinerary_events", {
   description: text("description"),
   location: text("location"),
   theme: text("theme").notNull().default("desert"),
+  // which trip plan this event belongs to: both | drive | fly
+  plan: text("plan").notNull().default("both"),
 });
 
 export type CostLine = { label: string; cents: number; estimate?: boolean };

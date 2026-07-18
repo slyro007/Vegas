@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Fraunces, Geist, Geist_Mono, Monoton } from "next/font/google";
 import { FamilyGate } from "@/components/FamilyGate";
 import { Nav } from "@/components/Nav";
+import { getTripSettings } from "@/lib/data";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,11 +34,13 @@ export const metadata: Metadata = {
     "Muir Lake → Flagstaff → the land → Vegas → Sedona. Itinerary, finances, and the big drive-vs-fly decision.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const settings = await getTripSettings().catch(() => null);
+  const locked = settings?.lockedScenarioId != null;
   return (
     <html
       lang="en"
@@ -56,7 +59,7 @@ export default function RootLayout({
           }}
         >
           <FamilyGate>
-            <Nav />
+            <Nav showDecide={!locked} />
             <main className="flex-1 pb-24 md:pb-10">{children}</main>
             <footer className="hidden md:block border-t border-borderc px-6 py-4 text-center text-xs text-ink-muted">
               Vegas 2026 · Pithya · Shy · Bex · Amma · Built with 🌵 and 🎰

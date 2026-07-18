@@ -2,16 +2,11 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useOptimistic, useState, useTransition } from "react";
-import { castVote } from "@/app/actions";
+import { castVote, lockScenario } from "@/app/actions";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
-import type { Scenario, Traveler, Vote } from "@/lib/data";
+import { scenarioAccent } from "@/lib/accents";
+import type { Scenario, Traveler, TripSettings, Vote } from "@/lib/data";
 import { fmtMoney } from "@/lib/format";
-
-const ACCENT: Record<string, { mark: string; soft: string; glow: string }> = {
-  forester: { mark: "var(--mark-orange)", soft: "rgba(202,108,52,0.16)", glow: "rgba(240,129,63,0.35)" },
-  "rental-suv": { mark: "var(--mark-purple)", soft: "rgba(139,115,209,0.16)", glow: "rgba(139,115,209,0.4)" },
-  fly: { mark: "var(--mark-teal)", soft: "rgba(14,165,181,0.16)", glow: "rgba(46,230,246,0.3)" },
-};
 
 const total = (s: Scenario) => s.costLines.reduce((sum, l) => sum + l.cents, 0);
 
@@ -19,10 +14,12 @@ export function ScenarioBoard({
   scenarios,
   travelers,
   votes,
+  settings,
 }: {
   scenarios: Scenario[];
   travelers: Traveler[];
   votes: Vote[];
+  settings: TripSettings;
 }) {
   const [pending, startTransition] = useTransition();
   const [optimisticVotes, applyVote] = useOptimistic(
@@ -33,8 +30,8 @@ export function ScenarioBoard({
     ],
   );
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [confirmLock, setConfirmLock] = useState<string | null>(null);
 
-  const maxTotal = Math.max(...scenarios.map(total));
   const voteFor = (travelerId: number) =>
     optimisticVotes.find((v) => v.travelerId === travelerId)?.scenarioId;
   const tallyFor = (scenarioId: number) =>
@@ -55,47 +52,11 @@ export function ScenarioBoard({
 
   return (
     <div className="space-y-10">
-      {/* ---------- cost comparison ---------- */}
-      <section className="rounded-2xl border border-borderc bg-card p-5 md:p-6">
-        <h2 className="text-xs uppercase tracking-widest text-ink-muted">
-          Travel cost, side by side
-        </h2>
-        <div className="mt-4 space-y-3">
-          {scenarios.map((s) => {
-            const accent = ACCENT[s.slug] ?? ACCENT.forester;
-            const t = total(s);
-            return (
-              <div key={s.id} title={`${s.name}: ${fmtMoney(t)}`}>
-                <div className="flex items-baseline justify-between gap-2 text-sm">
-                  <span className="truncate">
-                    {s.emoji} {s.name}
-                  </span>
-                  <span className="font-medium tabular-nums">{fmtMoney(t)}</span>
-                </div>
-                <div className="mt-1 h-3 overflow-hidden rounded-full bg-surface">
-                  <motion.div
-                    className="h-full rounded-full"
-                    style={{ background: accent.mark }}
-                    initial={{ width: 0 }}
-                    whileInView={{ width: `${(t / maxTotal) * 100}%` }}
-                    viewport={{ once: true }}
-                    transition={{ type: "spring", stiffness: 60, damping: 20 }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <p className="mt-3 text-xs text-ink-muted">
-          Travel-specific costs only — Vegas lodging, food, and spending money are the same in
-          every scenario. Hatched “est.” lines are estimates, not quotes.
-        </p>
-      </section>
-
       {/* ---------- scenario cards ---------- */}
       <section className="grid gap-4 lg:grid-cols-3">
         {scenarios.map((s, idx) => {
-          const accent = ACCENT[s.slug] ?? ACCENT.forester;
+          const accent = scenarioAccent(s.slug);
+          const isLocked = settings.lockedScenarioId === s.id;
           const t = total(s);
           const isOpen = expanded === s.slug;
           const tally = tallyFor(s.id);
@@ -109,16 +70,16 @@ export function ScenarioBoard({
               transition={{ type: "spring", stiffness: 140, damping: 20, delay: idx * 0.08 }}
               className="relative flex flex-col rounded-2xl border bg-card p-5"
               style={{
-                borderColor: leading ? accent.mark : "var(--border)",
-                boxShadow: leading ? `0 0 24px ${accent.glow}` : undefined,
+                borderColor: isLocked || leading ? accent.mark : "var(--border)",
+                boxShadow: isLocked || leading ? `0 0 24px ${accent.glow}` : undefined,
               }}
             >
-              {leading && (
+              {(isLocked || leading) && (
                 <div
                   className="absolute -top-3 right-4 rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-bg"
                   style={{ background: accent.mark }}
                 >
-                  👑 leading
+                  {isLocked ? "🔒 Locked In" : "👑 Leading"}
                 </div>
               )}
 
@@ -267,6 +228,31 @@ export function ScenarioBoard({
                     );
                   })}
                 </div>
+
+                {/* lock it in */}
+                {!settings.lockedScenarioId && (
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    disabled={pending}
+                    onClick={() => {
+                      if (confirmLock !== s.slug) {
+                        setConfirmLock(s.slug);
+                        setTimeout(() => setConfirmLock(null), 3000);
+                        return;
+                      }
+                      setConfirmLock(null);
+                      startTransition(() => lockScenario(s.id));
+                    }}
+                    className="mt-4 w-full rounded-xl border py-2 text-sm font-semibold transition-colors"
+                    style={{
+                      borderColor: confirmLock === s.slug ? accent.mark : "var(--border-strong)",
+                      background: confirmLock === s.slug ? accent.soft : "transparent",
+                      color: confirmLock === s.slug ? "var(--ink)" : "var(--ink-secondary)",
+                    }}
+                  >
+                    {confirmLock === s.slug ? "Tap Again to Confirm 🔐" : "🔒 Lock This Plan"}
+                  </motion.button>
+                )}
               </div>
             </motion.article>
           );

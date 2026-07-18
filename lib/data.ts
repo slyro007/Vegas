@@ -8,6 +8,7 @@ import {
   lodging,
   scenarios,
   travelers,
+  tripSettings,
   votes,
 } from "@/db/schema";
 
@@ -45,6 +46,11 @@ export async function getChecklist() {
     .orderBy(asc(checklistItems.sortOrder), asc(checklistItems.id));
 }
 
+export async function getTripSettings() {
+  const rows = await db.select().from(tripSettings);
+  return rows[0] ?? { id: 0, lockedScenarioId: null, lockedAt: null };
+}
+
 export async function getExpenses() {
   return db
     .select()
@@ -54,6 +60,7 @@ export async function getExpenses() {
 
 export type Traveler = Awaited<ReturnType<typeof getTravelers>>[number];
 export type Expense = Awaited<ReturnType<typeof getExpenses>>[number];
+export type TripSettings = Awaited<ReturnType<typeof getTripSettings>>;
 export type BudgetItem = Awaited<ReturnType<typeof getBudgetItems>>[number];
 export type LodgingStay = Awaited<ReturnType<typeof getLodging>>[number];
 export type ItineraryEvent = Awaited<ReturnType<typeof getItinerary>>[number];
