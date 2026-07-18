@@ -53,15 +53,21 @@ export async function deleteExpense(id: number) {
   revalidatePath("/");
 }
 
+/** Voting is a toggle: voting for the scenario you already picked removes your vote. */
 export async function castVote(travelerId: number, scenarioId: number) {
   await requireActor();
-  await db
-    .insert(votes)
-    .values({ travelerId, scenarioId })
-    .onConflictDoUpdate({
-      target: votes.travelerId,
-      set: { scenarioId, createdAt: new Date() },
-    });
+  const [existing] = await db.select().from(votes).where(eq(votes.travelerId, travelerId));
+  if (existing && existing.scenarioId === scenarioId) {
+    await db.delete(votes).where(eq(votes.id, existing.id));
+  } else {
+    await db
+      .insert(votes)
+      .values({ travelerId, scenarioId })
+      .onConflictDoUpdate({
+        target: votes.travelerId,
+        set: { scenarioId, createdAt: new Date() },
+      });
+  }
   revalidatePath("/scenarios");
   revalidatePath("/");
 }

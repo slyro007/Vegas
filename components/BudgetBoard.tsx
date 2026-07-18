@@ -130,6 +130,7 @@ export function BudgetBoard({
 }) {
   const [openId, setOpenId] = useState<number | null>(travelers[0]?.id ?? null);
   const [adding, setAdding] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [, startTransition] = useTransition();
 
   return (
@@ -292,14 +293,28 @@ export function BudgetBoard({
                               />
                             </span>
                             <button
-                              onClick={() =>
-                                startTransition(() => deleteBudgetItem(item.id))
+                              onClick={() => {
+                                if (confirmDelete !== item.id) {
+                                  setConfirmDelete(item.id);
+                                  setTimeout(() => setConfirmDelete(null), 3000);
+                                  return;
+                                }
+                                setConfirmDelete(null);
+                                startTransition(() => deleteBudgetItem(item.id));
+                              }}
+                              className={`col-start-1 row-start-2 justify-self-start pl-[18px] text-xs transition-colors md:col-start-auto md:row-start-auto md:justify-self-auto md:pl-0 ${
+                                confirmDelete === item.id
+                                  ? "font-semibold text-mark-pink"
+                                  : "text-ink-muted hover:text-mark-pink"
+                              }`}
+                              title={
+                                confirmDelete === item.id
+                                  ? "Tap again to delete this line and its logged expenses"
+                                  : "Delete item"
                               }
-                              className="col-start-1 row-start-2 justify-self-start pl-[18px] text-xs text-ink-muted transition-colors hover:text-mark-pink md:col-start-auto md:row-start-auto md:justify-self-auto md:pl-0"
-                              title="Delete item"
                               aria-label={`Delete ${item.label}`}
                             >
-                              ✕
+                              {confirmDelete === item.id ? "Delete?" : "✕"}
                             </button>
                           </li>
                         );

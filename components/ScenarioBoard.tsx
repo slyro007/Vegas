@@ -24,10 +24,13 @@ export function ScenarioBoard({
   const [pending, startTransition] = useTransition();
   const [optimisticVotes, applyVote] = useOptimistic(
     votes,
-    (state, next: { travelerId: number; scenarioId: number }) => [
-      ...state.filter((v) => v.travelerId !== next.travelerId),
-      { ...next, id: -next.travelerId, createdAt: new Date() },
-    ],
+    (state, next: { travelerId: number; scenarioId: number }) => {
+      const existing = state.find((v) => v.travelerId === next.travelerId);
+      const rest = state.filter((v) => v.travelerId !== next.travelerId);
+      // tapping your current pick again = unvote
+      if (existing && existing.scenarioId === next.scenarioId) return rest;
+      return [...rest, { ...next, id: -next.travelerId, createdAt: new Date() }];
+    },
   );
   const [expanded, setExpanded] = useState<string | null>(null);
   const [confirmLock, setConfirmLock] = useState<string | null>(null);
@@ -218,7 +221,7 @@ export function ScenarioBoard({
                         }}
                         title={
                           votedHere
-                            ? `${traveler.name} voted for this`
+                            ? `${traveler.name} voted for this — tap again to remove the vote`
                             : `Vote as ${traveler.name}`
                         }
                       >
