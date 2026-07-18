@@ -99,7 +99,7 @@ async function seed() {
     {
       travelerId: bex.id,
       label: "Luxor All-Inclusive",
-      category: "experience",
+      category: "lodging",
       plannedCents: 72096,
       notes:
         "$360.48 per room × 2 rooms — the deal is priced for 2 guests and we're 4 · Pyramid Premier Two Queen, Aug 12–14 · free cancellation until Aug 9 · vouchers worth up to $300 per room",

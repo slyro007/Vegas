@@ -44,16 +44,10 @@ export default async function FinancesPage() {
     .sort((a, b) => b.planned - a.planned);
   const maxCat = Math.max(...byCategory.map((c) => c.planned));
 
+  const leftToSpend = budgetTotal - actualTotal; // whole budget until real money moves
   const cushion = budgetTotal - plannedTotal;
   const stats = [
-    { label: "Per-Person Budgets", cents: budgetTotal, hint: "What everyone is bringing" },
-    { label: "Projected Spend", cents: plannedTotal, hint: "Everything itemized below" },
-    {
-      label: cushion >= 0 ? "Budget Cushion" : "Over Budget",
-      cents: Math.abs(cushion),
-      hint: cushion >= 0 ? "Budgets minus what's projected" : "Projected past the budgets",
-      accent: cushion >= 0,
-    },
+    { label: "Projected Spend", cents: plannedTotal, hint: "What the plan adds up to" },
     {
       label: "Actually Spent",
       cents: actualTotal,
@@ -61,6 +55,17 @@ export default async function FinancesPage() {
         withActuals.length > 0
           ? `${withActuals.length} line${withActuals.length === 1 ? "" : "s"} with real money down`
           : "Nothing yet — it's all projected",
+    },
+    {
+      label: "Left to Spend",
+      cents: leftToSpend,
+      hint: "Everyone's budgets minus what's actually spent",
+      accent: true,
+    },
+    {
+      label: cushion >= 0 ? "Budget Cushion" : "Over Budget",
+      cents: Math.abs(cushion),
+      hint: cushion >= 0 ? "Budget beyond the plan" : "Plan exceeds the budgets",
     },
   ];
 
