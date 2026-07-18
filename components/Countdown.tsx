@@ -31,7 +31,7 @@ function Unit({ value, label }: { value: number; label: string }) {
           </motion.span>
         </AnimatePresence>
       </div>
-      <span className="mt-1.5 text-[10px] md:text-xs uppercase tracking-widest text-ink-muted">
+      <span className="mt-1.5 text-[11px] md:text-xs uppercase tracking-widest text-ink-muted">
         {label}
       </span>
     </div>

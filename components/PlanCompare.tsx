@@ -40,7 +40,7 @@ export function PlanCompare({
       >
         <span className="text-2xl">🔒</span>
         <div className="min-w-0 flex-1">
-          <div className="text-[11px] uppercase tracking-widest text-ink-secondary">
+          <div className="text-xs uppercase tracking-widest text-ink-secondary">
             The Decision Is Made
           </div>
           <div className="font-display text-lg font-semibold md:text-xl">
@@ -92,17 +92,17 @@ export function PlanCompare({
                 <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1 text-sm">
                   <span className="flex items-center gap-2">
                     {s.emoji} {s.name}
-                    <motion.span animate={{ rotate: isOpen ? 180 : 0 }} className="text-[10px] text-ink-muted">
+                    <motion.span animate={{ rotate: isOpen ? 180 : 0 }} className="text-[11px] text-ink-muted">
                       ▾
                     </motion.span>
                   </span>
                   <span className="flex items-baseline gap-2">
                     {delta === 0 ? (
-                      <span className="rounded-full bg-mark-green/15 px-2 py-0.5 text-[11px] font-medium text-mark-green">
+                      <span className="rounded-full bg-mark-green/15 px-2 py-0.5 text-xs font-medium text-mark-green">
                         Cheapest ✓
                       </span>
                     ) : (
-                      <span className="rounded-full bg-mark-pink/10 px-2 py-0.5 text-[11px] font-medium text-mark-pink">
+                      <span className="rounded-full bg-mark-pink/10 px-2 py-0.5 text-xs font-medium text-mark-pink">
                         +{fmtMoney(delta)} · +{fmtMoney(Math.round(delta / travelerCount))}/person
                       </span>
                     )}
@@ -135,7 +135,7 @@ export function PlanCompare({
                           <span className="text-ink-secondary">
                             {line.label}
                             {line.estimate && (
-                              <span className="ml-1.5 rounded bg-surface px-1 py-px text-[10px] uppercase tracking-wide text-ink-muted">
+                              <span className="ml-1.5 rounded bg-surface px-1 py-px text-[11px] uppercase tracking-wide text-ink-muted">
                                 est.
                               </span>
                             )}

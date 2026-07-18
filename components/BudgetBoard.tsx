@@ -73,13 +73,14 @@ function AddItemForm({ travelerId, onDone }: { travelerId: number; onDone: () =>
   const [label, setLabel] = useState("");
   const [category, setCategory] = useState("misc");
   const [amount, setAmount] = useState("");
+  const [actual, setActual] = useState("");
   const [pending, startTransition] = useTransition();
 
   const submit = () => {
     const cents = parseDollars(amount) ?? 0;
     if (!label.trim()) return;
     startTransition(async () => {
-      await addBudgetItem(travelerId, label, category, cents);
+      await addBudgetItem(travelerId, label, category, cents, parseDollars(actual));
       onDone();
     });
   };
@@ -106,9 +107,19 @@ function AddItemForm({ travelerId, onDone }: { travelerId: number; onDone: () =>
       <input
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        placeholder="$0"
+        placeholder="Projected $"
         inputMode="decimal"
-        className="w-20 rounded border border-borderc bg-surface px-2 py-1.5 text-right text-sm tabular-nums outline-none focus:border-glow-pink/60"
+        aria-label="Projected amount"
+        className="w-28 rounded border border-borderc bg-surface px-2 py-1.5 text-right text-sm tabular-nums outline-none focus:border-glow-pink/60"
+      />
+      <input
+        value={actual}
+        onChange={(e) => setActual(e.target.value)}
+        placeholder="Actual $ (Optional)"
+        inputMode="decimal"
+        aria-label="Actual amount, only if it is already really spent"
+        title="Leave empty unless this money is really spent — actuals normally come from the Spend page or a booking"
+        className="w-36 rounded border border-borderc bg-surface px-2 py-1.5 text-right text-sm tabular-nums outline-none focus:border-glow-pink/60"
       />
       <button
         onClick={submit}
@@ -167,13 +178,13 @@ export function BudgetBoard({
                 <span className="flex items-baseline gap-2">
                   <span className="font-display text-lg font-semibold">{traveler.name}</span>
                   {traveler.nonNegotiableCents && (
-                    <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] uppercase tracking-wider text-ink-muted">
+                    <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] uppercase tracking-wider text-ink-muted">
                       {fmtMoney(traveler.nonNegotiableCents)} non-neg
                     </span>
                   )}
                 </span>
                 <span className="mt-0.5 block text-xs text-ink-muted">
-                  {own.length} Line Items · Plan {fmtMoney(planned)} · Budget{" "}
+                  {own.length} Line Items · Projected {fmtMoney(planned)} · Budget{" "}
                   {fmtMoney(traveler.budgetTotalCents)}
                 </span>
               </span>
@@ -229,10 +240,10 @@ export function BudgetBoard({
                   className="overflow-hidden border-t border-borderc"
                 >
                   <div className="p-4 md:p-5">
-                    <div className="mb-1 hidden grid-cols-[1fr_auto_auto_auto] gap-2 text-[10px] uppercase tracking-widest text-ink-muted md:grid">
+                    <div className="mb-1 hidden grid-cols-[1fr_auto_auto_auto] gap-2 text-[11px] uppercase tracking-widest text-ink-muted md:grid">
                       <span>Item</span>
-                      <span className="w-20 text-right">Planned</span>
-                      <span className="w-20 text-right">Actual</span>
+                      <span className="w-24 text-right">Projected</span>
+                      <span className="w-24 text-right">Actual</span>
                       <span className="w-6" />
                     </div>
                     <ul className="divide-y divide-borderc">
@@ -259,8 +270,8 @@ export function BudgetBoard({
                               )}
                             </span>
                             <span className="col-start-2 row-start-1 flex items-center justify-end gap-1 md:col-start-auto md:row-start-auto">
-                              <span className="text-[10px] uppercase text-ink-muted md:hidden">
-                                plan
+                              <span className="text-[11px] uppercase text-ink-muted md:hidden">
+                                projected
                               </span>
                               <MoneyCell
                                 cents={item.plannedCents}
@@ -272,7 +283,7 @@ export function BudgetBoard({
                               />
                             </span>
                             <span className="col-start-2 row-start-2 flex items-center justify-end gap-1 md:col-start-auto md:row-start-auto">
-                              <span className="text-[10px] uppercase text-ink-muted md:hidden">
+                              <span className="text-[11px] uppercase text-ink-muted md:hidden">
                                 actual
                               </span>
                               <MoneyCell

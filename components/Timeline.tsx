@@ -128,7 +128,7 @@ export function Timeline({
                     <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                       {event.time && (
                         <span
-                          className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider ${
+                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium uppercase tracking-wider ${
                             event.theme === "vegas"
                               ? "bg-mark-pink/20 text-glow-pink"
                               : "bg-mark-orange/20 text-glow-sunset"
