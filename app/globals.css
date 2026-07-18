@@ -28,6 +28,7 @@
   --glow-pink: #ff5ca8;
   --glow-teal: #2ee6f6;
   --glow-gold: #ffcf6b;
+  --glow-purple: #a78bfa;
 
   /* category marks */
   --cat-lodging: var(--mark-purple);
@@ -59,6 +60,7 @@
   --color-glow-pink: var(--glow-pink);
   --color-glow-teal: var(--glow-teal);
   --color-glow-gold: var(--glow-gold);
+  --color-glow-purple: var(--glow-purple);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-fraunces);

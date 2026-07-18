@@ -66,8 +66,8 @@ export const itineraryEvents = pgTable("itinerary_events", {
   description: text("description"),
   location: text("location"),
   theme: text("theme").notNull().default("desert"),
-  // which trip plan this event belongs to: both | drive | fly
-  plan: text("plan").notNull().default("both"),
+  // space-separated plan tags this event belongs to: "all" or any of drive | fly | hybrid
+  plan: text("plan").notNull().default("all"),
 });
 
 export type CostLine = { label: string; cents: number; estimate?: boolean };
