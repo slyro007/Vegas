@@ -578,6 +578,8 @@ async function seed() {
   await db.insert(checklistItems).values([
     // Pre-trip — the trip is booked; what's left is confirming and packing
     { list: "pre-trip", sortOrder: 0, label: "Delta Check-In Opens Thu Aug 6 (H2UQO8)", note: "24 hours before the 3:39 PM flight" },
+    // NOTE: the homepage "left to book" tile matches this row by label prefix
+    // ("Book the Midsize SUV") — keep the prefix if rewording (app/page.tsx)
     { list: "pre-trip", sortOrder: 1, label: "Book the Midsize SUV — Fri–Fri, Airport Pickup" },
     { list: "pre-trip", sortOrder: 2, label: "Confirm Caesar Meetup at Valle (Sat Aug 8)", assignee: "Pithya" },
     { list: "pre-trip", sortOrder: 3, label: "Decide + Book: Luxor vs Excalibur All-Inclusive", assignee: "BeX", note: "Deciding Tue Jul 21 · same package either way · free cancellation until Aug 9" },

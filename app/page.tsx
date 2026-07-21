@@ -7,39 +7,99 @@ import { RouteStrip } from "@/components/RouteStrip";
 import { Stars } from "@/components/Stars";
 import {
   getBudgetItems,
+  getChecklist,
+  getExpenses,
+  getItinerary,
   getLodging,
   getScenarios,
+  getTravelers,
   getTripSettings,
 } from "@/lib/data";
+import { estimateForScenario } from "@/lib/estimate";
 import { daysUntil, fmtMoney } from "@/lib/format";
 import { NAV_ICON, PlanIcon } from "@/lib/icons";
 
 export const dynamic = "force-dynamic";
 
-const QUICK_LINKS = [
-  { href: "/itinerary", title: "Itinerary", desc: "Aug 7–14, day by day" },
-  { href: "/finances", title: "Finances", desc: "Who pays what" },
-  { href: "/expenses", title: "Spend", desc: "Log it in ten seconds" },
-  { href: "/lodging", title: "Lodging", desc: "4 stays, all tracked" },
-  { href: "/lists", title: "Lists", desc: "Packing + to-dos" },
-];
-
 export default async function Dashboard() {
-  const [items, lodging, scenarios, settings] = await Promise.all([
-    getBudgetItems(),
-    getLodging(),
-    getScenarios(),
-    getTripSettings(),
-  ]);
+  const [travelers, items, lodging, scenarios, settings, expenses, checklist, events] =
+    await Promise.all([
+      getTravelers(),
+      getBudgetItems(),
+      getLodging(),
+      getScenarios(),
+      getTripSettings(),
+      getExpenses(),
+      getChecklist(),
+      getItinerary(),
+    ]);
   const lockedScenario = scenarios.find((s) => s.id === settings.lockedScenarioId) ?? null;
 
-  // the family yellow-pad pool, and how the real numbers sit against it
-  const bucketTotal = items.reduce((sum, i) => sum + i.yellowPadCents, 0);
-  const plannedWithActuals = items.filter((i) => i.actualCents !== null);
-  const savedSoFar = plannedWithActuals.reduce(
-    (sum, i) => sum + (i.plannedCents - (i.actualCents ?? 0)),
-    0,
+  // the real money picture — same engine call Finances makes
+  const est = estimateForScenario(travelers, items, lockedScenario ?? undefined);
+  const under = est.available >= 0;
+  const paidSoFar = expenses.reduce((sum, e) => sum + e.amountCents, 0);
+
+  // what still needs booking: the stays (incl. the MGM all-inclusive) + the rental car.
+  // The SUV rides on its pre-trip checklist row — label coupling noted in db/seed.ts.
+  const unbookedStays = lodging.filter((l) => l.bookingStatus !== "booked");
+  const suvItem = checklist.find(
+    (c) => c.list === "pre-trip" && c.label.startsWith("Book the Midsize SUV"),
   );
+  const leftToBook = unbookedStays.length + (suvItem && !suvItem.done ? 1 : 0);
+  const bookables = checklist.filter(
+    (c) => c.list === "pre-trip" && !c.done && /^(Book|Decide \+ Book)/.test(c.label),
+  );
+  const nextBooking =
+    bookables[0]?.label
+      .replace("Decide + Book: ", "")
+      .replace("Book the ", "")
+      .replace(/ —.*$/, "") ??
+    unbookedStays[0]?.name ??
+    null;
+
+  const todosOpen = checklist.filter((c) => !c.done);
+  const nextTodo = todosOpen.find((c) => c.list === "pre-trip") ?? todosOpen[0] ?? null;
+
+  // itinerary pulse: today's first event once the trip is live, else wheels-up
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const todayEvent = events.find(
+    (e) => e.date === todayIso && (e.plan === "all" || e.plan.split(" ").includes("fly")),
+  );
+  const itinerarySub = todayEvent
+    ? `Today: ${todayEvent.title}${todayEvent.time ? ` · ${todayEvent.time}` : ""}`
+    : "Wheels up Fri Aug 7 · 3:39 PM";
+
+  const quickLinks = [
+    { href: "/itinerary", title: "Itinerary", desc: itinerarySub },
+    {
+      href: "/finances",
+      title: "Finances",
+      desc: under
+        ? `${fmtMoney(est.available)} left in the pot`
+        : `Short ${fmtMoney(est.shortfall)} · BeX covering the airfare`,
+    },
+    {
+      href: "/expenses",
+      title: "Spend",
+      desc:
+        expenses.length > 0
+          ? `${expenses.length} ${expenses.length === 1 ? "entry" : "entries"} · ${fmtMoney(paidSoFar)} logged`
+          : "Nothing logged yet",
+    },
+    {
+      href: "/lodging",
+      title: "Lodging",
+      desc: `${lodging.length - unbookedStays.length} of ${lodging.length} stays booked`,
+    },
+    {
+      href: "/lists",
+      title: "Lists",
+      desc: `${checklist.length - todosOpen.length} of ${checklist.length} done${
+        nextBooking ? ` · next: ${nextBooking.toLowerCase()}` : ""
+      }`,
+    },
+  ];
 
   const luxor = lodging.find((l) => l.cancelBy);
   const cancelDays = luxor?.cancelBy ? daysUntil(luxor.cancelBy) : null;
@@ -100,30 +160,53 @@ export default async function Dashboard() {
       </section>
 
       <div className="mx-auto max-w-6xl space-y-12 px-4 py-10 md:px-6 md:py-14">
-        {/* ---------- stat tiles ---------- */}
+        {/* ---------- live stat tiles: the actual state of the trip ---------- */}
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {[
-            { label: "days in the desert", value: 8, prefix: "", accent: false },
-            { label: "miles flown, round trip", value: 2170, prefix: "~", accent: false },
-            { label: "yellow-pad budget", value: bucketTotal / 100, prefix: "$", accent: false },
             {
-              label: "saved vs. plan so far",
-              value: savedSoFar / 100,
+              label: leftToBook === 0 ? "everything's booked" : "left to book",
+              value: leftToBook,
+              prefix: "",
+              tone: leftToBook === 0 ? "text-mark-green" : "text-ink",
+              sub:
+                leftToBook === 0
+                  ? "flights, stays, SUV — all locked"
+                  : nextBooking
+                    ? `next: ${nextBooking.toLowerCase()}`
+                    : "stays + the rental SUV",
+            },
+            {
+              label: "paid so far",
+              value: paidSoFar / 100,
               prefix: "$",
-              accent: true,
+              tone: "text-ink",
+              sub: `of the ${fmtMoney(est.realTotal)} real trip`,
+            },
+            {
+              label: under ? "left in the pot" : "short by",
+              value: Math.abs(est.available) / 100,
+              prefix: "$",
+              tone: under ? "text-mark-green" : "text-mark-pink",
+              sub: `really ${fmtMoney(est.realTotal)} vs the ${fmtMoney(est.bucketTotal)} pad`,
+            },
+            {
+              label: "to-dos open",
+              value: todosOpen.length,
+              prefix: "",
+              tone: todosOpen.length === 0 ? "text-mark-green" : "text-ink",
+              sub: nextTodo ? `next: ${nextTodo.label.toLowerCase().replace(/ \(.*\)$/, "")}` : "all done",
             },
           ].map((stat, i) => (
             <Reveal key={stat.label} delay={i * 0.08}>
-              <div className="rounded-2xl border border-borderc bg-card p-4 md:p-5">
-                <div
-                  className={`font-display text-2xl font-semibold md:text-4xl ${
-                    stat.accent ? "text-mark-green" : "text-ink"
-                  }`}
-                >
+              <div className="h-full rounded-2xl border border-borderc bg-card p-4 md:p-5">
+                <div className={`font-display text-2xl font-semibold md:text-4xl ${stat.tone}`}>
                   <AnimatedNumber value={stat.value} prefix={stat.prefix} />
                 </div>
                 <div className="mt-1 text-xs uppercase tracking-wider text-ink-muted">
                   {stat.label}
+                </div>
+                <div className="mt-0.5 truncate text-xs text-ink-muted/70" title={stat.sub}>
+                  {stat.sub}
                 </div>
               </div>
             </Reveal>
@@ -190,7 +273,7 @@ export default async function Dashboard() {
 
         {/* ---------- quick links ---------- */}
         <section className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
-          {QUICK_LINKS.map((q, i) => (
+          {quickLinks.map((q, i) => (
             <Reveal key={q.href} delay={i * 0.06}>
               <Link
                 href={q.href}

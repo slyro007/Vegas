@@ -234,6 +234,14 @@ body {
   animation: dash-flow 1.4s linear infinite;
 }
 
+/* route scene: mountain layers drifting at different speeds for depth */
+@keyframes rs-drift {
+  from { transform: translateX(-6px); }
+  to { transform: translateX(6px); }
+}
+.rs-drift-far { animation: rs-drift 70s ease-in-out infinite alternate; }
+.rs-drift-near { animation: rs-drift 46s ease-in-out infinite alternate-reverse; }
+
 /* desert-vs-vegas card accents */
 .card-desert {
   border-color: rgba(202, 108, 52, 0.35);
@@ -252,7 +260,7 @@ body {
 .scroll-thin::-webkit-scrollbar-track { background: transparent; }
 
 @media (prefers-reduced-motion: reduce) {
-  .neon-flicker, .sunset-gradient, .dash-flow {
+  .neon-flicker, .sunset-gradient, .dash-flow, .rs-drift-far, .rs-drift-near {
     animation: none;
   }
 }

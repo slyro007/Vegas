@@ -145,7 +145,20 @@ export function BudgetBoard({
   items: BudgetItem[];
   estimate: Estimate;
 }) {
-  const [openId, setOpenId] = useState<number | null>(travelers[0]?.id ?? null);
+  // Multiple cards can be open at once. This is the zoom-jump fix: with a
+  // single-open accordion, opening card B collapsed card A ABOVE it, the page
+  // shrank by A's height, and the clicked header yanked upward — zoom just
+  // magnified the shift. Independent cards mean nothing above the click moves.
+  const [openIds, setOpenIds] = useState<Set<number>>(
+    () => new Set(travelers[0] ? [travelers[0].id] : []),
+  );
+  const toggleOpen = (id: number) =>
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   const [adding, setAdding] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [, startTransition] = useTransition();
@@ -163,7 +176,7 @@ export function BudgetBoard({
         // a shared line's real price comes from the scenario, keyed by costKey
         const coveredBy = new Map(person?.covered.map((c) => [c.item.id, c]) ?? []);
         const releasedIds = new Set(person?.released.map((r) => r.item.id) ?? []);
-        const isOpen = openId === traveler.id;
+        const isOpen = openIds.has(traveler.id);
 
         return (
           <motion.section
@@ -178,7 +191,7 @@ export function BudgetBoard({
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => setOpenId(isOpen ? null : traveler.id)}
+              onClick={() => toggleOpen(traveler.id)}
               className="flex w-full items-center gap-3 p-4 text-left md:p-5"
               aria-expanded={isOpen}
             >

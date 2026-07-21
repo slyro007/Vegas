@@ -20,20 +20,29 @@ export function DayGrid({
   days: TimelineDay[];
   accent?: TimelineAccent;
 }) {
-  const [openDate, setOpenDate] = useState<string | null>(null);
+  // Days expand independently — closing a day someone opened above the one you
+  // tapped shifts the whole grid and yanks the page (worst when zoomed in).
+  const [openDates, setOpenDates] = useState<Set<string>>(() => new Set());
+  const toggleDate = (date: string) =>
+    setOpenDates((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) next.delete(date);
+      else next.add(date);
+      return next;
+    });
 
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
       {days.map((day) => {
         const vegas = day.theme === "vegas";
-        const isOpen = openDate === day.date;
+        const isOpen = openDates.has(day.date);
         const d = parseDay(day.date);
         return (
           <motion.button
             key={day.date}
             layout
             transition={{ type: "spring", stiffness: 260, damping: 30 }}
-            onClick={() => setOpenDate(isOpen ? null : day.date)}
+            onClick={() => toggleDate(day.date)}
             aria-expanded={isOpen}
             className={`flex flex-col items-stretch justify-start rounded-2xl border p-3 text-left md:p-4 ${
               vegas ? "card-vegas" : "card-desert"
