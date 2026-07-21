@@ -4,10 +4,16 @@ import type { BudgetItem, Scenario, Traveler } from "@/lib/data";
 /** Total of a scenario's shared travel + lodging cost lines. */
 export const scenarioTotal = (s: Scenario) => s.costLines.reduce((a, l) => a + l.cents, 0);
 
-/** Yellow-pad lines this scenario actually pays for, and what it really costs. */
+/**
+ * A yellow-pad line this scenario actually pays for. One budget line can map to
+ * several cost lines — the fly plan itemizes lodging per night, so "Sedona Hotel"
+ * covers both the Saturday and Sunday nights at their own rates.
+ */
 export type CoveredLine = {
   item: BudgetItem;
-  line: CostLine;
+  lines: CostLine[];
+  /** what this plan really charges for it (sum of its cost lines) */
+  cents: number;
   /** yellowPad − real price. Positive = the real deal beat the plan. */
   saved: number;
 };
@@ -86,7 +92,12 @@ export function estimateForScenario(
   scenario: Scenario | undefined,
 ): Estimate {
   const lines = scenario?.costLines ?? [];
-  const byKey = new Map(lines.filter((l) => l.key).map((l) => [l.key as string, l]));
+  // a key can carry several lines (lodging is itemized per night on the fly plan)
+  const byKey = new Map<string, CostLine[]>();
+  for (const l of lines) {
+    if (!l.key) continue;
+    byKey.set(l.key, [...(byKey.get(l.key) ?? []), l]);
+  }
 
   const bucketTotal = items.reduce((a, i) => a + i.yellowPadCents, 0);
   const poolLines = lines.filter((l) => !l.owner);
@@ -102,13 +113,17 @@ export function estimateForScenario(
     const released: ReleasedLine[] = [];
     for (const item of own) {
       if (!item.costKey) continue;
-      const line = byKey.get(item.costKey);
-      if (line) covered.push({ item, line, saved: item.yellowPadCents - line.cents });
-      else released.push({ item, freed: item.yellowPadCents });
+      const matched = byKey.get(item.costKey);
+      if (matched?.length) {
+        const cents = matched.reduce((a, l) => a + l.cents, 0);
+        covered.push({ item, lines: matched, cents, saved: item.yellowPadCents - cents });
+      } else {
+        released.push({ item, freed: item.yellowPadCents });
+      }
     }
 
     const bucket = own.reduce((a, i) => a + i.yellowPadCents, 0);
-    const committed = personal + covered.reduce((a, c) => a + c.line.cents, 0);
+    const committed = personal + covered.reduce((a, c) => a + c.cents, 0);
 
     // itemize where this person's freed money came from
     for (const c of covered) {

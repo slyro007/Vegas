@@ -151,6 +151,17 @@ export function PlanCompare({
                           </span>
                           <span className="tabular-nums">{fmtMoney(line.cents)}</span>
                         </div>
+                        {line.alternative && (
+                          <div className="flex items-baseline justify-between gap-2 text-xs text-mark-amber">
+                            <span>{line.alternative.label}</span>
+                            <span className="tabular-nums">
+                              {fmtMoney(line.alternative.cents)}
+                              {line.alternative.cents > line.cents && (
+                                <> · +{fmtMoney(line.alternative.cents - line.cents)}</>
+                              )}
+                            </span>
+                          </div>
+                        )}
                         <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-surface">
                           <div
                             className="h-full rounded-full"

@@ -98,6 +98,8 @@ export type CostLine = {
   /** links to a budget line's costKey: gas | road-food | flagstaff | sedona | henderson */
   key?: string;
   confidence?: Confidence;
+  /** an open either/or — e.g. the last night: back to Henderson, or extend the Luxor */
+  alternative?: { label: string; cents: number };
   /** @deprecated use `confidence` */
   estimate?: boolean;
 };
