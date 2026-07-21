@@ -4,7 +4,7 @@ import { ChevronDown, Lock } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { unlockScenario } from "@/app/actions";
-import { ConfidenceTag, confidenceFill } from "@/components/ConfidenceTag";
+import { AltDelta, ConfidenceTag, confidenceFill } from "@/components/ConfidenceTag";
 import { scenarioAccent } from "@/lib/accents";
 import type { Scenario, TripSettings } from "@/lib/data";
 import { fmtMoney } from "@/lib/format";
@@ -156,9 +156,7 @@ export function PlanCompare({
                             <span>{line.alternative.label}</span>
                             <span className="tabular-nums">
                               {fmtMoney(line.alternative.cents)}
-                              {line.alternative.cents > line.cents && (
-                                <> · +{fmtMoney(line.alternative.cents - line.cents)}</>
-                              )}
+                              <AltDelta line={line} />
                             </span>
                           </div>
                         )}

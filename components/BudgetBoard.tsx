@@ -4,6 +4,7 @@ import { ChevronDown, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { addBudgetItem, deleteBudgetItem, updateBudgetItem } from "@/app/actions";
+import { AltDelta } from "@/components/ConfidenceTag";
 import type { BudgetItem, Traveler } from "@/lib/data";
 import type { Estimate } from "@/lib/estimate";
 import { CATEGORY_META, fmtMoney } from "@/lib/format";
@@ -382,9 +383,7 @@ export function BudgetBoard({
                                         </span>
                                         <span className="shrink-0 tabular-nums">
                                           {fmtMoney(line.alternative.cents)}
-                                          {line.alternative.cents > line.cents && (
-                                            <> · +{fmtMoney(line.alternative.cents - line.cents)}</>
-                                          )}
+                                          <AltDelta line={line} />
                                         </span>
                                       </div>
                                     )}

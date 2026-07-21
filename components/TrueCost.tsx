@@ -297,7 +297,7 @@ export function TrueCost({
             <span className="text-ink-secondary">It&apos;s the transportation, not the trip.</span>{" "}
             Hotels and food land within a couple hundred dollars of each other on all three plans —
             flying costs a bit more on lodging (the Saturday Sedona rate) and a bit less on food (no
-            road-trip meals). Nearly the whole gap is getting there: $1,931 of airfare plus the
+            road-trip meals). Nearly the whole gap is getting there: $2,475 to fly plus the
             rental, bags, ubers and fuel, against gas and a car we already own. The rental SUV is
             the same road trip with $650 of vehicle on top.
           </p>
