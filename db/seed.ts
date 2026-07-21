@@ -467,8 +467,10 @@ async function seed() {
   const driveFood = () => foodLines(100000, "Vegas week");
   const flyFood = () => foodLines(125000, "7 days off-resort");
   const flyCore = (): CostLine[] => [
-    // $1,700 covers all four round trip incl. seat selection — bags are separate
-    { label: "Delta Round Trip × 4, Seats Included (Fri–Sat)", cents: 170000, confidence: "quoted" },
+    // Real Delta checkout: fare $1,681.88 + taxes/fees $249.36 = $1,931.24 for all
+    // four. Main Classic includes seat selection but NOT checked bags (below).
+    { label: "Delta Round Trip, All Four — Main Classic (DL2260 / DL1837)", cents: 168188, confidence: "quoted" },
+    { label: "Delta Taxes, Fees & Charges", cents: 24936, confidence: "quoted" },
     { label: "Midsize Luxury SUV, Sat–Sat (Quoted)", cents: 65865, confidence: "quoted" },
     { label: "Checked Bags (All Four · $90 Each)", cents: 36000, confidence: "estimate" },
     // one shared XL each way, Austin only — we have the rental car in Vegas
