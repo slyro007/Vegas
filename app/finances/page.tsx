@@ -45,12 +45,12 @@ export default async function FinancesPage() {
         <p className="text-xs uppercase tracking-widest text-ink-muted">the money plan</p>
         <h1 className="mt-1 font-display text-3xl font-semibold md:text-5xl">Trip Finances</h1>
         <p className="mt-3 max-w-2xl text-sm text-ink-secondary md:text-base">
-          The <span className="font-medium text-ink">yellow pad</span> is what each person planned
-          to cover. <span className="font-medium text-ink">Projected</span> is the refined number
-          (the real Luxor + Best Western deals came in cheaper). Toggle a scenario to see whether
-          the whole trip still <span className="font-medium text-ink">fits the budget</span> — each
-          person&apos;s own responsibility stays put; the shared travel is pooled. Log real spend on
-          the{" "}
+          Everyone&apos;s <span className="font-medium text-ink">bucket</span> is what they planned
+          to cover on the yellow pad — it never changes. Toggle a scenario and watch how much of
+          each bucket that plan actually spends: whatever it{" "}
+          <span className="font-medium text-ink">doesn&apos;t</span> need goes back in. Fly instead
+          of drive and Amma&apos;s gas and road food come straight back. Costs nobody planned for
+          (flights, the rental, bags) come out of the pooled leftovers. Log real spend on the{" "}
           <Link href="/expenses" className="text-glow-pink hover:underline">
             Spend page
           </Link>
@@ -102,9 +102,11 @@ export default async function FinancesPage() {
       </Reveal>
 
       <p className="mt-6 text-xs text-ink-muted">
-        Yellow-pad lines are the original plan; edit any Projected or Actual amount inline. Shared
-        travel + lodging is split evenly four ways in the Estimate; personal lines stay with the
-        person. Lines with logged expenses show the logged sum as their actual.
+        Yellow-pad lines are the original plan; edit any Projected or Actual amount inline. Travel
+        and hotel lines are priced by whichever scenario is selected, so they aren&apos;t editable
+        here — a line the plan never incurs is marked released and its money returns to that
+        person&apos;s bucket. Nobody is charged a share of a cost they didn&apos;t plan for. Lines
+        with logged expenses show the logged sum as their actual.
       </p>
     </div>
   );

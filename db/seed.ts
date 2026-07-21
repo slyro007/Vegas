@@ -12,6 +12,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import {
   budgetItems,
   checklistItems,
+  type CostLine,
   expenses,
   itineraryEvents,
   lodging,
@@ -77,43 +78,47 @@ async function seed() {
     ])
     .returning();
 
-  console.log("Seeding budget items (yellow pad / projected / shared)…");
-  const S = true;
-  // [traveler, label, category, yellowPadCents, plannedCents, shared, notes?]
+  console.log("Seeding budget items (yellow pad / projected / cost key)…");
+  // [traveler, label, category, yellowPadCents, plannedCents, costKey, notes?]
+  // costKey links a line to the selected scenario's cost line — that scenario decides
+  // its real price. No matching cost line => the line is RELEASED and its yellow pad
+  // goes back in the owner's bucket (flying hands Amma back gas + road food).
+  // A line with a costKey is "shared" by definition.
   const budgetRows: [
     typeof pithya,
     string,
     string,
     number,
     number,
-    boolean,
+    string | null,
     string?,
   ][] = [
-    [pithya, "Flagstaff Hotel (Sat)", "lodging", 15000, 8450, S],
-    [pithya, "Caesar Ranch Adventure", "experience", 40000, 40000, false, "~4 hours of horses at the land in Valle"],
-    [pithya, "BW Henderson (Sun–Wed)", "lodging", 50000, 20000, S, "~$54/night on John's rate"],
-    [pithya, "Sedona Hotel (Fri)", "lodging", 25000, 14400, S],
-    [pithya, "Spending Money", "misc", 25000, 25000, false],
-    [bex, "Luxor / Excalibur All-Inclusive", "lodging", 160000, 72096, false, "Fully BeX's — all-inclusive covers breakfast, lunch & dinner Wed–Fri · real deal came in at $720.96 for 2 rooms"],
-    [bex, "Wynn Buffet (All Four)", "food", 40000, 40000, false, "~$100 a head — BeX covers everyone"],
-    [bex, "Vegas Meals — BeX's Share", "food", 75000, 75000, false],
-    [bex, "Spending Money", "misc", 25000, 25000, false],
-    [amma, "Road Trip Gas", "gas", 60000, 60000, S],
-    [amma, "Road Trip Food", "food", 40000, 40000, S],
-    [amma, "Vegas Meals — Amma's Share", "food", 25000, 25000, false],
-    [amma, "Caesar Gifts", "gifts", 15000, 15000, false],
-    [amma, "Spending Money", "misc", 25000, 25000, false],
-    [shy, "Pre-Vegas Trip", "misc", 20000, 20000, false],
-    [shy, "Spending Money", "misc", 25000, 25000, false],
+    [pithya, "Flagstaff Hotel (Sat)", "lodging", 15000, 8450, "flagstaff"],
+    [pithya, "Caesar Ranch Adventure", "experience", 40000, 40000, null, "~4 hours of horses at the land in Valle"],
+    [pithya, "BW Henderson (Sun–Wed)", "lodging", 50000, 20000, "henderson", "~$54/night on John's rate"],
+    [pithya, "Sedona Hotel (Fri)", "lodging", 25000, 14400, "sedona"],
+    [pithya, "Spending Money", "misc", 25000, 25000, null],
+    [bex, "Luxor / Excalibur All-Inclusive", "lodging", 160000, 72096, null, "Fully BeX's — all-inclusive covers breakfast, lunch & dinner Wed–Fri · real deal came in at $720.96 for 2 rooms"],
+    [bex, "Wynn Buffet (All Four)", "food", 40000, 40000, null, "~$100 a head — BeX covers everyone"],
+    [bex, "Vegas Meals — BeX's Share", "food", 75000, 75000, null],
+    [bex, "Spending Money", "misc", 25000, 25000, null],
+    [amma, "Road Trip Gas", "gas", 60000, 60000, "gas"],
+    [amma, "Road Trip Food", "food", 40000, 40000, "road-food"],
+    [amma, "Vegas Meals — Amma's Share", "food", 25000, 25000, null],
+    [amma, "Caesar Gifts", "gifts", 15000, 15000, null],
+    [amma, "Spending Money", "misc", 25000, 25000, null],
+    [shy, "Pre-Vegas Trip", "misc", 20000, 20000, null],
+    [shy, "Spending Money", "misc", 25000, 25000, null],
   ];
   await db.insert(budgetItems).values(
-    budgetRows.map(([t, label, category, yellowPadCents, plannedCents, shared, notes]) => ({
+    budgetRows.map(([t, label, category, yellowPadCents, plannedCents, costKey, notes]) => ({
       travelerId: t.id,
       label,
       category,
       yellowPadCents,
       plannedCents,
-      shared,
+      costKey,
+      shared: costKey !== null,
       notes: notes ?? null,
     })),
   );
@@ -430,6 +435,28 @@ async function seed() {
     { day: "Sat 15", plan: "5 AM depart Sedona" },
     { day: "Sun 16", plan: "Home at Muir Lake, early morning" },
   ];
+  // Shared cost lines. `owner` = whose yellow-pad bucket covers it (absent = drawn from
+  // the family pool, i.e. nobody budgeted for it); `key` links back to a budget line.
+  // `confidence`: quoted = a real price we were given · rate = John's BW rate, an
+  // assumption not a booking · estimate = rough.
+  // Every cents value is a GROUP TOTAL for all four, never per person.
+  const gas = (): CostLine => ({ label: "Gas (Round Trip)", cents: 60000, owner: "amma", key: "gas", confidence: "estimate" });
+  const roadFood = (): CostLine => ({ label: "Road Trip Food", cents: 40000, owner: "amma", key: "road-food", confidence: "estimate" });
+  const flagstaff = (): CostLine => ({ label: "Flagstaff Night (John's Rate)", cents: 8450, owner: "pithya", key: "flagstaff", confidence: "rate" });
+  const sedona = (label: string, cents: number): CostLine => ({ label, cents, owner: "pithya", key: "sedona", confidence: "rate" });
+  const henderson = (label: string, cents: number): CostLine => ({ label, cents, owner: "pithya", key: "henderson", confidence: "rate" });
+  const enterprise = (): CostLine => ({ label: "Enterprise Full-Size SUV (Whole Trip)", cents: 65000, confidence: "estimate" });
+  const ammaFlight = (): CostLine => ({ label: "Amma's Flight, Sun–Fri (Quoted)", cents: 35300, confidence: "quoted" });
+  const ammaUbers = (): CostLine => ({ label: "Amma's Ubers", cents: 8000, confidence: "estimate" });
+  const flyCore = (): CostLine[] => [
+    { label: "Delta Round Trip × 4 (Fri–Sat)", cents: 134800, confidence: "quoted" },
+    { label: "Midsize Luxury SUV, Sat–Sat (Quoted)", cents: 65865, confidence: "quoted" },
+    { label: "Checked Bags (All Four)", cents: 36000, confidence: "estimate" },
+    // one shared XL each way, Austin only — we have the rental car in Vegas
+    { label: "Austin Airport Uber — One Ride Each Way (All Four)", cents: 30000, confidence: "estimate" },
+    { label: "Arizona Driving Fuel (The Land + Sedona)", cents: 40000, confidence: "estimate" },
+  ];
+
   await db.insert(scenarios).values([
     {
       slug: "forester",
@@ -450,11 +477,11 @@ async function seed() {
         "Puts ~2,400 miles on the 2019 Forester",
       ],
       costLines: [
-        { label: "Gas (Round Trip)", cents: 60000 },
-        { label: "Road Trip Food", cents: 40000 },
-        { label: "Flagstaff Night", cents: 8450 },
-        { label: "Sedona Night", cents: 14400 },
-        { label: "BW Henderson (Vegas Base)", cents: 20000 },
+        gas(),
+        roadFood(),
+        flagstaff(),
+        sedona("Sedona Night (John's Rate)", 14400),
+        henderson("BW Henderson (Vegas Base)", 20000),
       ],
       itineraryOutline: roadOutline,
     },
@@ -476,12 +503,12 @@ async function seed() {
         "Still ~30 hours of driving",
       ],
       costLines: [
-        { label: "Enterprise Full-Size SUV (Whole Trip)", cents: 65000, estimate: true },
-        { label: "Gas (Round Trip)", cents: 60000, estimate: true },
-        { label: "Road Trip Food", cents: 40000 },
-        { label: "Flagstaff Night", cents: 8450 },
-        { label: "Sedona Night", cents: 14400 },
-        { label: "BW Henderson (Vegas Base)", cents: 20000 },
+        enterprise(),
+        gas(),
+        roadFood(),
+        flagstaff(),
+        sedona("Sedona Night (John's Rate)", 14400),
+        henderson("BW Henderson (Vegas Base)", 20000),
       ],
       itineraryOutline: roadOutline,
     },
@@ -504,13 +531,9 @@ async function seed() {
         "Checked bags + airport Ubers on top of the fares",
       ],
       costLines: [
-        { label: "Delta Round Trip × 4 (Fri–Sat)", cents: 134800 },
-        { label: "Midsize Luxury SUV, Sat–Sat (quoted)", cents: 65865 },
-        { label: "Checked Bags (×4)", cents: 36000, estimate: true },
-        { label: "Sedona Night (BW Red Rock, John's Rate)", cents: 14400 },
-        { label: "Airport Ubers", cents: 12000, estimate: true },
-        { label: "Land + Sedona Fuel", cents: 12000, estimate: true },
-        { label: "BW Henderson (Fri fly-in + Sun–Wed + Fri, 5 nights)", cents: 27000 },
+        ...flyCore(),
+        sedona("Sedona Night (BW Red Rock, John's Rate)", 14400),
+        henderson("BW Henderson (Fri fly-in + Sun–Wed + Fri, 5 nights)", 27000),
       ],
       itineraryOutline: [
         { day: "Fri 7", plan: "Fly in 4:32 PM · Uber to Henderson · crash" },
@@ -543,13 +566,13 @@ async function seed() {
         "More room in the car, but the cooler only feeds three",
       ],
       costLines: [
-        { label: "Gas (Round Trip)", cents: 60000 },
-        { label: "Road Trip Food", cents: 40000 },
-        { label: "Flagstaff Night", cents: 8450 },
-        { label: "Sedona Night", cents: 14400 },
-        { label: "Amma's Flight, Sun–Fri (Quoted)", cents: 35300 },
-        { label: "Amma's Ubers", cents: 8000, estimate: true },
-        { label: "BW Henderson (Vegas Base)", cents: 20000 },
+        gas(),
+        roadFood(),
+        flagstaff(),
+        sedona("Sedona Night (John's Rate)", 14400),
+        ammaFlight(),
+        ammaUbers(),
+        henderson("BW Henderson (Vegas Base)", 20000),
       ],
       itineraryOutline: hybridOutline,
     },
@@ -572,14 +595,14 @@ async function seed() {
         "Pickup and drop-off logistics on a 5 AM departure day",
       ],
       costLines: [
-        { label: "Enterprise Full-Size SUV (Whole Trip)", cents: 65000, estimate: true },
-        { label: "Gas (Round Trip)", cents: 60000, estimate: true },
-        { label: "Road Trip Food", cents: 40000 },
-        { label: "Flagstaff Night", cents: 8450 },
-        { label: "Sedona Night", cents: 14400 },
-        { label: "Amma's Flight, Sun–Fri (Quoted)", cents: 35300 },
-        { label: "Amma's Ubers", cents: 8000, estimate: true },
-        { label: "BW Henderson (Vegas Base)", cents: 20000 },
+        enterprise(),
+        gas(),
+        roadFood(),
+        flagstaff(),
+        sedona("Sedona Night (John's Rate)", 14400),
+        ammaFlight(),
+        ammaUbers(),
+        henderson("BW Henderson (Vegas Base)", 20000),
       ],
       itineraryOutline: hybridOutline,
     },
@@ -602,13 +625,9 @@ async function seed() {
         "Friday's last Vegas day is still up in the air",
       ],
       costLines: [
-        { label: "Delta Round Trip × 4 (Fri–Sat)", cents: 134800 },
-        { label: "Midsize Luxury SUV, Sat–Sat (quoted)", cents: 65865 },
-        { label: "Checked Bags (×4)", cents: 36000, estimate: true },
-        { label: "Sedona — 2 Nights (BW Red Rock)", cents: 28800 },
-        { label: "BW Henderson (Fri fly-in + Mon–Wed + Fri, 4 nights)", cents: 21600 },
-        { label: "Airport Ubers", cents: 12000, estimate: true },
-        { label: "Land + Sedona Fuel", cents: 12000, estimate: true },
+        ...flyCore(),
+        sedona("Sedona — 2 Nights (BW Red Rock, John's Rate)", 28800),
+        henderson("BW Henderson (Fri fly-in + Mon–Wed + Fri, 4 nights)", 21600),
       ],
       itineraryOutline: [
         { day: "Fri 7", plan: "Fly in 4:32 PM · Uber to Henderson · crash" },

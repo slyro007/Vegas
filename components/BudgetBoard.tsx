@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { addBudgetItem, deleteBudgetItem, updateBudgetItem } from "@/app/actions";
 import type { BudgetItem, Traveler } from "@/lib/data";
+import type { Estimate } from "@/lib/estimate";
 import { CATEGORY_META, fmtMoney } from "@/lib/format";
 import { TravelerAvatar } from "@/lib/icons";
 
@@ -137,9 +138,11 @@ function AddItemForm({ travelerId, onDone }: { travelerId: number; onDone: () =>
 export function BudgetBoard({
   travelers,
   items,
+  estimate,
 }: {
   travelers: Traveler[];
   items: BudgetItem[];
+  estimate: Estimate;
 }) {
   const [openId, setOpenId] = useState<number | null>(travelers[0]?.id ?? null);
   const [adding, setAdding] = useState<number | null>(null);
@@ -150,12 +153,15 @@ export function BudgetBoard({
     <div className="space-y-4">
       {travelers.map((traveler, idx) => {
         const own = items.filter((i) => i.travelerId === traveler.id);
-        // each person's own responsibility — fixed, not split with the shared travel pool
-        const yellow = own.reduce((s, i) => s + i.yellowPadCents, 0);
-        const projected = own.reduce((s, i) => s + i.plannedCents, 0);
+        const person = estimate.perPerson.find((p) => p.traveler.id === traveler.id);
+        // bucket = their yellow pad (fixed) · committed = what this plan actually spends of it
+        const bucket = person?.bucket ?? own.reduce((s, i) => s + i.yellowPadCents, 0);
+        const committed = person?.committed ?? 0;
+        const left = person?.left ?? 0;
         const spent = own.reduce((s, i) => s + (i.actualCents ?? 0), 0);
-        // + = real deals came in under what they planned on the yellow pad
-        const savedVsYellow = yellow - projected;
+        // a shared line's real price comes from the scenario, keyed by costKey
+        const coveredBy = new Map(person?.covered.map((c) => [c.item.id, c.line]) ?? []);
+        const releasedIds = new Set(person?.released.map((r) => r.item.id) ?? []);
         const isOpen = openId === traveler.id;
 
         return (
@@ -183,19 +189,22 @@ export function BudgetBoard({
               <span className="min-w-0 flex-1">
                 <span className="font-display text-lg font-semibold">{traveler.name}</span>
                 <span className="mt-0.5 block text-xs text-ink-muted">
-                  {own.length} Lines · Yellow Pad {fmtMoney(yellow)}
+                  {own.length} Lines · Bucket {fmtMoney(bucket)}
                 </span>
               </span>
               <span className="text-right">
-                <span
+                <motion.span
+                  key={left}
+                  initial={{ opacity: 0, y: -3 }}
+                  animate={{ opacity: 1, y: 0 }}
                   className={`block font-display text-lg font-semibold tabular-nums ${
-                    savedVsYellow > 0 ? "text-mark-green" : ""
+                    left > 0 ? "text-mark-green" : ""
                   }`}
                 >
-                  {fmtMoney(projected)}
-                </span>
+                  {fmtMoney(left)}
+                </motion.span>
                 <span className="block text-[11px] uppercase tracking-wider text-ink-muted">
-                  Projected
+                  Left in Bucket
                 </span>
                 <motion.span
                   animate={{ rotate: isOpen ? 180 : 0 }}
@@ -206,23 +215,20 @@ export function BudgetBoard({
               </span>
             </button>
 
-            {/* projected-vs-yellow-pad bar (their own responsibility) */}
+            {/* committed-vs-bucket bar */}
             <div className="px-4 pb-4 md:px-5">
               <div className="relative h-2 overflow-hidden rounded-full bg-surface">
                 <motion.div
                   className="absolute inset-y-0 left-0 rounded-full"
                   style={{ background: traveler.color }}
                   initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(100, yellow ? (projected / yellow) * 100 : 0)}%` }}
+                  animate={{ width: `${Math.min(100, bucket ? (committed / bucket) * 100 : 0)}%` }}
                   transition={{ type: "spring", stiffness: 70, damping: 20 }}
                 />
               </div>
               <p className="mt-1.5 text-xs text-ink-muted">
-                {savedVsYellow > 0
-                  ? `${fmtMoney(savedVsYellow)} under the yellow-pad plan`
-                  : savedVsYellow < 0
-                    ? `${fmtMoney(-savedVsYellow)} over the yellow-pad plan`
-                    : "Right on the yellow-pad plan"}
+                {fmtMoney(committed)} committed on this plan
+                {left > 0 ? ` · ${fmtMoney(left)} back in the bucket` : " · fully spoken for"}
                 {spent > 0 && ` · ${fmtMoney(spent)} spent`}
               </p>
             </div>
@@ -241,8 +247,10 @@ export function BudgetBoard({
                     <ul className="divide-y divide-borderc">
                       {own.map((item) => {
                         const meta = CATEGORY_META[item.category] ?? CATEGORY_META.misc;
+                        const covered = coveredBy.get(item.id);
+                        const released = releasedIds.has(item.id);
                         return (
-                          <li key={item.id} className="py-3">
+                          <li key={item.id} className={`py-3 ${released ? "opacity-60" : ""}`}>
                             <div className="flex items-start justify-between gap-2">
                               <span className="flex min-w-0 items-center gap-2 text-sm">
                                 <span
@@ -250,10 +258,17 @@ export function BudgetBoard({
                                   style={{ background: meta.cssVar }}
                                   title={meta.label}
                                 />
-                                <span className="truncate">{item.label}</span>
-                                {item.shared && (
+                                <span className={`truncate ${released ? "line-through" : ""}`}>
+                                  {item.label}
+                                </span>
+                                {released && (
+                                  <span className="shrink-0 rounded bg-mark-green/15 px-1 py-px text-[10px] uppercase tracking-wide text-mark-green">
+                                    released
+                                  </span>
+                                )}
+                                {covered && (
                                   <span className="shrink-0 rounded bg-surface px-1 py-px text-[10px] uppercase tracking-wide text-ink-muted">
-                                    shared
+                                    this plan
                                   </span>
                                 )}
                               </span>
@@ -285,47 +300,68 @@ export function BudgetBoard({
                             {item.notes && (
                               <p className="mt-0.5 pl-[18px] text-xs text-ink-muted">{item.notes}</p>
                             )}
-                            <div className="mt-2 grid grid-cols-3 gap-2 pl-[18px]">
-                              <div>
-                                <div className="text-[10px] uppercase tracking-wide text-ink-muted">
-                                  Yellow Pad
+                            {released ? (
+                              <p className="mt-1 pl-[18px] text-xs text-mark-green">
+                                {fmtMoney(item.yellowPadCents)} back in the bucket — this plan never
+                                pays for it
+                              </p>
+                            ) : (
+                              <div className="mt-2 grid grid-cols-3 gap-2 pl-[18px]">
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-wide text-ink-muted">
+                                    Yellow Pad
+                                  </div>
+                                  <div className="tabular-nums text-ink-secondary">
+                                    {fmtMoney(item.yellowPadCents)}
+                                  </div>
                                 </div>
-                                <div className="tabular-nums text-ink-secondary">
-                                  {fmtMoney(item.yellowPadCents)}
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-wide text-ink-muted">
+                                    {covered ? "This Plan" : "Projected"}
+                                  </div>
+                                  {covered ? (
+                                    // price comes from the selected scenario, so it isn't editable here
+                                    <div
+                                      className={`px-1.5 py-0.5 tabular-nums ${
+                                        covered.cents < item.yellowPadCents ? "text-mark-green" : ""
+                                      }`}
+                                      title={covered.label}
+                                    >
+                                      {fmtMoney(covered.cents)}
+                                    </div>
+                                  ) : (
+                                    <MoneyCell
+                                      cents={item.plannedCents}
+                                      className={
+                                        item.plannedCents < item.yellowPadCents
+                                          ? "text-mark-green"
+                                          : ""
+                                      }
+                                      onSave={(cents) =>
+                                        startTransition(() =>
+                                          updateBudgetItem(item.id, { plannedCents: cents ?? 0 }),
+                                        )
+                                      }
+                                    />
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-wide text-ink-muted">
+                                    Actual
+                                  </div>
+                                  <MoneyCell
+                                    cents={item.actualCents}
+                                    placeholder="—"
+                                    clearable
+                                    onSave={(cents) =>
+                                      startTransition(() =>
+                                        updateBudgetItem(item.id, { actualCents: cents }),
+                                      )
+                                    }
+                                  />
                                 </div>
                               </div>
-                              <div>
-                                <div className="text-[10px] uppercase tracking-wide text-ink-muted">
-                                  Projected
-                                </div>
-                                <MoneyCell
-                                  cents={item.plannedCents}
-                                  className={
-                                    item.plannedCents < item.yellowPadCents ? "text-mark-green" : ""
-                                  }
-                                  onSave={(cents) =>
-                                    startTransition(() =>
-                                      updateBudgetItem(item.id, { plannedCents: cents ?? 0 }),
-                                    )
-                                  }
-                                />
-                              </div>
-                              <div>
-                                <div className="text-[10px] uppercase tracking-wide text-ink-muted">
-                                  Actual
-                                </div>
-                                <MoneyCell
-                                  cents={item.actualCents}
-                                  placeholder="—"
-                                  clearable
-                                  onSave={(cents) =>
-                                    startTransition(() =>
-                                      updateBudgetItem(item.id, { actualCents: cents }),
-                                    )
-                                  }
-                                />
-                              </div>
-                            </div>
+                            )}
                           </li>
                         );
                       })}

@@ -33,9 +33,13 @@ export const budgetItems = pgTable("budget_items", {
   yellowPadCents: integer("yellow_pad_cents").notNull().default(0),
   plannedCents: integer("planned_cents").notNull().default(0),
   actualCents: integer("actual_cents"),
-  // shared trip cost (transport/lodging/road food) — the Estimated column splits
-  // these evenly 4 ways per scenario; personal lines stay with the person
+  // shared trip cost (transport/lodging/road food) — its real price comes from the
+  // selected scenario's cost lines, not from plannedCents; personal lines stay with the person
   shared: boolean("shared").notNull().default(false),
+  // links this line to a scenario cost line (gas | road-food | flagstaff | sedona | henderson).
+  // No matching cost line in a scenario => the line is released and its yellow pad goes back
+  // in the owner's bucket (e.g. road trip gas when we fly).
+  costKey: text("cost_key"),
   notes: text("notes"),
 });
 
@@ -77,7 +81,26 @@ export const itineraryEvents = pgTable("itinerary_events", {
   plan: text("plan").notNull().default("all"),
 });
 
-export type CostLine = { label: string; cents: number; estimate?: boolean };
+/**
+ * How solid a number is. Nothing outside the Luxor package is actually booked:
+ *   quoted   — a real price we were given (Delta fares, the Enterprise SUV)
+ *   rate     — John's Best Western rates: an assumption, not a booking
+ *   estimate — rough (gas, road food, bags, ubers, fuel)
+ * `estimate?: boolean` is the legacy flag kept so older migrations still typecheck.
+ */
+export type Confidence = "quoted" | "rate" | "estimate";
+
+export type CostLine = {
+  label: string;
+  cents: number;
+  /** traveler slug whose yellow-pad bucket covers this line; absent = drawn from the family pool */
+  owner?: string;
+  /** links to a budget line's costKey: gas | road-food | flagstaff | sedona | henderson */
+  key?: string;
+  confidence?: Confidence;
+  /** @deprecated use `confidence` */
+  estimate?: boolean;
+};
 
 export const scenarios = pgTable("scenarios", {
   id: serial("id").primaryKey(),
