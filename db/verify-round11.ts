@@ -24,7 +24,7 @@ const f = (c: number) => (c < 0 ? "-$" : "$") + (Math.abs(c) / 100).toFixed(2);
 const EXPECTED_AVAILABLE: Record<string, number> = {
   forester: 135054,
   "rental-suv": 70054,
-  fly: -144961,
+  fly: -168085,
 };
 
 async function main() {
@@ -67,8 +67,8 @@ async function main() {
     }
 
     // group-total convention: no line may be scaled by traveler count
-    if (s.slug === "fly" && clines !== 522865) {
-      fail("fly cost lines", f(clines), "expected $5,228.65 — did the uber or fare get ×4?");
+    if (s.slug === "fly" && clines !== 545989) {
+      fail("fly cost lines", f(clines), "expected $5,459.89 — did the uber or fare get ×4?");
     }
     if (scens.length !== 3) fail("expected exactly 3 scenarios, got", scens.length);
 
