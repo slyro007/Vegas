@@ -81,6 +81,7 @@ const ammaUbers = (): CostLine => ({ label: "Amma's Ubers", cents: 8000, confide
 
 // shared by both fly variants
 const flyCore = (): CostLine[] => [
+  // NOTE: superseded by migrate-round12 (fares rose to $1,700 with seats)
   { label: "Delta Round Trip × 4 (Fri–Sat)", cents: 134800, confidence: "quoted" },
   { label: "Midsize Luxury SUV, Sat–Sat (Quoted)", cents: 65865, confidence: "quoted" },
   { label: "Checked Bags (All Four)", cents: 36000, confidence: "estimate" },
