@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useOptimistic, useState, useTransition } from "react";
 import { castVote, lockScenario } from "@/app/actions";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
+import { ConfidenceTag, confidenceFill } from "@/components/ConfidenceTag";
 import { scenarioAccent } from "@/lib/accents";
 import type { Scenario, Traveler, TripSettings, Vote } from "@/lib/data";
 import { fmtMoney } from "@/lib/format";
@@ -138,11 +139,7 @@ export function ScenarioBoard({
                           <div className="flex items-baseline justify-between gap-2">
                             <span className="text-ink-secondary">
                               {line.label}
-                              {line.estimate && (
-                                <span className="ml-1.5 rounded bg-surface px-1 py-px text-[11px] uppercase tracking-wide text-ink-muted">
-                                  est.
-                                </span>
-                              )}
+                              <ConfidenceTag line={line} />
                             </span>
                             <span className="tabular-nums">{fmtMoney(line.cents)}</span>
                           </div>
@@ -152,9 +149,7 @@ export function ScenarioBoard({
                               style={{
                                 width: `${(line.cents / t) * 100}%`,
                                 background: accent.mark,
-                                backgroundImage: line.estimate
-                                  ? "repeating-linear-gradient(45deg, transparent 0 3px, rgba(0,0,0,0.35) 3px 6px)"
-                                  : undefined,
+                                backgroundImage: confidenceFill(line),
                               }}
                             />
                           </div>

@@ -4,6 +4,7 @@ import { ChevronDown, Lock } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { unlockScenario } from "@/app/actions";
+import { ConfidenceTag, confidenceFill } from "@/components/ConfidenceTag";
 import { scenarioAccent } from "@/lib/accents";
 import type { Scenario, TripSettings } from "@/lib/data";
 import { fmtMoney } from "@/lib/format";
@@ -146,11 +147,7 @@ export function PlanCompare({
                         <div className="flex items-baseline justify-between gap-2">
                           <span className="text-ink-secondary">
                             {line.label}
-                            {line.estimate && (
-                              <span className="ml-1.5 rounded bg-surface px-1 py-px text-[11px] uppercase tracking-wide text-ink-muted">
-                                est.
-                              </span>
-                            )}
+                            <ConfidenceTag line={line} />
                           </span>
                           <span className="tabular-nums">{fmtMoney(line.cents)}</span>
                         </div>
@@ -160,9 +157,7 @@ export function PlanCompare({
                             style={{
                               width: `${(line.cents / t) * 100}%`,
                               background: accent.mark,
-                              backgroundImage: line.estimate
-                                ? "repeating-linear-gradient(45deg, transparent 0 3px, rgba(0,0,0,0.35) 3px 6px)"
-                                : undefined,
+                              backgroundImage: confidenceFill(line),
                             }}
                           />
                         </div>
@@ -177,8 +172,11 @@ export function PlanCompare({
       </div>
       <p className="mt-4 text-xs text-ink-muted">
         Getting there plus the shared hotel nights (the Best Westerns). The Luxor all-inclusive is
-        BeX&apos;s, and personal food + spending money live on the Finances board. Hatched
-        &quot;est.&quot; lines are estimates, not quotes. Tap a plan for the line-by-line.
+        BeX&apos;s, and personal food + spending money live on the Finances board. Tags mark how
+        firm each number is: <span className="text-mark-green">quoted</span> is a real price we were
+        given, <span className="text-mark-amber">john&apos;s rate</span> is an assumption we
+        haven&apos;t booked, and <span className="text-ink-secondary">est.</span> is a rough guess.
+        Tap a plan for the line-by-line.
       </p>
     </section>
   );
