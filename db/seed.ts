@@ -553,8 +553,16 @@ async function seed() {
       ],
       costLines: [
         ...flyCore(),
-        sedona("Sedona — 2 Nights (BW Red Rock, John's Rate)", 28800),
-        henderson("BW Henderson (Fri fly-in + Mon–Wed + Fri, 4 nights)", 21600),
+        // lodging itemized per night: the Fri fly-in night and the Sat weekend
+        // rate were invisible inside the old aggregates (see migrate-round15.ts)
+        henderson("BW Henderson — Fri Aug 7, the fly-in night", 5400),
+        sedona("Sedona — Sat Aug 8 (weekend rate)", 20000),
+        sedona("Sedona — Sun Aug 9", 14400),
+        henderson("BW Henderson — Mon + Tue, Aug 10–11", 10800),
+        {
+          ...henderson("Last Night — BW Henderson, Fri Aug 14", 5400),
+          alternative: { label: "or extend the Luxor — 2 rooms × $100", cents: 20000 },
+        },
         ...flyFood(),
       ],
       itineraryOutline: [

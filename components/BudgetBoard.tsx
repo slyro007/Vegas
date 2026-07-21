@@ -160,7 +160,7 @@ export function BudgetBoard({
         const left = person?.left ?? 0;
         const spent = own.reduce((s, i) => s + (i.actualCents ?? 0), 0);
         // a shared line's real price comes from the scenario, keyed by costKey
-        const coveredBy = new Map(person?.covered.map((c) => [c.item.id, c.line]) ?? []);
+        const coveredBy = new Map(person?.covered.map((c) => [c.item.id, c]) ?? []);
         const releasedIds = new Set(person?.released.map((r) => r.item.id) ?? []);
         const isOpen = openId === traveler.id;
 
@@ -325,7 +325,6 @@ export function BudgetBoard({
                                       className={`px-1.5 py-0.5 tabular-nums ${
                                         covered.cents < item.yellowPadCents ? "text-mark-green" : ""
                                       }`}
-                                      title={covered.label}
                                     >
                                       {fmtMoney(covered.cents)}
                                     </div>
@@ -361,6 +360,37 @@ export function BudgetBoard({
                                   />
                                 </div>
                               </div>
+                            )}
+
+                            {/* what this plan is actually paying for, night by night */}
+                            {covered && covered.lines.length > 0 && (
+                              <ul className="mt-2 space-y-1 pl-[18px]">
+                                {covered.lines.map((line) => (
+                                  <li key={line.label} className="text-xs">
+                                    <div className="flex items-baseline justify-between gap-2">
+                                      <span className="min-w-0 truncate text-ink-muted">
+                                        {line.label}
+                                      </span>
+                                      <span className="shrink-0 tabular-nums text-ink-secondary">
+                                        {fmtMoney(line.cents)}
+                                      </span>
+                                    </div>
+                                    {line.alternative && (
+                                      <div className="mt-0.5 flex items-baseline justify-between gap-2 text-mark-amber">
+                                        <span className="min-w-0 truncate">
+                                          {line.alternative.label}
+                                        </span>
+                                        <span className="shrink-0 tabular-nums">
+                                          {fmtMoney(line.alternative.cents)}
+                                          {line.alternative.cents > line.cents && (
+                                            <> · +{fmtMoney(line.alternative.cents - line.cents)}</>
+                                          )}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
                             )}
                           </li>
                         );
