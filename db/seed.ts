@@ -157,7 +157,7 @@ async function seed() {
       notes: "Home base for Old Vegas + Fremont — two nights on John's rate.",
     },
     {
-      name: "Luxor — All-Inclusive Experience",
+      name: "Luxor or Excalibur — All-Inclusive",
       location: "Las Vegas Strip",
       checkIn: "2026-08-12",
       checkOut: "2026-08-14",
@@ -166,7 +166,7 @@ async function seed() {
       cancelBy: "2026-08-09",
       theme: "vegas",
       notes:
-        "$360.48 per room × 2 rooms · Pyramid Premier Two Queen · all-inclusive covers breakfast, lunch & dinner Wed–Fri · fully BeX's · free cancellation until Aug 9",
+        "Deciding between the two by Tue Jul 21 — same all-inclusive package + price either way · $360.48 per room × 2 · covers breakfast, lunch & dinner Wed–Fri · fully BeX's · free cancellation until Aug 9",
     },
   ]);
 
@@ -580,7 +580,7 @@ async function seed() {
     { list: "pre-trip", sortOrder: 0, label: "Delta Check-In Opens Thu Aug 6 (H2UQO8)", note: "24 hours before the 3:39 PM flight" },
     { list: "pre-trip", sortOrder: 1, label: "Book the Midsize SUV — Fri–Fri, Airport Pickup" },
     { list: "pre-trip", sortOrder: 2, label: "Confirm Caesar Meetup at Valle (Sat Aug 8)", assignee: "Pithya" },
-    { list: "pre-trip", sortOrder: 3, label: "Book Luxor All-Inclusive", assignee: "BeX", note: "Free cancellation until Aug 9" },
+    { list: "pre-trip", sortOrder: 3, label: "Decide + Book: Luxor vs Excalibur All-Inclusive", assignee: "BeX", note: "Deciding Tue Jul 21 · same package either way · free cancellation until Aug 9" },
     { list: "pre-trip", sortOrder: 4, label: "Confirm John's BW Rate — Henderson + Sedona", assignee: "Pithya" },
     { list: "pre-trip", sortOrder: 5, label: "Pick Up Amma on the Way to the Airport (Fri Aug 7)" },
     { list: "pre-trip", sortOrder: 6, label: "Download Offline Maps for the Desert Stretches" },
