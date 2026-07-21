@@ -34,9 +34,19 @@ const VIEWS = [
 type ViewKey = (typeof VIEWS)[number]["key"];
 const VIEW_STORAGE_KEY = "itinerary-view";
 
-function buildDays(events: ItineraryEvent[], filterKey: string): TimelineDay[] {
+/**
+ * Both road trips share every day of the trip; the rental only adds pickup and
+ * drop-off on either end, so it renders `drive` plus its own `driveb` events.
+ */
+const DRIVE_VARIANTS = [
+  { key: "forester" as const, label: "Our Forester", keys: ["drive"] },
+  { key: "rental" as const, label: "Rental SUV", keys: ["drive", "driveb"] },
+];
+type DriveVariant = (typeof DRIVE_VARIANTS)[number]["key"];
+
+function buildDays(events: ItineraryEvent[], filterKeys: string[]): TimelineDay[] {
   const filtered = events.filter(
-    (e) => e.plan === "all" || e.plan.split(" ").includes(filterKey),
+    (e) => e.plan === "all" || e.plan.split(" ").some((t) => filterKeys.includes(t)),
   );
   const byDate = new Map<string, ItineraryEvent[]>();
   for (const event of filtered) {
@@ -57,11 +67,14 @@ function buildDays(events: ItineraryEvent[], filterKey: string): TimelineDay[] {
 export function ItineraryView({
   events,
   defaultPlan = "drive",
+  defaultDriveVariant = "forester",
 }: {
   events: ItineraryEvent[];
   defaultPlan?: TimelineAccent;
+  defaultDriveVariant?: DriveVariant;
 }) {
   const [plan, setPlan] = useState<TimelineAccent>(defaultPlan);
+  const [driveVariant, setDriveVariant] = useState<DriveVariant>(defaultDriveVariant);
   const [view, setView] = useState<ViewKey>("timeline");
 
   // hydrate the saved view choice after mount (SSR-safe)
@@ -75,7 +88,9 @@ export function ItineraryView({
   };
 
   const meta = PLANS.find((p) => p.key === plan)!;
-  const days = buildDays(events, plan);
+  const variant = DRIVE_VARIANTS.find((v) => v.key === driveVariant)!;
+  const filterKeys = plan === "drive" ? variant.keys : [plan];
+  const days = buildDays(events, filterKeys);
 
   return (
     <div>
@@ -146,14 +161,50 @@ export function ItineraryView({
         </div>
       </div>
 
+      {/* drive-only sub-toggle: our Forester vs the rental SUV */}
+      {plan === "drive" && (
+        <div className="mt-3 inline-flex rounded-full border border-borderc bg-card p-1">
+          {DRIVE_VARIANTS.map((v) => {
+            const active = driveVariant === v.key;
+            return (
+              <button
+                key={v.key}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setDriveVariant(v.key)}
+                className={`relative rounded-full px-3 py-1.5 text-xs font-medium transition-colors md:text-sm ${
+                  active ? "text-ink" : "text-ink-muted hover:text-ink-secondary"
+                }`}
+                aria-pressed={active}
+              >
+                {active && (
+                  <motion.span
+                    layoutId="drive-variant-pill"
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background: "color-mix(in srgb, var(--mark-orange) 26%, transparent)",
+                      border: "1px solid var(--mark-orange)",
+                    }}
+                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                  />
+                )}
+                <span className="relative">{v.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <motion.div
-        key={`${plan}-${view}`}
+        key={`${filterKeys.join("-")}-${view}`}
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 200, damping: 26 }}
       >
         <p className="mt-4 max-w-xl text-sm text-ink-secondary md:text-base">
-          {meta.blurb}
+          {plan === "drive" && driveVariant === "rental"
+            ? "Same ten days, but in an Enterprise full-size SUV — real room for four people, luggage and the cooler. Pick it up Friday afternoon and drop it back Sunday once everyone's slept."
+            : meta.blurb}
         </p>
         <div className="mt-8">
           {view === "grid" ? (
