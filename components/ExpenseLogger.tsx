@@ -21,11 +21,14 @@ export function ExpenseLogger({
   budgetItems,
   expenses,
   defaultTravelerId = null,
+  excludedItemIds = [],
 }: {
   travelers: Traveler[];
   budgetItems: BudgetItem[];
   expenses: Expense[];
   defaultTravelerId?: number | null;
+  /** lines the booked plan released — nothing to spend on, so not offered */
+  excludedItemIds?: number[];
 }) {
   const [travelerId, setTravelerId] = useState<number | null>(defaultTravelerId);
   const [budgetItemId, setBudgetItemId] = useState<number | null>(null);
@@ -35,7 +38,10 @@ export function ExpenseLogger({
 
   const travelerById = new Map(travelers.map((t) => [t.id, t]));
   const itemById = new Map(budgetItems.map((i) => [i.id, i]));
-  const myLines = travelerId ? budgetItems.filter((i) => i.travelerId === travelerId) : [];
+  const excluded = new Set(excludedItemIds);
+  const myLines = travelerId
+    ? budgetItems.filter((i) => i.travelerId === travelerId && !excluded.has(i.id))
+    : [];
 
   const loggedByItem = new Map<number, number>();
   const loggedByTraveler = new Map<number, number>();
