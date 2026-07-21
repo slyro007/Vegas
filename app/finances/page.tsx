@@ -1,13 +1,7 @@
 import Link from "next/link";
 import { FinancesEstimator } from "@/components/FinancesEstimator";
 import { Reveal } from "@/components/Reveal";
-import {
-  getBudgetItems,
-  getExpenses,
-  getScenarios,
-  getTravelers,
-  getTripSettings,
-} from "@/lib/data";
+import { getBudgetItems, getTravelers } from "@/lib/data";
 import { CATEGORY_META, fmtMoney } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -15,18 +9,12 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Finances · Vegas 2026" };
 
 export default async function FinancesPage() {
-  const [travelers, items, expenses, scenarios, settings] = await Promise.all([
-    getTravelers(),
-    getBudgetItems(),
-    getExpenses(),
-    getScenarios(),
-    getTripSettings(),
-  ]);
+  const [travelers, items] = await Promise.all([getTravelers(), getBudgetItems()]);
 
-  // ordered by top spender (most projected first) — BeX leads
-  const projectedFor = (id: number) =>
+  // ordered by who covers the most — BeX leads
+  const costFor = (id: number) =>
     items.filter((i) => i.travelerId === id).reduce((s, i) => s + i.plannedCents, 0);
-  const orderedTravelers = [...travelers].sort((a, b) => projectedFor(b.id) - projectedFor(a.id));
+  const orderedTravelers = [...travelers].sort((a, b) => costFor(b.id) - costFor(a.id));
 
   const byCategory = Object.entries(CATEGORY_META)
     .map(([key, meta]) => ({
@@ -41,37 +29,29 @@ export default async function FinancesPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 md:px-6 md:py-14">
       <Reveal>
-        <p className="text-xs uppercase tracking-widest text-ink-muted">the money plan</p>
+        <p className="text-xs uppercase tracking-widest text-ink-muted">the money</p>
         <h1 className="mt-1 font-display text-3xl font-semibold md:text-5xl">Trip Finances</h1>
         <p className="mt-3 max-w-2xl text-sm text-ink-secondary md:text-base">
           The trip is <span className="font-medium text-ink">booked</span> — flights confirmed,
-          Friday to Friday. Everyone&apos;s{" "}
-          <span className="font-medium text-ink">bucket</span> is what they planned to cover on the
-          yellow pad: whatever the booked trip doesn&apos;t need goes back in (Amma&apos;s road-trip
-          gas and food came straight back), and what nobody planned for — the flights, bags, the
-          rental — comes out of the pot. Log real spend on the{" "}
+          Friday to Friday. Here&apos;s what it really costs, who covers each piece, and what&apos;s
+          been paid so far. Log a payment on the{" "}
           <Link href="/expenses" className="text-glow-pink hover:underline">
             Spend page
-          </Link>
-          .
+          </Link>{" "}
+          and it lands here for everyone.
         </p>
       </Reveal>
 
       {/* the booked plan: shortfall · money moves · per-person board */}
       <Reveal className="mt-8" delay={0.05}>
-        <FinancesEstimator
-          travelers={orderedTravelers}
-          items={items}
-          scenarios={scenarios}
-          settings={settings}
-        />
+        <FinancesEstimator travelers={orderedTravelers} items={items} />
       </Reveal>
 
       {/* category breakdown */}
       <Reveal className="mt-8">
         <section className="rounded-2xl border border-borderc bg-card p-5">
           <h2 className="text-xs uppercase tracking-widest text-ink-muted">
-            projected spend by category
+            trip cost by category
           </h2>
           <div className="mt-4 space-y-2.5">
             {byCategory.map((cat) => (
@@ -96,11 +76,9 @@ export default async function FinancesPage() {
       </Reveal>
 
       <p className="mt-6 text-xs text-ink-muted">
-        Yellow-pad lines are the original plan; edit any Projected or Actual amount inline. Travel
-        and hotel lines are priced by the booked plan, so they aren&apos;t editable here — a line
-        the trip never incurs is marked released and its money returns to that person&apos;s
-        bucket. Nobody is charged a share of a cost they didn&apos;t plan for. Lines with logged
-        expenses show the logged sum as their actual.
+        Tap any Cost to adjust it. Paid amounts come from the Spend page — every logged payment
+        rolls straight into these totals. The Crew card holds the shared costs (the rental, bags,
+        Ubers, fuel) that anyone can chip in on.
       </p>
     </div>
   );

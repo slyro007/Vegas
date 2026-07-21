@@ -1,34 +1,19 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { ExpenseLogger } from "@/components/ExpenseLogger";
 import { Reveal } from "@/components/Reveal";
-import {
-  getBudgetItems,
-  getExpenses,
-  getScenarios,
-  getTravelers,
-  getTripSettings,
-} from "@/lib/data";
-import { estimateForScenario } from "@/lib/estimate";
+import { getBudgetItems, getExpenses, getTravelers } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Spend · Vegas 2026" };
 
 export default async function ExpensesPage() {
-  const [travelers, budgetItems, expenses, scenarios, settings, user] = await Promise.all([
+  const [travelers, budgetItems, expenses, user] = await Promise.all([
     getTravelers(),
     getBudgetItems(),
     getExpenses(),
-    getScenarios(),
-    getTripSettings(),
     currentUser(),
   ]);
-
-  // lines the booked plan RELEASED (Flagstaff, road-trip gas + food) never get
-  // spent on — keep them out of the logger, but still resolvable in the feed
-  const locked = scenarios.find((s) => s.id === settings.lockedScenarioId);
-  const est = estimateForScenario(travelers, budgetItems, locked);
-  const releasedIds = est.perPerson.flatMap((p) => p.released.map((r) => r.item.id));
 
   // auto-select whoever is signed in (testers get no preselect)
   const userEmails = user?.emailAddresses.map((e) => e.emailAddress.toLowerCase()) ?? [];
@@ -37,9 +22,9 @@ export default async function ExpensesPage() {
   );
 
   // top spender first, to match the Finances board
-  const projectedFor = (id: number) =>
+  const costFor = (id: number) =>
     budgetItems.filter((i) => i.travelerId === id).reduce((s, i) => s + i.plannedCents, 0);
-  const orderedTravelers = [...travelers].sort((a, b) => projectedFor(b.id) - projectedFor(a.id));
+  const orderedTravelers = [...travelers].sort((a, b) => costFor(b.id) - costFor(a.id));
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 md:px-6 md:py-14">
@@ -62,7 +47,6 @@ export default async function ExpensesPage() {
           budgetItems={budgetItems}
           expenses={expenses}
           defaultTravelerId={me?.id ?? null}
-          excludedItemIds={releasedIds}
         />
       </div>
     </div>
