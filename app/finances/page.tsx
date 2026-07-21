@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { FinancesEstimator } from "@/components/FinancesEstimator";
-import { PlanCompare } from "@/components/PlanCompare";
 import { Reveal } from "@/components/Reveal";
 import {
   getBudgetItems,
@@ -45,12 +44,12 @@ export default async function FinancesPage() {
         <p className="text-xs uppercase tracking-widest text-ink-muted">the money plan</p>
         <h1 className="mt-1 font-display text-3xl font-semibold md:text-5xl">Trip Finances</h1>
         <p className="mt-3 max-w-2xl text-sm text-ink-secondary md:text-base">
-          Everyone&apos;s <span className="font-medium text-ink">bucket</span> is what they planned
-          to cover on the yellow pad — it never changes. Toggle a scenario and watch how much of
-          each bucket that plan actually spends: whatever it{" "}
-          <span className="font-medium text-ink">doesn&apos;t</span> need goes back in. Fly instead
-          of drive and Amma&apos;s gas and road food come straight back. Costs nobody planned for
-          (flights, the rental, bags) come out of the pooled leftovers. Log real spend on the{" "}
+          The trip is <span className="font-medium text-ink">booked</span> — flights confirmed,
+          Friday to Friday. Everyone&apos;s{" "}
+          <span className="font-medium text-ink">bucket</span> is what they planned to cover on the
+          yellow pad: whatever the booked trip doesn&apos;t need goes back in (Amma&apos;s road-trip
+          gas and food came straight back), and what nobody planned for — the flights, bags, the
+          rental — comes out of the pot. Log real spend on the{" "}
           <Link href="/expenses" className="text-glow-pink hover:underline">
             Spend page
           </Link>
@@ -58,12 +57,7 @@ export default async function FinancesPage() {
         </p>
       </Reveal>
 
-      {/* the plan money comparison */}
-      <Reveal className="mt-8" delay={0.05}>
-        <PlanCompare scenarios={scenarios} settings={settings} travelerCount={travelers.length} />
-      </Reveal>
-
-      {/* scenario-aware estimator: toggle · surplus/shortfall · per-person board */}
+      {/* the booked plan: shortfall · money moves · per-person board */}
       <Reveal className="mt-8" delay={0.05}>
         <FinancesEstimator
           travelers={orderedTravelers}
@@ -103,10 +97,10 @@ export default async function FinancesPage() {
 
       <p className="mt-6 text-xs text-ink-muted">
         Yellow-pad lines are the original plan; edit any Projected or Actual amount inline. Travel
-        and hotel lines are priced by whichever scenario is selected, so they aren&apos;t editable
-        here — a line the plan never incurs is marked released and its money returns to that
-        person&apos;s bucket. Nobody is charged a share of a cost they didn&apos;t plan for. Lines
-        with logged expenses show the logged sum as their actual.
+        and hotel lines are priced by the booked plan, so they aren&apos;t editable here — a line
+        the trip never incurs is marked released and its money returns to that person&apos;s
+        bucket. Nobody is charged a share of a cost they didn&apos;t plan for. Lines with logged
+        expenses show the logged sum as their actual.
       </p>
     </div>
   );

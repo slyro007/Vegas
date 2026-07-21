@@ -94,10 +94,11 @@ async function seed() {
     string?,
   ][] = [
     [pithya, "Flagstaff Hotel (Sat)", "lodging", 15000, 8450, "flagstaff"],
-    [pithya, "Caesar Ranch Adventure", "experience", 40000, 40000, null, "~4 hours of horses at the land in Valle"],
+    [pithya, "Caesar Ranch Adventure", "experience", 40000, 40000, null, "~4 hours of horses at Valle"],
     [pithya, "BW Henderson (Sun–Wed)", "lodging", 50000, 20000, "henderson", "~$54/night on John's rate"],
     [pithya, "Sedona Hotel (Fri)", "lodging", 25000, 14400, "sedona"],
     [pithya, "Spending Money", "misc", 25000, 25000, null],
+    [bex, "Air Travel — Delta (Booked)", "travel", 0, 215200, "airfare", "Booked · H2UQO8 · flights $1,756.28 + trip protection $140.80 + taxes & fees $254.92 — BeX covered it"],
     [bex, "Luxor / Excalibur All-Inclusive", "lodging", 160000, 72096, null, "Fully BeX's — all-inclusive covers breakfast, lunch & dinner Wed–Fri · real deal came in at $720.96 for 2 rooms"],
     [bex, "Wynn Buffet (All Four)", "food", 40000, 40000, null, "~$100 a head — BeX covers everyone"],
     [bex, "Vegas Meals — BeX's Share", "food", 75000, 75000, "vegas-food-bex"],
@@ -126,24 +127,34 @@ async function seed() {
   console.log("Seeding lodging…");
   await db.insert(lodging).values([
     {
-      name: "Aiden by Best Western",
-      location: "Flagstaff, AZ",
+      name: "Best Western Henderson",
+      location: "Henderson, NV",
+      checkIn: "2026-08-07",
+      checkOut: "2026-08-08",
+      plannedCents: 5400,
+      bookingStatus: "planned",
+      theme: "vegas",
+      notes: "The fly-in night — land 4:32 PM, drive over in the SUV. John's rate, ~$54.",
+    },
+    {
+      name: "Best Western — Red Rock Balcony",
+      location: "Sedona, AZ",
       checkIn: "2026-08-08",
-      checkOut: "2026-08-09",
-      plannedCents: 8450,
+      checkOut: "2026-08-10",
+      plannedCents: 34400,
       bookingStatus: "planned",
       theme: "desert",
-      notes: "2 queens · super-late-night check-in after the drive from Muir Lake · John's rate",
+      notes: "Two red-rock nights — Saturday at the $200 weekend rate, Sunday $144 on John's rate.",
     },
     {
       name: "Best Western Henderson",
       location: "Henderson, NV",
-      checkIn: "2026-08-09",
+      checkIn: "2026-08-10",
       checkOut: "2026-08-12",
-      plannedCents: 20000,
+      plannedCents: 10800,
       bookingStatus: "planned",
       theme: "vegas",
-      notes: "2 queens · ~$54/night via John — ~$200-ish for the whole thing",
+      notes: "Home base for Old Vegas + Fremont — two nights on John's rate.",
     },
     {
       name: "Luxor — All-Inclusive Experience",
@@ -155,17 +166,7 @@ async function seed() {
       cancelBy: "2026-08-09",
       theme: "vegas",
       notes:
-        "$360.48 per room × 2 rooms — the deal is priced for 2 guests and we're 4 · Pyramid Premier Two Queen, Aug 12–14 · free cancellation until Aug 9 · vouchers worth up to $300 per room",
-    },
-    {
-      name: "Best Western — Red Rock Balcony",
-      location: "Sedona, AZ",
-      checkIn: "2026-08-14",
-      checkOut: "2026-08-15",
-      plannedCents: 14400,
-      bookingStatus: "planned",
-      theme: "desert",
-      notes: "2 queens with the balcony · John's rate",
+        "$360.48 per room × 2 rooms · Pyramid Premier Two Queen · all-inclusive covers breakfast, lunch & dinner Wed–Fri · fully BeX's · free cancellation until Aug 9",
     },
   ]);
 
@@ -205,7 +206,7 @@ async function seed() {
       sortOrder: 0,
       time: "Morning",
       title: "Breakfast in Flagstaff",
-      description: "Fuel up before the land.",
+      description: "Fuel up before Valle.",
       location: "Flagstaff, AZ",
       theme: "desert",
     },
@@ -213,7 +214,7 @@ async function seed() {
       date: "2026-08-09",
       sortOrder: 1,
       time: "Midday",
-      title: "The Land — Horses with Caesar",
+      title: "Valle — Horses with Caesar",
       description: "About 4 hours riding and hanging with Caesar's horse-adventure crew on our land.",
       location: "287 S Victoria Dr, Valle, AZ",
       theme: "desert",
@@ -335,7 +336,7 @@ async function seed() {
         "Depart Muir Lake",
         "Check In at Flagstaff",
         "Breakfast in Flagstaff",
-        "The Land — Horses with Caesar",
+        "Valle — Horses with Caesar",
         "Drive to Vegas + Check In",
         "Dinner, Groceries, Pack the Cooler",
         "Depart Sedona",
@@ -346,22 +347,28 @@ async function seed() {
       ]),
     );
   await db.insert(itineraryEvents).values([
-    // Fly plan: fly in Friday, land + Sedona the first weekend, full Vegas week, fly home Saturday
-    // Rental SUV variant: same ten days, plus pickup and drop-off on either end
-    { date: "2026-08-07", sortOrder: -1, time: "4:00 PM", title: "Pick Up the Rental SUV", description: "Enterprise full-size SUV for the whole trip — grab it before Amma's pickup so it's loaded and ready for the 5 AM haul.", location: "Enterprise, Cedar Park", theme: "desert", plan: "driveb" },
-    { date: "2026-08-16", sortOrder: 1, time: "11:00 AM", title: "Return the Rental SUV", description: "Unload, sleep in, then drop the SUV back. Check the fuel level before you go.", location: "Enterprise, Cedar Park", theme: "desert", plan: "driveb" },
-    { date: "2026-08-07", sortOrder: 0, time: "3:39 PM", title: "Fly AUS → LAS", description: "Delta nonstop — all four of us, wheels down at 4:32 PM.", location: "Austin-Bergstrom → Harry Reid Intl", theme: "vegas", plan: "fly" },
-    { date: "2026-08-07", sortOrder: 1, time: "Evening", title: "Uber to Henderson + Crash", description: "Straight to Best Western Henderson on John's rate — settle in and rest up.", location: "Henderson, NV", theme: "vegas", plan: "fly" },
-    { date: "2026-08-08", sortOrder: 0, time: "Morning", title: "Rent the SUV + Check Out", description: "Pick up the midsize luxury SUV at Harry Reid and check out of Henderson for the weekend loop.", location: "Harry Reid Intl, Las Vegas", theme: "vegas", plan: "fly" },
-    { date: "2026-08-08", sortOrder: 1, time: "Midday", title: "The Land — Horses with Caesar", description: "~3.5 hours out to the land in Valle — ride and hang with Caesar's crew.", location: "287 S Victoria Dr, Valle, AZ", theme: "desert", plan: "fly" },
-    { date: "2026-08-08", sortOrder: 2, time: "Evening", title: "Drive to Sedona + Overnight", description: "On to Sedona for the night — Best Western Red Rock, John's rate.", location: "Sedona, AZ", theme: "desert", plan: "fly" },
-    { date: "2026-08-14", sortOrder: 0, time: "Morning", title: "Check Out the Luxor → Henderson", description: "Last stretch — back to Best Western Henderson for the final night.", location: "Henderson, NV", theme: "vegas", plan: "fly" },
-    { date: "2026-08-14", sortOrder: 1, time: "Afternoon", title: "Explore More Vegas", description: "Open day — more Vegas, or maybe meet Shy's aunt. Undecided, and that's fine.", location: "Las Vegas", theme: "vegas", plan: "fly" },
-    { date: "2026-08-15", sortOrder: 0, time: "5:15 PM", title: "Fly LAS → AUS", description: "Delta nonstop home — lands 10:05 PM, in bed by midnight.", location: "Harry Reid Intl → Austin-Bergstrom", theme: "vegas", plan: "fly" },
+    // Rental SUV drive variant (history — the drive plans no longer render)
+    { date: "2026-08-07", sortOrder: -1, time: "4:00 PM", title: "Pick Up the Rental SUV (Drive Variant)", description: "Enterprise full-size SUV for the whole trip — grab it before Amma's pickup so it's loaded and ready for the 5 AM haul.", location: "Enterprise, Cedar Park", theme: "desert", plan: "driveb" },
+    { date: "2026-08-16", sortOrder: 1, time: "11:00 AM", title: "Return the Rental SUV (Drive Variant)", description: "Unload, sleep in, then drop the SUV back. Check the fuel level before you go.", location: "Enterprise, Cedar Park", theme: "desert", plan: "driveb" },
+    // THE trip — booked (H2UQO8): fly in Friday, Valle + a Sedona weekend, Moapa on the
+    // Monday drive back, the Vegas week, fly home Friday. SUV is Fri–Fri, airport pickup.
+    { date: "2026-08-07", sortOrder: 0, time: "3:39 PM", title: "Fly AUS → LAS", description: "Booked — Delta DL2260, all four of us. Wheels down 4:32 PM.", location: "Austin-Bergstrom → Harry Reid Intl", theme: "vegas", plan: "fly" },
+    { date: "2026-08-07", sortOrder: 1, time: "5:00 PM", title: "Pick Up the Rental SUV", description: "Midsize luxury SUV at Harry Reid, Fri–Fri — loaded and rolling by 6.", location: "Harry Reid Intl, Las Vegas", theme: "vegas", plan: "fly" },
+    { date: "2026-08-07", sortOrder: 2, time: "6:00 PM", title: "Drive to Henderson + Crash", description: "Twenty minutes to Best Western Henderson on John's rate — settle in, rest up.", location: "Henderson, NV", theme: "vegas", plan: "fly" },
+    { date: "2026-08-08", sortOrder: 0, time: "9:00 AM", title: "Check Out of Henderson", description: "Pack the SUV and point it at Arizona — Valle first, then Sedona.", location: "Henderson, NV", theme: "vegas", plan: "fly" },
+    { date: "2026-08-08", sortOrder: 1, time: "12:30 PM", title: "Valle — Horses with Caesar", description: "~3.5 hours out to Valle — ride and hang with Caesar's crew.", location: "287 S Victoria Dr, Valle, AZ", theme: "desert", plan: "fly" },
+    { date: "2026-08-08", sortOrder: 2, time: "6:00 PM", title: "Drive to Sedona + Overnight", description: "On to Sedona for the night — Best Western Red Rock, John's rate.", location: "Sedona, AZ", theme: "desert", plan: "fly" },
+    { date: "2026-08-09", sortOrder: 0, time: "9:00 AM", title: "Full Day in Sedona", description: "A slow second day in the red rocks — Slide Rock, the vortexes, downtown — and a second night at Best Western Red Rock.", location: "Sedona, AZ", theme: "desert", plan: "fly" },
+    { date: "2026-08-10", sortOrder: 0, time: "8:00 AM", title: "Check Out Sedona + Drive Back", description: "Pack up and point the SUV back toward Nevada (~4.5 hr).", location: "Sedona → Moapa Valley", theme: "desert", plan: "fly" },
+    { date: "2026-08-10", sortOrder: 1, time: "12:30 PM", title: "Moapa Valley on the Way", description: "Break the drive in Shy's hometown before the last push to Vegas.", location: "Moapa Valley, NV", theme: "vegas", plan: "fly" },
+    { date: "2026-08-10", sortOrder: 2, time: "6:00 PM", title: "Check Into Henderson", description: "Best Western Henderson on John's rate — home base for the Vegas week.", location: "Henderson, NV", theme: "vegas", plan: "fly" },
+    { date: "2026-08-14", sortOrder: 0, time: "11:00 AM", title: "Check Out the Luxor", description: "Last morning on the Strip — pack up, one more walk through the pyramid.", location: "Las Vegas, NV", theme: "vegas", plan: "fly" },
+    { date: "2026-08-14", sortOrder: 1, time: "3:00 PM", title: "Return the SUV at the Airport", description: "Gas it up, drop it at Harry Reid, roll straight to the gate.", location: "Harry Reid Intl, Las Vegas", theme: "vegas", plan: "fly" },
+    { date: "2026-08-14", sortOrder: 2, time: "5:15 PM", title: "Fly LAS → AUS", description: "Booked — Delta DL1837, 5:15 PM. Lands Austin 10:05 PM, home by midnight.", location: "Harry Reid Intl → Austin-Bergstrom", theme: "vegas", plan: "fly" },
   ]);
 
-  // round 9: real clock times, the fly Friday-night wording, and the flyb variant
-  console.log("Timing events + wiring the second fly routing…");
+  // real clock times on the shared drive-era events (the "all" ones still render)
+  console.log("Timing events…");
   const eventTimes: [string, string, string][] = [
     ["2026-08-10", "Moapa Valley Day", "10:00 AM"],
     ["2026-08-11", "Old Vegas + Fremont Street", "1:00 PM"],
@@ -372,40 +379,16 @@ async function seed() {
     ["2026-08-07", "Pick Up Amma", "6:00 PM"],
     ["2026-08-08", "Check In at Flagstaff", "8:30 PM"],
     ["2026-08-09", "Breakfast in Flagstaff", "8:00 AM"],
-    ["2026-08-09", "The Land — Horses with Caesar", "11:00 AM"],
+    ["2026-08-09", "Valle — Horses with Caesar", "11:00 AM"],
     ["2026-08-09", "Drive to Vegas + Check In", "5:00 PM"],
     ["2026-08-14", "Check Out → Drive to Sedona", "9:00 AM"],
     ["2026-08-14", "Slide Rock + Downtown Sedona", "2:00 PM"],
     ["2026-08-14", "Dinner, Groceries, Pack the Cooler", "6:30 PM"],
     ["2026-08-16", "Home — Muir Lake", "1:00 AM"],
-    ["2026-08-07", "Uber to Henderson + Crash", "5:30 PM"],
-    ["2026-08-08", "Rent the SUV + Check Out", "9:00 AM"],
-    ["2026-08-08", "The Land — Horses with Caesar", "12:30 PM"],
-    ["2026-08-08", "Drive to Sedona + Overnight", "6:00 PM"],
-    ["2026-08-09", "Explore All of Sedona", "9:00 AM"],
-    ["2026-08-09", "Drive Back to Vegas + Check In", "3:00 PM"],
-    ["2026-08-14", "Explore More Vegas", "2:00 PM"],
-    ["2026-08-07", "Pack the Car — Party of Three", "6:00 PM"],
   ];
   for (const [date, title, time] of eventTimes) {
     await sql.query("UPDATE itinerary_events SET time = $1 WHERE date = $2 AND title = $3", [time, date, title]);
   }
-  await sql.query("UPDATE itinerary_events SET plan = 'drive fly hybrid' WHERE plan = 'all' AND title = 'Moapa Valley Day'");
-  await sql.query(
-    "UPDATE itinerary_events SET plan = 'fly flyb' WHERE plan = 'fly' AND title IN ('Fly AUS → LAS','Uber to Henderson + Crash','Rent the SUV + Check Out','The Land — Horses with Caesar','Drive to Sedona + Overnight','Explore More Vegas','Fly LAS → AUS')",
-  );
-  await sql.query(
-    "UPDATE itinerary_events SET plan = 'fly flyb', title = 'Last Night — Henderson or Extend the Luxor', time = '11:00 AM', description = 'One more Vegas night before Saturday''s flight: check out of the Luxor back to Best Western Henderson on John''s rate, or see if the Luxor/Excalibur will extend a night. TBD.' WHERE plan = 'fly' AND title = 'Check Out the Luxor → Henderson'",
-  );
-  await db.insert(itineraryEvents).values([
-    { date: "2026-08-09", sortOrder: 0, time: "9:00 AM", title: "Full Day in Sedona", description: "A slow second day in the red rocks — Slide Rock, the vortexes, downtown — and a second night at Best Western Red Rock.", location: "Sedona, AZ", theme: "desert", plan: "fly" },
-    { date: "2026-08-10", sortOrder: 0, time: "8:00 AM", title: "Check Out Sedona + Drive Back", description: "Pack up and point the SUV back toward Nevada (~4.5 hr).", location: "Sedona → Moapa Valley", theme: "desert", plan: "fly" },
-    { date: "2026-08-10", sortOrder: 1, time: "12:30 PM", title: "Moapa Valley on the Way", description: "Break the drive in Shy's hometown before the last push to Vegas.", location: "Moapa Valley, NV", theme: "vegas", plan: "fly" },
-    { date: "2026-08-10", sortOrder: 2, time: "6:00 PM", title: "Check Into Henderson", description: "Best Western Henderson on John's rate — home base for the Vegas week.", location: "Henderson, NV", theme: "vegas", plan: "fly" },
-  ]);
-
-  console.log("Seeding trip settings…");
-  await db.insert(tripSettings).values({ lockedScenarioId: null, lockedAt: null });
 
   console.log("Seeding scenarios…");
   const hybridOutline = [
@@ -423,7 +406,7 @@ async function seed() {
   const roadOutline = [
     { day: "Fri 7", plan: "Pick up Amma · pack the cooler" },
     { day: "Sat 8", plan: "5 AM depart Muir Lake · ~15 hr · Flagstaff late night" },
-    { day: "Sun 9", plan: "Breakfast · horses with Caesar at the land · on to Vegas" },
+    { day: "Sun 9", plan: "Breakfast · horses with Caesar at Valle · on to Vegas" },
     { day: "Mon 10", plan: "Moapa Valley day" },
     { day: "Tue 11", plan: "Old Vegas + Fremont Street" },
     { day: "Wed 12", plan: "Wynn Buffet → Luxor All-Inclusive" },
@@ -465,24 +448,25 @@ async function seed() {
     },
   ];
   const driveFood = () => foodLines(100000, "Vegas week");
-  const flyFood = () => foodLines(125000, "7 days off-resort");
+  const flyFood = () => foodLines(125000, "6 days off-resort");
   const flyCore = (): CostLine[] => [
-    // Delta $2,066 fare + 3 bags @ $90 ($270) + insurance $139 = $2,475.
-    // Frontier bundles bags into its fare, so a per-line comparison would measure
-    // different things — kept as one line with the itemization in the label.
+    // BOOKED — H2UQO8: flights $1,756.28 + trip protection $140.80 + taxes $254.92
+    // = $2,152.00 for all four, paid by BeX (owner: her bucket covers it).
     {
-      label: "Air Travel — Delta: fare $2,066 + 3 bags $270 + insurance $139",
-      cents: 247500,
+      label: "Air Travel — Delta, Booked Fri–Fri: flights $1,756.28 + protection $140.80 + taxes $254.92",
+      cents: 215200,
+      owner: "bex",
+      key: "airfare",
       confidence: "quoted",
-      alternative: { label: "or Frontier — $2,250 flight & bags, $50 insurance", cents: 230000 },
     },
-    { label: "Midsize Luxury SUV, Sat–Sat (Quoted)", cents: 65865, confidence: "quoted" },
+    { label: "Checked Bags — 3 at $90", cents: 27000, confidence: "estimate" },
+    { label: "Midsize Luxury SUV — Fri–Fri, Airport Pickup", cents: 65865, confidence: "quoted" },
     // one shared XL each way, Austin only — we have the rental car in Vegas
     { label: "Austin Airport Uber — One Ride Each Way (All Four)", cents: 30000, confidence: "estimate" },
-    { label: "Arizona Driving Fuel (The Land + Sedona)", cents: 40000, confidence: "estimate" },
+    { label: "Arizona Driving Fuel (Valle + Sedona)", cents: 40000, confidence: "estimate" },
   ];
 
-  await db.insert(scenarios).values([
+  const insertedScenarios = await db.insert(scenarios).values([
     {
       slug: "forester",
       name: "Road Trip · Our Forester",
@@ -490,7 +474,7 @@ async function seed() {
       travelSummary: "~15 hr drive each way · ~30 hr total behind the wheel",
       emoji: "🚙",
       pros: [
-        "Full itinerary: the land, Caesar's horses, Flagstaff AND Sedona",
+        "Full itinerary: Valle, Caesar's horses, Flagstaff AND Sedona",
         "Cooler packed for Amma's dietary needs the whole way",
         "No rental cost — the car is already ours",
         "Total flexibility on stops and timing",
@@ -521,7 +505,7 @@ async function seed() {
         "Way more room for 4 people, luggage, and the cooler",
         "Zero wear on the Forester",
         "Newer vehicle — peace of mind in the desert heat",
-        "Keeps the full itinerary, land visit and all",
+        "Keeps the full itinerary, Valle visit and all",
       ],
       cons: [
         "+$650 over taking our own car",
@@ -542,72 +526,74 @@ async function seed() {
     {
       slug: "fly",
       name: "Fly · Sedona Weekend",
-      tagline: "Same Friday fly-in — but a two-night red-rock weekend",
-      travelSummary: "All fly Fri Aug 7 · two Sedona nights · Moapa on the Monday drive back",
+      tagline: "Booked — fly in Friday, a red-rock weekend, then the Vegas week",
+      travelSummary:
+        "Booked · DL2260 AUS→LAS Fri Aug 7, 3:39–4:32 PM · DL1837 LAS→AUS Fri Aug 14, 5:15–10:05 PM",
       emoji: "✈️",
       pros: [
-        "A slow two-night Sedona weekend, not a one-night dash",
+        "Flights are booked — confirmation H2UQO8",
         "Everyone flies together — zero 15-hour drives",
-        "Land + horses still happen on Saturday",
-        "Moapa Valley folds into the Monday drive back",
+        "Two full nights in Sedona, not a rushed overnight",
+        "Valle horses Saturday, fresh off the plane",
       ],
       cons: [
-        "The priciest fly option — a second Sedona night",
-        "One fewer Best Western night in Vegas",
-        "Big Saturday: rental, the land, then the drive to Sedona",
-        "Friday's last Vegas day is still up in the air",
+        "The priciest way to get there — $2,152 of booked airfare",
+        "Runs past the yellow-pad budget",
+        "Big Saturday: Henderson checkout, Valle, then the drive to Sedona",
+        "Friday home flight lands 10:05 PM — late night back in Austin",
       ],
       costLines: [
         ...flyCore(),
-        // lodging itemized per night: the Fri fly-in night and the Sat weekend
-        // rate were invisible inside the old aggregates (see migrate-round15.ts)
+        // lodging itemized per night — the Fri fly-in night and the Sat weekend
+        // rate were once invisible inside aggregates (see migrate-round15.ts)
         henderson("BW Henderson — Fri Aug 7, the fly-in night", 5400),
         sedona("Sedona — Sat Aug 8 (weekend rate)", 20000),
         sedona("Sedona — Sun Aug 9", 14400),
         henderson("BW Henderson — Mon + Tue, Aug 10–11", 10800),
-        {
-          ...henderson("Last Night — BW Henderson, Fri Aug 14", 5400),
-          alternative: { label: "or extend the Luxor — 2 rooms × $100", cents: 20000 },
-        },
         ...flyFood(),
       ],
       itineraryOutline: [
-        { day: "Fri 7", plan: "Fly in 4:32 PM · Uber to Henderson · crash" },
-        { day: "Sat 8", plan: "Rent the SUV · horses at the land · drive to Sedona overnight" },
+        { day: "Fri 7", plan: "Fly in 4:32 PM · pick up the SUV · drive to Henderson" },
+        { day: "Sat 8", plan: "Check out · horses at Valle · overnight in Sedona" },
         { day: "Sun 9", plan: "A full, slow day in Sedona · second red-rock night" },
         { day: "Mon 10", plan: "Check out Sedona · Moapa Valley on the drive back · into Henderson" },
         { day: "Tue 11", plan: "Old Vegas + Fremont Street" },
         { day: "Wed 12", plan: "Wynn Buffet → Luxor All-Inclusive" },
         { day: "Thu 13", plan: "Luxor day · BeX at the Backstreet Boys, Sphere" },
-        { day: "Fri 14", plan: "Last night: Henderson or extend the Luxor · explore more Vegas" },
-        { day: "Sat 15", plan: "Fly home 5:15 PM" },
+        { day: "Fri 14", plan: "Check out · return the SUV · fly home 5:15 PM" },
       ],
     },
-  ]);
+  ]).returning();
+
+  console.log("Seeding trip settings…");
+  // the decision is made — the fly plan is booked (H2UQO8)
+  const flyScenario = insertedScenarios.find((sc) => sc.slug === "fly");
+  await db.insert(tripSettings).values({
+    lockedScenarioId: flyScenario?.id ?? null,
+    lockedAt: new Date(),
+  });
+
 
   console.log("Seeding checklists…");
   await db.insert(checklistItems).values([
-    // Pre-trip
-    { list: "pre-trip", sortOrder: 0, label: "Decide: Forester vs Rental vs Fly", note: "Vote on the Decide page!" },
-    { list: "pre-trip", sortOrder: 1, label: "Confirm Caesar Meetup at the Land (Sun Aug 9)", assignee: "Pithya" },
-    { list: "pre-trip", sortOrder: 2, label: "Book Luxor All-Inclusive", assignee: "BeX", note: "Free cancellation until Aug 9" },
-    { list: "pre-trip", sortOrder: 3, label: "Confirm John's BW Rate — Flagstaff, Henderson, Sedona", assignee: "Pithya" },
-    { list: "pre-trip", sortOrder: 4, label: "Oil Change + Tire Check on the Forester", note: "Skip if we rent or fly" },
-    { list: "pre-trip", sortOrder: 5, label: "Pick Up Amma from City View at the Park (Fri Aug 7)" },
+    // Pre-trip — the trip is booked; what's left is confirming and packing
+    { list: "pre-trip", sortOrder: 0, label: "Delta Check-In Opens Thu Aug 6 (H2UQO8)", note: "24 hours before the 3:39 PM flight" },
+    { list: "pre-trip", sortOrder: 1, label: "Book the Midsize SUV — Fri–Fri, Airport Pickup" },
+    { list: "pre-trip", sortOrder: 2, label: "Confirm Caesar Meetup at Valle (Sat Aug 8)", assignee: "Pithya" },
+    { list: "pre-trip", sortOrder: 3, label: "Book Luxor All-Inclusive", assignee: "BeX", note: "Free cancellation until Aug 9" },
+    { list: "pre-trip", sortOrder: 4, label: "Confirm John's BW Rate — Henderson + Sedona", assignee: "Pithya" },
+    { list: "pre-trip", sortOrder: 5, label: "Pick Up Amma on the Way to the Airport (Fri Aug 7)" },
     { list: "pre-trip", sortOrder: 6, label: "Download Offline Maps for the Desert Stretches" },
-    // Groceries (Amma-safe cooler)
+    // Groceries (Amma-safe, once we have the SUV)
     { list: "groceries", sortOrder: 0, label: "Amma's Staples", note: "Her list — restrictions for health + age" },
     { list: "groceries", sortOrder: 1, label: "Fruit + Easy Snacks" },
     { list: "groceries", sortOrder: 2, label: "Water Flats" },
-    { list: "groceries", sortOrder: 3, label: "Ice Packs + Ice for the Cooler" },
-    { list: "groceries", sortOrder: 4, label: "Breakfast Items" },
-    { list: "groceries", sortOrder: 5, label: "Road-Lunch Fixings" },
+    { list: "groceries", sortOrder: 3, label: "Breakfast Items" },
     // Sedona restock
-    { list: "sedona-restock", sortOrder: 0, label: "Groceries for the Drive Home (Amma-Safe)", note: "Friday night, Aug 14" },
-    { list: "sedona-restock", sortOrder: 1, label: "Re-Ice + Repack the Cooler" },
-    { list: "sedona-restock", sortOrder: 2, label: "Gas Up for the 5 AM Start" },
+    { list: "sedona-restock", sortOrder: 0, label: "Amma-Safe Grocery Run in Sedona" },
+    { list: "sedona-restock", sortOrder: 1, label: "Fuel Up the SUV Before the Moapa Drive" },
     // Packing
-    { list: "packing", sortOrder: 0, label: "Chargers + Car Mounts" },
+    { list: "packing", sortOrder: 0, label: "Chargers + Cables" },
     { list: "packing", sortOrder: 1, label: "Swimsuits — Luxor Pool + Slide Rock" },
     { list: "packing", sortOrder: 2, label: "Water Shoes for Slide Rock" },
     { list: "packing", sortOrder: 3, label: "Sun Hats + Sunscreen" },

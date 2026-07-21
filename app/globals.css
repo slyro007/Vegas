@@ -31,6 +31,7 @@
   --glow-purple: #a78bfa;
 
   /* category marks */
+  --cat-travel: var(--glow-blue, #6ea8ff);
   --cat-lodging: var(--mark-purple);
   --cat-food: var(--mark-amber);
   --cat-gas: var(--mark-orange);

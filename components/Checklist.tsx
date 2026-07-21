@@ -23,15 +23,15 @@ const LISTS: { key: string; label: string; Icon: LucideIcon; blurb: string }[] =
   },
   {
     key: "groceries",
-    label: "Cooler run",
+    label: "Grocery run",
     Icon: Snowflake,
-    blurb: "Amma-safe groceries — pack the cooler before we roll.",
+    blurb: "Amma-safe groceries, first stop once we have the SUV.",
   },
   {
     key: "sedona-restock",
     label: "Sedona restock",
     Icon: Mountain,
-    blurb: "Friday night, Aug 14 — reload for the drive home.",
+    blurb: "Before the Monday drive back — groceries and a full tank.",
   },
   {
     key: "packing",

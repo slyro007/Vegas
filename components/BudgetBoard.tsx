@@ -199,13 +199,13 @@ export function BudgetBoard({
                   initial={{ opacity: 0, y: -3 }}
                   animate={{ opacity: 1, y: 0 }}
                   className={`block font-display text-lg font-semibold tabular-nums ${
-                    left > 0 ? "text-mark-green" : ""
+                    left > 0 ? "text-mark-green" : left < 0 ? "text-mark-pink" : ""
                   }`}
                 >
-                  {fmtMoney(left)}
+                  {fmtMoney(Math.abs(left))}
                 </motion.span>
                 <span className="block text-[11px] uppercase tracking-wider text-ink-muted">
-                  Left in Bucket
+                  {left < 0 ? "Beyond Their Bucket" : "Left in Bucket"}
                 </span>
                 <motion.span
                   animate={{ rotate: isOpen ? 180 : 0 }}
@@ -229,7 +229,11 @@ export function BudgetBoard({
               </div>
               <p className="mt-1.5 text-xs text-ink-muted">
                 {fmtMoney(committed)} committed on this plan
-                {left > 0 ? ` · ${fmtMoney(left)} back in the bucket` : " · fully spoken for"}
+                {left > 0
+                  ? ` · ${fmtMoney(left)} back in the bucket`
+                  : left < 0
+                    ? ` · covering ${fmtMoney(-left)} beyond their bucket`
+                    : " · fully spoken for"}
                 {spent > 0 && ` · ${fmtMoney(spent)} spent`}
               </p>
             </div>

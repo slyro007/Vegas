@@ -9,7 +9,6 @@ import {
   expenses,
   lodging,
   tripSettings,
-  votes,
 } from "@/db/schema";
 import { requireActor } from "@/lib/identity";
 
@@ -50,25 +49,6 @@ export async function deleteExpense(id: number) {
   if (gone) await recomputeActual(gone.budgetItemId);
   revalidatePath("/expenses");
   revalidatePath("/finances");
-  revalidatePath("/");
-}
-
-/** Voting is a toggle: voting for the scenario you already picked removes your vote. */
-export async function castVote(travelerId: number, scenarioId: number) {
-  await requireActor();
-  const [existing] = await db.select().from(votes).where(eq(votes.travelerId, travelerId));
-  if (existing && existing.scenarioId === scenarioId) {
-    await db.delete(votes).where(eq(votes.id, existing.id));
-  } else {
-    await db
-      .insert(votes)
-      .values({ travelerId, scenarioId })
-      .onConflictDoUpdate({
-        target: votes.travelerId,
-        set: { scenarioId, createdAt: new Date() },
-      });
-  }
-  revalidatePath("/scenarios");
   revalidatePath("/");
 }
 
@@ -119,7 +99,7 @@ export async function addBudgetItem(
   await requireActor();
   const trimmed = label.trim().slice(0, 200);
   if (!trimmed) return;
-  const allowed = ["lodging", "food", "gas", "experience", "gifts", "misc"];
+  const allowed = ["travel", "lodging", "food", "gas", "experience", "gifts", "misc"];
   const planned = Math.max(0, Math.round(plannedCents));
   await db.insert(budgetItems).values({
     travelerId,
@@ -168,16 +148,4 @@ export async function updateShortfallNote(note: string) {
   revalidatePath("/finances");
 }
 
-const scenarioPaths = ["/scenarios", "/finances", "/itinerary", "/"];
 
-export async function lockScenario(scenarioId: number) {
-  await requireActor();
-  await db.update(tripSettings).set({ lockedScenarioId: scenarioId, lockedAt: new Date() });
-  for (const p of scenarioPaths) revalidatePath(p);
-}
-
-export async function unlockScenario() {
-  await requireActor();
-  await db.update(tripSettings).set({ lockedScenarioId: null, lockedAt: null });
-  for (const p of scenarioPaths) revalidatePath(p);
-}

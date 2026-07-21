@@ -15,8 +15,8 @@ export default async function ListsPage() {
         <p className="text-xs uppercase tracking-widest text-ink-muted">shared · live for everyone</p>
         <h1 className="mt-1 font-display text-3xl font-semibold md:text-5xl">The Lists</h1>
         <p className="mt-3 max-w-xl text-sm text-ink-secondary md:text-base">
-          Check things off and they update for the whole family. The cooler lists keep Amma&apos;s
-          food safe on both long hauls.
+          Check things off and they update for the whole family. The grocery lists keep
+          Amma&apos;s food safe once we have the SUV.
         </p>
       </Reveal>
 

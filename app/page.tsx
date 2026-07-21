@@ -1,4 +1,4 @@
-import { Clock, Dices, Lock } from "lucide-react";
+import { Clock, Lock } from "lucide-react";
 import Link from "next/link";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { Countdown } from "@/components/Countdown";
@@ -9,9 +9,7 @@ import {
   getBudgetItems,
   getLodging,
   getScenarios,
-  getTravelers,
   getTripSettings,
-  getVotes,
 } from "@/lib/data";
 import { daysUntil, fmtMoney } from "@/lib/format";
 import { NAV_ICON, PlanIcon } from "@/lib/icons";
@@ -19,40 +17,29 @@ import { NAV_ICON, PlanIcon } from "@/lib/icons";
 export const dynamic = "force-dynamic";
 
 const QUICK_LINKS = [
-  { href: "/itinerary", title: "Itinerary", desc: "10 days, stop by stop" },
-  { href: "/scenarios", title: "Decide", desc: "Drive, rent, fly — or split?" },
+  { href: "/itinerary", title: "Itinerary", desc: "Aug 7–14, day by day" },
   { href: "/finances", title: "Finances", desc: "Who pays what" },
   { href: "/expenses", title: "Spend", desc: "Log it in ten seconds" },
   { href: "/lodging", title: "Lodging", desc: "4 stays, all tracked" },
-  { href: "/lists", title: "Lists", desc: "Cooler, packing, to-dos" },
+  { href: "/lists", title: "Lists", desc: "Packing + to-dos" },
 ];
 
 export default async function Dashboard() {
-  const [travelers, items, lodging, scenarios, votes, settings] = await Promise.all([
-    getTravelers(),
+  const [items, lodging, scenarios, settings] = await Promise.all([
     getBudgetItems(),
     getLodging(),
     getScenarios(),
-    getVotes(),
     getTripSettings(),
   ]);
   const lockedScenario = scenarios.find((s) => s.id === settings.lockedScenarioId) ?? null;
 
-  const totalBudget = travelers.reduce((sum, t) => sum + t.budgetTotalCents, 0);
+  // the family yellow-pad pool, and how the real numbers sit against it
+  const bucketTotal = items.reduce((sum, i) => sum + i.yellowPadCents, 0);
   const plannedWithActuals = items.filter((i) => i.actualCents !== null);
   const savedSoFar = plannedWithActuals.reduce(
     (sum, i) => sum + (i.plannedCents - (i.actualCents ?? 0)),
     0,
   );
-
-  const tally = new Map<number, number>();
-  for (const v of votes) tally.set(v.scenarioId, (tally.get(v.scenarioId) ?? 0) + 1);
-  const leader =
-    votes.length > 0
-      ? scenarios.reduce((best, s) =>
-          (tally.get(s.id) ?? 0) > (tally.get(best.id) ?? 0) ? s : best,
-        )
-      : null;
 
   const luxor = lodging.find((l) => l.cancelBy);
   const cancelDays = luxor?.cancelBy ? daysUntil(luxor.cancelBy) : null;
@@ -87,7 +74,7 @@ export default async function Dashboard() {
         <div className="relative mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-24">
           <Reveal>
             <p className="font-display italic text-ink-secondary md:text-lg">
-              Muir Lake → Flagstaff → the land →
+              Austin → Vegas → Valle →
             </p>
           </Reveal>
           <Reveal delay={0.1}>
@@ -97,15 +84,16 @@ export default async function Dashboard() {
           </Reveal>
           <Reveal delay={0.2}>
             <p className="mt-3 max-w-xl text-sm text-ink-secondary md:text-base">
-              The family trip · <span className="text-ink font-medium">Aug 7 – 16, 2026</span> ·
-              Pithya, Shy, BeX &amp; Amma — horses in Valle, Moapa Valley, old Vegas, the Luxor,
-              and Slide Rock on the way home.
+              The family trip — <span className="font-medium text-ink">flights booked</span> ·{" "}
+              <span className="text-ink font-medium">Aug 7 – 14, 2026</span> · Pithya, Shy, BeX
+              &amp; Amma — horses at Valle, a Sedona weekend, Moapa Valley, old Vegas, and the
+              Luxor to close it out.
             </p>
           </Reveal>
           <Reveal delay={0.35} className="mt-8">
-            <Countdown targetIso="2026-08-08T05:00:00-05:00" />
+            <Countdown targetIso="2026-08-07T15:39:00-05:00" />
             <p className="mt-2 text-xs uppercase tracking-widest text-ink-muted">
-              until wheels roll from Muir Lake
+              until wheels up out of Austin
             </p>
           </Reveal>
         </div>
@@ -115,9 +103,9 @@ export default async function Dashboard() {
         {/* ---------- stat tiles ---------- */}
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {[
-            { label: "days on the road", value: 10, prefix: "", accent: false },
-            { label: "miles round trip", value: 2600, prefix: "~", accent: false },
-            { label: "family budget", value: totalBudget / 100, prefix: "$", accent: false },
+            { label: "days in the desert", value: 8, prefix: "", accent: false },
+            { label: "miles flown, round trip", value: 2170, prefix: "~", accent: false },
+            { label: "yellow-pad budget", value: bucketTotal / 100, prefix: "$", accent: false },
             {
               label: "saved vs. plan so far",
               value: savedSoFar / 100,
@@ -142,16 +130,16 @@ export default async function Dashboard() {
           ))}
         </section>
 
-        {/* ---------- decision + deadline callouts ---------- */}
+        {/* ---------- booked + deadline callouts ---------- */}
         <section className="grid gap-3 md:grid-cols-2 md:gap-4">
-          <Reveal>
-            {lockedScenario ? (
+          {lockedScenario && (
+            <Reveal>
               <Link
                 href="/finances"
                 className="group block h-full rounded-2xl border border-mark-green/50 bg-card p-5 transition-colors hover:bg-card-hover"
               >
                 <div className="flex items-center gap-1.5 text-xs uppercase tracking-widest text-mark-green">
-                  <Lock className="h-3.5 w-3.5" aria-hidden /> Locked In
+                  <Lock className="h-3.5 w-3.5" aria-hidden /> Booked
                 </div>
                 <div className="mt-2 flex items-center gap-2 font-display text-xl md:text-2xl">
                   <PlanIcon plan={lockedScenario.slug} className="h-5 w-5 shrink-0" />
@@ -159,40 +147,12 @@ export default async function Dashboard() {
                   {fmtMoney(lockedScenario.costLines.reduce((s, l) => s + l.cents, 0))}
                 </div>
                 <div className="mt-2 text-sm text-ink-secondary">
-                  The decision is made — Finances is now the money page.{" "}
+                  Delta H2UQO8, Friday to Friday — Finances has every dollar.{" "}
                   <span className="text-glow-pink group-hover:underline">See It →</span>
                 </div>
               </Link>
-            ) : (
-              <Link
-                href="/scenarios"
-                className="group block h-full rounded-2xl border border-borderc bg-card p-5 transition-colors hover:bg-card-hover hover:border-glow-pink/40"
-              >
-                <div className="text-xs uppercase tracking-widest text-ink-muted">
-                  The Big Decision
-                </div>
-                <div className="mt-2 flex items-center gap-2 font-display text-xl md:text-2xl">
-                  {leader ? (
-                    <>
-                      <PlanIcon plan={leader.slug} className="h-5 w-5 shrink-0" />
-                      {leader.name} is leading ({tally.get(leader.id)}/{travelers.length} votes)
-                    </>
-                  ) : (
-                    <>
-                      <Dices className="h-5 w-5 shrink-0" aria-hidden />
-                      Drive, rent, fly — or split it with Amma in the air?
-                    </>
-                  )}
-                </div>
-                <div className="mt-2 text-sm text-ink-secondary">
-                  {votes.length === 0
-                    ? "Nobody has voted yet — be the first."
-                    : `${votes.length} of ${travelers.length} have voted.`}{" "}
-                  <span className="text-glow-pink group-hover:underline">Cast Yours →</span>
-                </div>
-              </Link>
-            )}
-          </Reveal>
+            </Reveal>
+          )}
           {luxor && cancelDays !== null && (
             <Reveal delay={0.1}>
               <Link
