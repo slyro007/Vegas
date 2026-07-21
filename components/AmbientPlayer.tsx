@@ -105,6 +105,36 @@ export function AmbientPlayer() {
     };
   }, [skip]);
 
+  // Keep the ball in the VISIBLE bottom-right corner when pinch-zoomed.
+  // `position: fixed` pins to the layout viewport, so at zoom > 1 the player can
+  // sit entirely outside what's on screen until the user scrolls to it. Track
+  // the visual viewport and translate the (outer, non-animated) wrapper into
+  // view — a pure transform, so the component never remounts and the module-
+  // singleton audio keeps playing untouched.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return; // old browsers: keep plain fixed positioning
+    const reposition = () => {
+      const el = rootRef.current;
+      if (!el) return;
+      if (vv.scale > 1.02) {
+        const dx = vv.offsetLeft + vv.width - document.documentElement.clientWidth;
+        const dy = vv.offsetTop + vv.height - document.documentElement.clientHeight;
+        el.style.transform = `translate(${dx}px, ${dy}px)`;
+      } else {
+        el.style.transform = "";
+      }
+    };
+    vv.addEventListener("resize", reposition, { passive: true });
+    vv.addEventListener("scroll", reposition, { passive: true });
+    reposition();
+    return () => {
+      vv.removeEventListener("resize", reposition);
+      vv.removeEventListener("scroll", reposition);
+      if (rootRef.current) rootRef.current.style.transform = "";
+    };
+  }, []);
+
   // Close the pinned (touch) panel when tapping elsewhere.
   useEffect(() => {
     if (!pinned) return;
