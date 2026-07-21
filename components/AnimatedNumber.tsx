@@ -24,7 +24,11 @@ export function AnimatedNumber({
 }) {
   format ??= (v: number) => `${prefix}${Math.round(v).toLocaleString()}${suffix}`;
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
+  // Positive margin so the count-up fires slightly BEFORE the number scrolls in.
+  // A negative margin meant an element could be on screen yet not "in view", and
+  // since this only runs once it would sit at $0 forever — which is what happened
+  // to the fly card, whose two-line tagline pushed it just past the threshold.
+  const inView = useInView(ref, { once: true, margin: "100px" });
   const motionValue = useMotionValue(0);
   const [display, setDisplay] = useState(() => format(0));
 

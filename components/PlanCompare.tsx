@@ -81,7 +81,7 @@ export function PlanCompare({
   return (
     <section className="rounded-2xl border border-borderc bg-card p-5 md:p-6">
       <h2 className="text-xs uppercase tracking-widest text-ink-muted">
-        Drive · Rent · Fly · Split — The Money
+        Drive · Rent · Fly — The Money
       </h2>
       <div className="mt-4 space-y-4">
         {scenarios.map((s) => {
@@ -182,9 +182,9 @@ export function PlanCompare({
         })}
       </div>
       <p className="mt-4 text-xs text-ink-muted">
-        Getting there plus the shared hotel nights (the Best Westerns). The Luxor all-inclusive is
-        BeX&apos;s, and personal food + spending money live on the Finances board. Tags mark how
-        firm each number is: <span className="text-mark-green">quoted</span> is a real price we were
+        Everything that changes with the plan: getting there, the Best Western nights, and
+        non-resort food. The Luxor all-inclusive and spending money are the same either way, so
+        they sit on the Finances board instead. Tags mark how firm each number is: <span className="text-mark-green">quoted</span> is a real price we were
         given, <span className="text-mark-amber">john&apos;s rate</span> is an assumption we
         haven&apos;t booked, and <span className="text-ink-secondary">est.</span> is a rough guess.
         Tap a plan for the line-by-line.
