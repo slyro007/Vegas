@@ -449,9 +449,10 @@ async function seed() {
   const ammaFlight = (): CostLine => ({ label: "Amma's Flight, Sun–Fri (Quoted)", cents: 35300, confidence: "quoted" });
   const ammaUbers = (): CostLine => ({ label: "Amma's Ubers", cents: 8000, confidence: "estimate" });
   const flyCore = (): CostLine[] => [
-    { label: "Delta Round Trip × 4 (Fri–Sat)", cents: 134800, confidence: "quoted" },
+    // $1,700 covers all four round trip incl. seat selection — bags are separate
+    { label: "Delta Round Trip × 4, Seats Included (Fri–Sat)", cents: 170000, confidence: "quoted" },
     { label: "Midsize Luxury SUV, Sat–Sat (Quoted)", cents: 65865, confidence: "quoted" },
-    { label: "Checked Bags (All Four)", cents: 36000, confidence: "estimate" },
+    { label: "Checked Bags (All Four · $90 Each)", cents: 36000, confidence: "estimate" },
     // one shared XL each way, Austin only — we have the rental car in Vegas
     { label: "Austin Airport Uber — One Ride Each Way (All Four)", cents: 30000, confidence: "estimate" },
     { label: "Arizona Driving Fuel (The Land + Sedona)", cents: 40000, confidence: "estimate" },
