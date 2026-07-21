@@ -160,6 +160,13 @@ export default async function Dashboard() {
       </section>
 
       <div className="mx-auto max-w-6xl space-y-12 px-4 py-10 md:px-6 md:py-14">
+        {/* ---------- the route, floating — first thing after the hero ---------- */}
+        <section>
+          <Reveal>
+            <RouteStrip />
+          </Reveal>
+        </section>
+
         {/* ---------- live stat tiles: the actual state of the trip ---------- */}
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {[
@@ -260,16 +267,6 @@ export default async function Dashboard() {
               </Link>
             </Reveal>
           )}
-        </section>
-
-        {/* ---------- route ---------- */}
-        <section>
-          <Reveal>
-            <h2 className="font-display text-lg text-ink-secondary">The Route</h2>
-            <div className="mt-3 rounded-2xl border border-borderc bg-card p-4">
-              <RouteStrip />
-            </div>
-          </Reveal>
         </section>
 
         {/* ---------- quick links ---------- */}

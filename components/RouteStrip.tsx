@@ -202,10 +202,17 @@ export function RouteStrip() {
     <div onMouseLeave={() => setActive(null)}>
       <div className="scroll-thin overflow-x-auto">
         <svg
-          viewBox="0 0 785 150"
-          className="h-[9.4rem] w-[785px] min-w-full"
+          viewBox="-52 0 889 150"
+          className="h-auto w-full min-w-[760px]"
           role="img"
           aria-label="Route: fly Austin to Vegas, then Valle, Sedona, Moapa Valley, the Vegas week, and fly home. Hover or tap a stop for details."
+          style={{
+            // no box — the scene floats, fading out at its edges
+            maskImage:
+              "linear-gradient(90deg, transparent 0%, black 4%, black 96%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(90deg, transparent 0%, black 4%, black 96%, transparent 100%)",
+          }}
         >
           <defs>
             <linearGradient id="rs-sky" x1="0" y1="0" x2="1" y2="0">
@@ -222,14 +229,11 @@ export function RouteStrip() {
               <stop offset="0" stopColor="var(--glow-pink)" stopOpacity="0.55" />
               <stop offset="1" stopColor="var(--glow-pink)" stopOpacity="0" />
             </linearGradient>
-            <clipPath id="rs-clip">
-              <rect x="0" y="0" width="785" height="150" rx="12" />
-            </clipPath>
           </defs>
 
-          <g clipPath="url(#rs-clip)">
-            {/* sky: desert sunset sweeping into neon night */}
-            <rect x="0" y="0" width="785" height="150" fill="url(#rs-sky)" />
+          <g>
+            {/* sky: desert sunset sweeping into neon night (edges fade via the svg mask) */}
+            <rect x="-52" y="0" width="889" height="150" fill="url(#rs-sky)" />
 
             {/* a low sun, half-set behind the far ridge */}
             <circle
@@ -259,14 +263,14 @@ export function RouteStrip() {
             {/* mountains, two drifting layers */}
             <polygon
               className="rs-drift-far"
-              points="0,95 60,72 130,88 210,66 300,86 380,70 470,88 560,68 640,86 720,72 785,88 800,88 800,150 -15,150 -15,95"
+              points="-60,95 0,95 60,72 130,88 210,66 300,86 380,70 470,88 560,68 640,86 720,72 785,88 850,80 850,150 -60,150"
               fill="#1c1531"
               opacity="0.75"
               aria-hidden
             />
             <polygon
               className="rs-drift-near"
-              points="0,112 70,92 150,106 240,88 330,104 420,90 510,106 600,94 690,104 785,94 800,94 800,150 -15,150 -15,112"
+              points="-60,104 0,112 70,92 150,106 240,88 330,104 420,90 510,106 600,94 690,104 785,94 850,102 850,150 -60,150"
               fill="#120d1c"
               aria-hidden
             />
