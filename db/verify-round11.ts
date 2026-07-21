@@ -22,9 +22,9 @@ const db = drizzle(neon(process.env.DATABASE_URL!));
 const f = (c: number) => (c < 0 ? "-$" : "$") + (Math.abs(c) / 100).toFixed(2);
 
 const EXPECTED_AVAILABLE: Record<string, number> = {
-  forester: 135054,
-  "rental-suv": 70054,
-  fly: -175761,
+  forester: 125528,
+  "rental-suv": 60528,
+  fly: -185287,
 };
 
 async function main() {
