@@ -101,11 +101,11 @@ async function seed() {
     [bex, "Air Travel — Delta (Booked)", "travel", 0, 215200, "airfare", "Booked · H2UQO8 · flights $1,756.28 + trip protection $140.80 + taxes & fees $254.92 — BeX covered it"],
     [bex, "Luxor All-Inclusive (Booked)", "lodging", 160000, 81622, null, "Booked — $816.22 total: $391.10 paid on the 2941 card, $425.12 due at the resort · all-inclusive covers breakfast, lunch & dinner Wed–Fri · fully BeX's"],
     [bex, "Wynn Buffet (All Four)", "food", 40000, 40000, null, "~$100 a head — BeX covers everyone"],
-    [bex, "Vegas Meals — BeX's Share", "food", 75000, 75000, "vegas-food-bex"],
+    [bex, "Non-Resort Food — BeX's Share", "food", 75000, 93750, "vegas-food-bex"],
     [bex, "Spending Money", "misc", 25000, 25000, null],
     [amma, "Road Trip Gas", "gas", 60000, 0, "gas"],
     [amma, "Road Trip Food", "food", 40000, 0, "road-food"],
-    [amma, "Vegas Meals — Amma's Share", "food", 25000, 25000, "vegas-food-amma"],
+    [amma, "Non-Resort Food — Amma's Share", "food", 25000, 31250, "vegas-food-amma"],
     [amma, "Caesar Gifts", "gifts", 15000, 15000, null],
     [amma, "Spending Money", "misc", 25000, 25000, null],
     [shy, "Pre-Vegas Trip", "misc", 20000, 20000, null],
@@ -123,6 +123,14 @@ async function seed() {
       notes: notes ?? null,
     })),
   );
+
+  // owner-less shared costs — "The Crew" — anyone can pay toward them on Spend
+  await db.insert(budgetItems).values([
+    { travelerId: null, label: "Rental SUV — Fri–Fri, Airport Pickup", category: "travel", yellowPadCents: 0, plannedCents: 65865, shared: true, notes: "Midsize luxury SUV, quoted — grab it at Harry Reid on landing, drop it before the flight home. Not booked yet." },
+    { travelerId: null, label: "Checked Bags — 3 at $90", category: "travel", yellowPadCents: 0, plannedCents: 27000, shared: true, notes: "Three checked bags on Delta, ~$90 each." },
+    { travelerId: null, label: "Austin Airport Uber — Both Ways", category: "travel", yellowPadCents: 0, plannedCents: 30000, shared: true, notes: "One shared XL home→airport and airport→home. Buffered over ~$100 each way." },
+    { travelerId: null, label: "Arizona Driving Fuel", category: "gas", yellowPadCents: 0, plannedCents: 40000, shared: true, notes: "Gas for the SUV: Valle, Sedona, and the Moapa drive back." },
+  ]);
 
   console.log("Seeding lodging…");
   await db.insert(lodging).values([

@@ -4,9 +4,7 @@ import { ChevronDown, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { addBudgetItem, deleteBudgetItem, updateBudgetItem } from "@/app/actions";
-import { AltDelta } from "@/components/ConfidenceTag";
 import type { BudgetItem, Traveler } from "@/lib/data";
-import type { Estimate } from "@/lib/estimate";
 import { CATEGORY_META, fmtMoney } from "@/lib/format";
 import { TravelerAvatar } from "@/lib/icons";
 
@@ -77,14 +75,13 @@ function AddItemForm({ travelerId, onDone }: { travelerId: number; onDone: () =>
   const [label, setLabel] = useState("");
   const [category, setCategory] = useState("misc");
   const [amount, setAmount] = useState("");
-  const [actual, setActual] = useState("");
   const [pending, startTransition] = useTransition();
 
   const submit = () => {
     const cents = parseDollars(amount) ?? 0;
     if (!label.trim()) return;
     startTransition(async () => {
-      await addBudgetItem(travelerId, label, category, cents, parseDollars(actual));
+      await addBudgetItem(travelerId, label, category, cents, null);
       onDone();
     });
   };
@@ -111,19 +108,10 @@ function AddItemForm({ travelerId, onDone }: { travelerId: number; onDone: () =>
       <input
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        placeholder="Projected $"
+        placeholder="Cost $"
         inputMode="decimal"
-        aria-label="Projected amount"
+        aria-label="Cost"
         className="w-28 rounded border border-borderc bg-surface px-2 py-1.5 text-right text-sm tabular-nums outline-none focus:border-glow-pink/60"
-      />
-      <input
-        value={actual}
-        onChange={(e) => setActual(e.target.value)}
-        placeholder="Actual $ (Optional)"
-        inputMode="decimal"
-        aria-label="Actual amount, only if it is already really spent"
-        title="Leave empty unless this money is really spent — actuals normally come from the Spend page or a booking"
-        className="w-36 rounded border border-borderc bg-surface px-2 py-1.5 text-right text-sm tabular-nums outline-none focus:border-glow-pink/60"
       />
       <button
         onClick={submit}
@@ -136,51 +124,58 @@ function AddItemForm({ travelerId, onDone }: { travelerId: number; onDone: () =>
   );
 }
 
+/** A column in the ledger: a traveler, or the owner-less shared "Crew" group. */
+type Column = {
+  key: string;
+  name: string;
+  color: string;
+  travelerId: number | null;
+};
+
+/**
+ * The booked-trip ledger. One card per person plus "The Crew" (shared costs
+ * nobody owns). Each card is cost vs paid — no plans, buckets, or yellow pad;
+ * this is what the trip actually costs and what's been paid so far.
+ */
 export function BudgetBoard({
   travelers,
   items,
-  estimate,
 }: {
   travelers: Traveler[];
   items: BudgetItem[];
-  estimate: Estimate;
 }) {
-  // Multiple cards can be open at once. This is the zoom-jump fix: with a
-  // single-open accordion, opening card B collapsed card A ABOVE it, the page
-  // shrank by A's height, and the clicked header yanked upward — zoom just
-  // magnified the shift. Independent cards mean nothing above the click moves.
-  const [openIds, setOpenIds] = useState<Set<number>>(
-    () => new Set(travelers[0] ? [travelers[0].id] : []),
-  );
-  const toggleOpen = (id: number) =>
-    setOpenIds((prev) => {
+  const columns: Column[] = [
+    ...travelers.map((t) => ({ key: `t${t.id}`, name: t.name, color: t.color, travelerId: t.id })),
+    { key: "crew", name: "The Crew", color: "var(--glow-purple)", travelerId: null },
+  ];
+
+  const [openKeys, setOpenKeys] = useState<Set<string>>(() => new Set([columns[0]?.key]));
+  const toggleOpen = (key: string) =>
+    setOpenKeys((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
-  const [adding, setAdding] = useState<number | null>(null);
+  const [adding, setAdding] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [, startTransition] = useTransition();
 
   return (
     <div className="space-y-4">
-      {travelers.map((traveler, idx) => {
-        const own = items.filter((i) => i.travelerId === traveler.id);
-        const person = estimate.perPerson.find((p) => p.traveler.id === traveler.id);
-        // bucket = their yellow pad (fixed) · committed = what this plan actually spends of it
-        const bucket = person?.bucket ?? own.reduce((s, i) => s + i.yellowPadCents, 0);
-        const committed = person?.committed ?? 0;
-        const left = person?.left ?? 0;
-        const spent = own.reduce((s, i) => s + (i.actualCents ?? 0), 0);
-        // a shared line's real price comes from the scenario, keyed by costKey
-        const coveredBy = new Map(person?.covered.map((c) => [c.item.id, c]) ?? []);
-        const releasedIds = new Set(person?.released.map((r) => r.item.id) ?? []);
-        const isOpen = openIds.has(traveler.id);
+      {columns.map((col, idx) => {
+        // active lines only — released $0 lines stay dormant, never shown
+        const own = items.filter(
+          (i) => i.travelerId === col.travelerId && i.plannedCents > 0,
+        );
+        const cost = own.reduce((s, i) => s + i.plannedCents, 0);
+        const paid = own.reduce((s, i) => s + (i.actualCents ?? 0), 0);
+        const remaining = cost - paid;
+        const isOpen = openKeys.has(col.key);
+        const isCrew = col.travelerId === null;
 
         return (
           <motion.section
-            key={traveler.id}
+            key={col.key}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-40px" }}
@@ -191,34 +186,35 @@ export function BudgetBoard({
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => toggleOpen(traveler.id)}
+              onClick={() => toggleOpen(col.key)}
               className="flex w-full items-center gap-3 p-4 text-left md:p-5"
               aria-expanded={isOpen}
             >
-              <TravelerAvatar
-                name={traveler.name}
-                color={traveler.color}
-                className="h-10 w-10 text-lg"
-              />
+              {isCrew ? (
+                <span
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-semibold"
+                  style={{ background: "color-mix(in srgb, var(--glow-purple) 22%, transparent)", color: "var(--glow-purple)" }}
+                  aria-hidden
+                >
+                  ☺
+                </span>
+              ) : (
+                <TravelerAvatar name={col.name} color={col.color} className="h-10 w-10 text-lg" />
+              )}
               <span className="min-w-0 flex-1">
-                <span className="font-display text-lg font-semibold">{traveler.name}</span>
+                <span className="font-display text-lg font-semibold">{col.name}</span>
                 <span className="mt-0.5 block text-xs text-ink-muted">
-                  {own.length} Lines · Bucket {fmtMoney(bucket)}
+                  {own.length} {own.length === 1 ? "Line" : "Lines"}
+                  {isCrew && " · shared by everyone"}
+                  {paid > 0 && ` · ${fmtMoney(paid)} paid`}
                 </span>
               </span>
               <span className="text-right">
-                <motion.span
-                  key={left}
-                  initial={{ opacity: 0, y: -3 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`block font-display text-lg font-semibold tabular-nums ${
-                    left > 0 ? "text-mark-green" : left < 0 ? "text-mark-pink" : ""
-                  }`}
-                >
-                  {fmtMoney(Math.abs(left))}
-                </motion.span>
+                <span className="block font-display text-lg font-semibold tabular-nums">
+                  {fmtMoney(cost)}
+                </span>
                 <span className="block text-[11px] uppercase tracking-wider text-ink-muted">
-                  {left < 0 ? "Beyond Their Bucket" : "Left in Bucket"}
+                  {remaining <= 0 && cost > 0 ? "Fully Paid" : "Total Cost"}
                 </span>
                 <motion.span
                   animate={{ rotate: isOpen ? 180 : 0 }}
@@ -229,25 +225,27 @@ export function BudgetBoard({
               </span>
             </button>
 
-            {/* committed-vs-bucket bar */}
+            {/* paid-vs-cost bar */}
             <div className="px-4 pb-4 md:px-5">
               <div className="relative h-2 overflow-hidden rounded-full bg-surface">
                 <motion.div
-                  className="absolute inset-y-0 left-0 rounded-full"
-                  style={{ background: traveler.color }}
+                  className="absolute inset-y-0 left-0 rounded-full bg-mark-green"
                   initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(100, bucket ? (committed / bucket) * 100 : 0)}%` }}
+                  animate={{ width: `${cost ? Math.min(100, (paid / cost) * 100) : 0}%` }}
                   transition={{ type: "spring", stiffness: 70, damping: 20 }}
                 />
               </div>
               <p className="mt-1.5 text-xs text-ink-muted">
-                {fmtMoney(committed)} committed on this plan
-                {left > 0
-                  ? ` · ${fmtMoney(left)} back in the bucket`
-                  : left < 0
-                    ? ` · covering ${fmtMoney(-left)} beyond their bucket`
-                    : " · fully spoken for"}
-                {spent > 0 && ` · ${fmtMoney(spent)} spent`}
+                {paid > 0 ? (
+                  <>
+                    {fmtMoney(paid)} paid ·{" "}
+                    <span className={remaining > 0 ? "text-mark-amber" : "text-mark-green"}>
+                      {remaining > 0 ? `${fmtMoney(remaining)} left to pay` : "all settled"}
+                    </span>
+                  </>
+                ) : (
+                  <>Nothing paid yet · {fmtMoney(cost)} to go</>
+                )}
               </p>
             </div>
 
@@ -265,10 +263,9 @@ export function BudgetBoard({
                     <ul className="divide-y divide-borderc">
                       {own.map((item) => {
                         const meta = CATEGORY_META[item.category] ?? CATEGORY_META.misc;
-                        const covered = coveredBy.get(item.id);
-                        const released = releasedIds.has(item.id);
+                        const linePaid = item.actualCents ?? 0;
                         return (
-                          <li key={item.id} className={`py-3 ${released ? "opacity-60" : ""}`}>
+                          <li key={item.id} className="py-3">
                             <div className="flex items-start justify-between gap-2">
                               <span className="flex min-w-0 items-center gap-2 text-sm">
                                 <span
@@ -276,17 +273,10 @@ export function BudgetBoard({
                                   style={{ background: meta.cssVar }}
                                   title={meta.label}
                                 />
-                                <span className={`truncate ${released ? "line-through" : ""}`}>
-                                  {item.label}
-                                </span>
-                                {released && (
+                                <span className="truncate">{item.label}</span>
+                                {linePaid > 0 && linePaid >= item.plannedCents && (
                                   <span className="shrink-0 rounded bg-mark-green/15 px-1 py-px text-[10px] uppercase tracking-wide text-mark-green">
-                                    released
-                                  </span>
-                                )}
-                                {covered && (
-                                  <span className="shrink-0 rounded bg-surface px-1 py-px text-[10px] uppercase tracking-wide text-ink-muted">
-                                    this plan
+                                    paid
                                   </span>
                                 )}
                               </span>
@@ -307,7 +297,7 @@ export function BudgetBoard({
                                 }`}
                                 title={
                                   confirmDelete === item.id
-                                    ? "Tap again to delete this line and its logged expenses"
+                                    ? "Tap again to delete this line and its logged payments"
                                     : "Delete item"
                                 }
                                 aria-label={`Delete ${item.label}`}
@@ -318,111 +308,62 @@ export function BudgetBoard({
                             {item.notes && (
                               <p className="mt-0.5 pl-[18px] text-xs text-ink-muted">{item.notes}</p>
                             )}
-                            {released ? (
-                              <p className="mt-1 pl-[18px] text-xs text-mark-green">
-                                {fmtMoney(item.yellowPadCents)} back in the bucket — this plan never
-                                pays for it
-                              </p>
-                            ) : (
-                              <div className="mt-2 grid grid-cols-3 gap-2 pl-[18px]">
-                                <div>
-                                  <div className="text-[10px] uppercase tracking-wide text-ink-muted">
-                                    Yellow Pad
-                                  </div>
-                                  <div className="tabular-nums text-ink-secondary">
-                                    {fmtMoney(item.yellowPadCents)}
-                                  </div>
+                            <div className="mt-2 grid grid-cols-2 gap-2 pl-[18px]">
+                              <div>
+                                <div className="text-[10px] uppercase tracking-wide text-ink-muted">
+                                  Cost
                                 </div>
-                                <div>
-                                  <div className="text-[10px] uppercase tracking-wide text-ink-muted">
-                                    {covered ? "This Plan" : "Projected"}
-                                  </div>
-                                  {covered ? (
-                                    // price comes from the selected scenario, so it isn't editable here
-                                    <div
-                                      className={`px-1.5 py-0.5 tabular-nums ${
-                                        covered.cents < item.yellowPadCents ? "text-mark-green" : ""
-                                      }`}
-                                    >
-                                      {fmtMoney(covered.cents)}
-                                    </div>
-                                  ) : (
-                                    <MoneyCell
-                                      cents={item.plannedCents}
-                                      className={
-                                        item.plannedCents < item.yellowPadCents
-                                          ? "text-mark-green"
-                                          : ""
-                                      }
-                                      onSave={(cents) =>
-                                        startTransition(() =>
-                                          updateBudgetItem(item.id, { plannedCents: cents ?? 0 }),
-                                        )
-                                      }
-                                    />
-                                  )}
-                                </div>
-                                <div>
-                                  <div className="text-[10px] uppercase tracking-wide text-ink-muted">
-                                    Actual
-                                  </div>
-                                  <MoneyCell
-                                    cents={item.actualCents}
-                                    placeholder="—"
-                                    clearable
-                                    onSave={(cents) =>
-                                      startTransition(() =>
-                                        updateBudgetItem(item.id, { actualCents: cents }),
-                                      )
-                                    }
-                                  />
-                                </div>
+                                <MoneyCell
+                                  cents={item.plannedCents}
+                                  onSave={(cents) =>
+                                    startTransition(() =>
+                                      updateBudgetItem(item.id, { plannedCents: cents ?? 0 }),
+                                    )
+                                  }
+                                />
                               </div>
-                            )}
-
-                            {/* what this plan is actually paying for, night by night */}
-                            {covered && covered.lines.length > 0 && (
-                              <ul className="mt-2 space-y-1 pl-[18px]">
-                                {covered.lines.map((line) => (
-                                  <li key={line.label} className="text-xs">
-                                    <div className="flex items-baseline justify-between gap-2">
-                                      <span className="min-w-0 truncate text-ink-muted">
-                                        {line.label}
-                                      </span>
-                                      <span className="shrink-0 tabular-nums text-ink-secondary">
-                                        {fmtMoney(line.cents)}
-                                      </span>
-                                    </div>
-                                    {line.alternative && (
-                                      <div className="mt-0.5 flex items-baseline justify-between gap-2 text-mark-amber">
-                                        <span className="min-w-0 truncate">
-                                          {line.alternative.label}
-                                        </span>
-                                        <span className="shrink-0 tabular-nums">
-                                          {fmtMoney(line.alternative.cents)}
-                                          <AltDelta line={line} />
-                                        </span>
-                                      </div>
-                                    )}
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
+                              <div>
+                                <div className="text-[10px] uppercase tracking-wide text-ink-muted">
+                                  Paid
+                                </div>
+                                <MoneyCell
+                                  cents={item.actualCents}
+                                  placeholder="—"
+                                  clearable
+                                  className={
+                                    linePaid >= item.plannedCents && linePaid > 0
+                                      ? "text-mark-green"
+                                      : ""
+                                  }
+                                  onSave={(cents) =>
+                                    startTransition(() =>
+                                      updateBudgetItem(item.id, { actualCents: cents }),
+                                    )
+                                  }
+                                />
+                              </div>
+                            </div>
                           </li>
                         );
                       })}
                     </ul>
 
-                    {adding === traveler.id ? (
-                      <AddItemForm travelerId={traveler.id} onDone={() => setAdding(null)} />
-                    ) : (
-                      <button
-                        onClick={() => setAdding(traveler.id)}
-                        className="mt-3 rounded-full border border-dashed border-borderc-strong px-3 py-1.5 text-xs text-ink-secondary transition-colors hover:border-glow-pink/50 hover:text-ink"
-                      >
-                        + Add Line Item
-                      </button>
-                    )}
+                    {/* shared lines are added via the seed/migration, not per-person here */}
+                    {!isCrew && col.travelerId !== null ? (
+                      adding === col.key ? (
+                        <AddItemForm
+                          travelerId={col.travelerId}
+                          onDone={() => setAdding(null)}
+                        />
+                      ) : (
+                        <button
+                          onClick={() => setAdding(col.key)}
+                          className="mt-3 rounded-full border border-dashed border-borderc-strong px-3 py-1.5 text-xs text-ink-secondary transition-colors hover:border-glow-pink/50 hover:text-ink"
+                        >
+                          + Add Line Item
+                        </button>
+                      )
+                    ) : null}
                   </div>
                 </motion.div>
               )}

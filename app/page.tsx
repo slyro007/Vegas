@@ -15,7 +15,6 @@ import {
   getTravelers,
   getTripSettings,
 } from "@/lib/data";
-import { estimateForScenario } from "@/lib/estimate";
 import { daysUntil, fmtMoney } from "@/lib/format";
 import { NAV_ICON, PlanIcon } from "@/lib/icons";
 
@@ -35,10 +34,11 @@ export default async function Dashboard() {
     ]);
   const lockedScenario = scenarios.find((s) => s.id === settings.lockedScenarioId) ?? null;
 
-  // the real money picture — same engine call Finances makes
-  const est = estimateForScenario(travelers, items, lockedScenario ?? undefined);
-  const under = est.available >= 0;
+  // the booked-trip ledger — active lines only, same numbers Finances shows
+  const activeItems = items.filter((i) => i.plannedCents > 0);
+  const tripTotal = activeItems.reduce((sum, i) => sum + i.plannedCents, 0);
   const paidSoFar = expenses.reduce((sum, e) => sum + e.amountCents, 0);
+  const leftToPay = tripTotal - paidSoFar;
 
   // what still needs booking: the stays (incl. the MGM all-inclusive) + the rental car.
   // The SUV rides on its pre-trip checklist row — label coupling noted in db/seed.ts.
@@ -75,9 +75,7 @@ export default async function Dashboard() {
     {
       href: "/finances",
       title: "Finances",
-      desc: under
-        ? `${fmtMoney(est.available)} left in the pot`
-        : `${fmtMoney(est.shortfall)} still to place · BeX covering the airfare`,
+      desc: `${fmtMoney(leftToPay)} left to pay · ${fmtMoney(tripTotal)} trip`,
     },
     {
       href: "/expenses",
@@ -186,16 +184,15 @@ export default async function Dashboard() {
               label: "paid so far",
               value: paidSoFar / 100,
               prefix: "$",
-              tone: "text-ink",
-              sub: `of the ${fmtMoney(est.realTotal)} real trip`,
+              tone: "text-mark-green",
+              sub: `of the ${fmtMoney(tripTotal)} booked trip`,
             },
             {
-              // amber, not pink: it's the open piece of the plan, not an alarm
-              label: under ? "left in the pot" : "still to place",
-              value: Math.abs(est.available) / 100,
+              label: "left to pay",
+              value: leftToPay / 100,
               prefix: "$",
-              tone: under ? "text-mark-green" : "text-mark-amber",
-              sub: `really ${fmtMoney(est.realTotal)} vs the ${fmtMoney(est.bucketTotal)} pad`,
+              tone: "text-mark-amber",
+              sub: `${Math.round((paidSoFar / tripTotal) * 100)}% covered so far`,
             },
             {
               label: "to-dos open",

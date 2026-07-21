@@ -16,19 +16,54 @@ function parseDollars(input: string): number | null {
   return Math.round(value * 100);
 }
 
+/** One selectable cost in the logger — its price and what's been paid so far. */
+function LineButton({
+  line,
+  active,
+  logged,
+  onPick,
+}: {
+  line: BudgetItem;
+  active: boolean;
+  logged: number;
+  onPick: () => void;
+}) {
+  const meta = CATEGORY_META[line.category] ?? CATEGORY_META.misc;
+  const left = line.plannedCents - logged;
+  return (
+    <button
+      onClick={onPick}
+      className={`rounded-xl border p-3 text-left transition-colors ${
+        active ? "border-glow-pink/60 bg-mark-pink/10" : "border-borderc hover:border-borderc-strong"
+      }`}
+    >
+      <span className="flex items-center gap-2 text-sm font-medium">
+        <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: meta.cssVar }} />
+        {line.label}
+      </span>
+      <span className="mt-1 block text-xs text-ink-muted">
+        Cost {fmtMoney(line.plannedCents)}
+        {logged > 0 && <span className="text-mark-teal"> · Paid {fmtMoney(logged)}</span>}
+        <span className={left < 0 ? "text-mark-pink" : left === 0 ? "text-mark-green" : ""}>
+          {" "}
+          · {left < 0 ? "+" : ""}
+          {left === 0 ? "settled" : `${fmtMoney(Math.abs(left))} ${left < 0 ? "over" : "left"}`}
+        </span>
+      </span>
+    </button>
+  );
+}
+
 export function ExpenseLogger({
   travelers,
   budgetItems,
   expenses,
   defaultTravelerId = null,
-  excludedItemIds = [],
 }: {
   travelers: Traveler[];
   budgetItems: BudgetItem[];
   expenses: Expense[];
   defaultTravelerId?: number | null;
-  /** lines the booked plan released — nothing to spend on, so not offered */
-  excludedItemIds?: number[];
 }) {
   const [travelerId, setTravelerId] = useState<number | null>(defaultTravelerId);
   const [budgetItemId, setBudgetItemId] = useState<number | null>(null);
@@ -38,10 +73,10 @@ export function ExpenseLogger({
 
   const travelerById = new Map(travelers.map((t) => [t.id, t]));
   const itemById = new Map(budgetItems.map((i) => [i.id, i]));
-  const excluded = new Set(excludedItemIds);
-  const myLines = travelerId
-    ? budgetItems.filter((i) => i.travelerId === travelerId && !excluded.has(i.id))
-    : [];
+  // active lines only — dormant $0 lines aren't spendable
+  const active = budgetItems.filter((i) => i.plannedCents > 0);
+  const myLines = travelerId ? active.filter((i) => i.travelerId === travelerId) : [];
+  const sharedLines = active.filter((i) => i.travelerId === null);
 
   const loggedByItem = new Map<number, number>();
   const loggedByTraveler = new Map<number, number>();
@@ -111,54 +146,45 @@ export function ExpenseLogger({
               transition={{ type: "spring", stiffness: 200, damping: 28 }}
               className="overflow-hidden"
             >
-              <p className="mt-4 text-sm text-ink-secondary">Which budget line?</p>
+              <p className="mt-4 text-sm text-ink-secondary">Which cost?</p>
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                {myLines.map((line) => {
-                  const meta = CATEGORY_META[line.category] ?? CATEGORY_META.misc;
-                  const active = budgetItemId === line.id;
-                  const logged = loggedByItem.get(line.id) ?? 0;
-                  return (
-                    <button
-                      key={line.id}
-                      onClick={() => setBudgetItemId(active ? null : line.id)}
-                      className={`rounded-xl border p-3 text-left transition-colors ${
-                        active
-                          ? "border-glow-pink/60 bg-mark-pink/10"
-                          : "border-borderc hover:border-borderc-strong"
-                      }`}
-                    >
-                      <span className="flex items-center gap-2 text-sm font-medium">
-                        <span
-                          className="h-2.5 w-2.5 shrink-0 rounded-sm"
-                          style={{ background: meta.cssVar }}
-                        />
-                        {line.label}
-                      </span>
-                      <span className="mt-1 block text-xs text-ink-muted">
-                        Projected {fmtMoney(line.plannedCents)}
-                        {logged > 0 && (
-                          <span className="text-mark-teal"> · Logged {fmtMoney(logged)}</span>
-                        )}
-                        <span
-                          className={
-                            line.plannedCents - logged < 0 ? "text-mark-pink" : "text-mark-green"
-                          }
-                        >
-                          {" "}
-                          · {line.plannedCents - logged < 0 ? "+" : ""}
-                          {fmtMoney(Math.abs(line.plannedCents - logged))}{" "}
-                          {line.plannedCents - logged < 0 ? "Over" : "Left"}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
+                {myLines.map((line) => (
+                  <LineButton
+                    key={line.id}
+                    line={line}
+                    active={budgetItemId === line.id}
+                    logged={loggedByItem.get(line.id) ?? 0}
+                    onPick={() => setBudgetItemId(budgetItemId === line.id ? null : line.id)}
+                  />
+                ))}
                 {myLines.length === 0 && (
                   <p className="text-sm text-ink-muted">
-                    No budget lines yet — add one on the Finances page first.
+                    No costs on this person yet — add one on the Finances page first.
                   </p>
                 )}
               </div>
+
+              {sharedLines.length > 0 && (
+                <>
+                  <p className="mt-4 flex items-center gap-2 text-sm text-ink-secondary">
+                    Shared · The Crew
+                    <span className="text-xs text-ink-muted">— anyone can pay these</span>
+                  </p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    {sharedLines.map((line) => (
+                      <LineButton
+                        key={line.id}
+                        line={line}
+                        active={budgetItemId === line.id}
+                        logged={loggedByItem.get(line.id) ?? 0}
+                        onPick={() =>
+                          setBudgetItemId(budgetItemId === line.id ? null : line.id)
+                        }
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <div className="flex items-center rounded-xl border border-borderc bg-surface px-3 focus-within:border-glow-pink/60">
@@ -194,33 +220,61 @@ export function ExpenseLogger({
         </AnimatePresence>
       </section>
 
-      {/* ---------- per-person totals ---------- */}
-      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {travelers.map((t) => {
-          const logged = loggedByTraveler.get(t.id) ?? 0;
-          const plannedSum = budgetItems
-            .filter((i) => i.travelerId === t.id)
-            .reduce((s, i) => s + i.plannedCents, 0);
-          const budgetLeft = t.budgetTotalCents - logged;
-          const planLeft = plannedSum - logged;
+      {/* ---------- per-person + Crew totals: paid vs what they owe ---------- */}
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+        {[
+          ...travelers.map((t) => ({
+            key: `t${t.id}`,
+            name: t.name,
+            color: t.color,
+            owed: active
+              .filter((i) => i.travelerId === t.id)
+              .reduce((s, i) => s + i.plannedCents, 0),
+            paid: loggedByTraveler.get(t.id) ?? 0,
+          })),
+          {
+            key: "crew",
+            name: "The Crew",
+            color: "var(--glow-purple)",
+            owed: active.filter((i) => i.travelerId === null).reduce((s, i) => s + i.plannedCents, 0),
+            // shared lines are paid by whoever logs them; sum the lines' actuals
+            paid: active
+              .filter((i) => i.travelerId === null)
+              .reduce((s, i) => s + (loggedByItem.get(i.id) ?? 0), 0),
+          },
+        ].map((c) => {
+          const left = c.owed - c.paid;
           return (
-            <div key={t.id} className="rounded-2xl border border-borderc bg-card p-4">
+            <div key={c.key} className="rounded-2xl border border-borderc bg-card p-4">
               <div className="flex items-center gap-1.5 text-sm text-ink-secondary">
-                <TravelerAvatar name={t.name} color={t.color} className="h-5 w-5 text-[11px]" />
-                {t.name}
+                <span
+                  className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold"
+                  style={{
+                    background: `color-mix(in srgb, ${c.color} 30%, transparent)`,
+                    color: c.color,
+                  }}
+                  aria-hidden
+                >
+                  {c.key === "crew" ? "☺" : c.name[0]}
+                </span>
+                {c.name}
               </div>
               <div className="mt-1 font-display text-xl font-semibold tabular-nums">
-                {fmtMoney(logged)}
+                {fmtMoney(c.paid)}
               </div>
-              <div className="text-xs uppercase tracking-wider text-ink-muted">Logged</div>
+              <div className="text-xs uppercase tracking-wider text-ink-muted">Paid</div>
               <div className="mt-2 space-y-0.5 text-xs">
-                <div className={budgetLeft < 0 ? "text-mark-pink" : "text-ink-secondary"}>
-                  Budget: <span className="tabular-nums">{fmtMoney(Math.abs(budgetLeft))}</span>{" "}
-                  {budgetLeft < 0 ? "Over" : "Left"}
+                <div className="text-ink-secondary">
+                  Owes <span className="tabular-nums">{fmtMoney(c.owed)}</span>
                 </div>
-                <div className={planLeft < 0 ? "text-mark-pink" : "text-ink-secondary"}>
-                  Projected: <span className="tabular-nums">{fmtMoney(Math.abs(planLeft))}</span>{" "}
-                  {planLeft < 0 ? "Over" : "Left"}
+                <div className={left <= 0 ? "text-mark-green" : "text-mark-amber"}>
+                  {left <= 0 ? (
+                    "Settled"
+                  ) : (
+                    <>
+                      <span className="tabular-nums">{fmtMoney(left)}</span> left
+                    </>
+                  )}
                 </div>
               </div>
             </div>
