@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import { scenarioAccent } from "@/lib/accents";
 import type { BudgetItem, Scenario, Traveler } from "@/lib/data";
 import { estimateForScenario } from "@/lib/estimate";
@@ -199,28 +199,38 @@ export function TrueCost({
             </div>
             <div className="text-right text-xs uppercase tracking-wider text-mark-teal">Flying</div>
 
-            <div className="text-ink-secondary">Hotels</div>
-            <div className="text-right tabular-nums">{fmtMoney(drive.est.hotels)}</div>
-            <div className="text-right tabular-nums">{fmtMoney(fly.est.hotels)}</div>
-
-            <div className="text-ink-secondary">Getting there</div>
-            <div className="text-right tabular-nums">{fmtMoney(drive.est.gettingThere)}</div>
-            <div className="text-right tabular-nums">{fmtMoney(fly.est.gettingThere)}</div>
+            {(
+              [
+                ["Hotels", drive.est.hotels, fly.est.hotels],
+                ["Food", drive.est.food, fly.est.food],
+                ["Getting there", drive.est.gettingThere, fly.est.gettingThere],
+              ] as const
+            ).map(([label, d, f]) => (
+              <Fragment key={label}>
+                <div className="text-ink-secondary">{label}</div>
+                <div className="text-right tabular-nums">{fmtMoney(d)}</div>
+                <div className="text-right tabular-nums">{fmtMoney(f)}</div>
+              </Fragment>
+            ))}
           </div>
 
           <div className="mt-4 space-y-1.5 border-t border-borderc pt-3 text-sm">
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-ink-secondary">Hotels difference</span>
-              <span className="tabular-nums text-mark-green">
-                flying is {fmtMoney(drive.est.hotels - fly.est.hotels)} cheaper
-              </span>
-            </div>
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="text-ink-secondary">Getting-there difference</span>
-              <span className="tabular-nums text-mark-pink">
-                flying is {fmtMoney(fly.est.gettingThere - drive.est.gettingThere)} more
-              </span>
-            </div>
+            {(
+              [
+                ["Hotels", fly.est.hotels - drive.est.hotels],
+                ["Food", fly.est.food - drive.est.food],
+                ["Getting there", fly.est.gettingThere - drive.est.gettingThere],
+              ] as const
+            ).map(([label, delta]) => (
+              <div key={label} className="flex items-baseline justify-between gap-3">
+                <span className="text-ink-secondary">{label} difference</span>
+                <span
+                  className={`tabular-nums ${delta > 0 ? "text-mark-pink" : "text-mark-green"}`}
+                >
+                  flying is {fmtMoney(Math.abs(delta))} {delta > 0 ? "more" : "cheaper"}
+                </span>
+              </div>
+            ))}
             <div className="flex items-baseline justify-between gap-3 pt-1 font-medium">
               <span>Driving really saves</span>
               <span className="tabular-nums text-mark-green">
@@ -230,11 +240,12 @@ export function TrueCost({
           </div>
 
           <p className="mt-4 text-xs text-ink-muted">
-            <span className="text-ink-secondary">The hotels are a wash.</span> Flying is even
-            slightly cheaper on lodging — no Flagstaff night, though it adds a fifth Henderson
-            night. John&apos;s rates aren&apos;t what makes driving cheaper; the whole gap is
-            transportation. And since both columns use the same unbooked rates, if those rates move
-            they move together — the drive-vs-fly answer barely changes.
+            <span className="text-ink-secondary">It&apos;s the transportation, not the trip.</span>{" "}
+            Hotels and food are close either way — flying costs a bit more on lodging (the second
+            Sedona night) and a bit less on food (no road-trip meals). Nearly the entire gap is
+            getting there: airfare, the rental, bags, ubers and fuel against a tank of gas. And
+            since both hotel columns use the same unbooked rates, if those rates move they move
+            together — the answer barely changes.
           </p>
         </div>
       )}
