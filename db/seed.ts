@@ -347,6 +347,9 @@ async function seed() {
     );
   await db.insert(itineraryEvents).values([
     // Fly plan: fly in Friday, land + Sedona the first weekend, full Vegas week, fly home Saturday
+    // Rental SUV variant: same ten days, plus pickup and drop-off on either end
+    { date: "2026-08-07", sortOrder: -1, time: "4:00 PM", title: "Pick Up the Rental SUV", description: "Enterprise full-size SUV for the whole trip — grab it before Amma's pickup so it's loaded and ready for the 5 AM haul.", location: "Enterprise, Cedar Park", theme: "desert", plan: "driveb" },
+    { date: "2026-08-16", sortOrder: 1, time: "11:00 AM", title: "Return the Rental SUV", description: "Unload, sleep in, then drop the SUV back. Check the fuel level before you go.", location: "Enterprise, Cedar Park", theme: "desert", plan: "driveb" },
     { date: "2026-08-07", sortOrder: 0, time: "3:39 PM", title: "Fly AUS → LAS", description: "Delta nonstop — all four of us, wheels down at 4:32 PM.", location: "Austin-Bergstrom → Harry Reid Intl", theme: "vegas", plan: "fly" },
     { date: "2026-08-07", sortOrder: 1, time: "Evening", title: "Uber to Henderson + Crash", description: "Straight to Best Western Henderson on John's rate — settle in and rest up.", location: "Henderson, NV", theme: "vegas", plan: "fly" },
     { date: "2026-08-08", sortOrder: 0, time: "Morning", title: "Rent the SUV + Check Out", description: "Pick up the midsize luxury SUV at Harry Reid and check out of Henderson for the weekend loop.", location: "Harry Reid Intl, Las Vegas", theme: "vegas", plan: "fly" },
