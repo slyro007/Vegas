@@ -33,6 +33,22 @@ export function ConfidenceTag({ line }: { line: CostLine }) {
   );
 }
 
+/**
+ * The gap between a line and its alternative, in the direction that matters —
+ * a cheaper alternative is a saving worth seeing, not just a smaller number.
+ */
+export function AltDelta({ line }: { line: CostLine }) {
+  if (!line.alternative) return null;
+  const delta = line.alternative.cents - line.cents;
+  if (delta === 0) return null;
+  const money = `$${(Math.abs(delta) / 100).toFixed(2).replace(/\.00$/, "")}`;
+  return delta > 0 ? (
+    <span className="text-mark-pink"> · +{money}</span>
+  ) : (
+    <span className="text-mark-green"> · saves {money}</span>
+  );
+}
+
 /** Bar fill treatment matching the tag: solid when quoted, hatched when not. */
 export function confidenceFill(line: CostLine) {
   const c = confidenceOf(line);

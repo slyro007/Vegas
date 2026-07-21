@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useOptimistic, useState, useTransition } from "react";
 import { castVote, lockScenario } from "@/app/actions";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
-import { ConfidenceTag, confidenceFill } from "@/components/ConfidenceTag";
+import { AltDelta, ConfidenceTag, confidenceFill } from "@/components/ConfidenceTag";
 import { scenarioAccent } from "@/lib/accents";
 import type { Scenario, Traveler, TripSettings, Vote } from "@/lib/data";
 import { fmtMoney } from "@/lib/format";
@@ -148,6 +148,7 @@ export function ScenarioBoard({
                               <span>{line.alternative.label}</span>
                               <span className="tabular-nums">
                                 {fmtMoney(line.alternative.cents)}
+                                <AltDelta line={line} />
                               </span>
                             </div>
                           )}
