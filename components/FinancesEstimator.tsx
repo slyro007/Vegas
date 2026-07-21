@@ -39,7 +39,6 @@ export function FinancesEstimator({
   const saveNote = () => startTransition(() => updateShortfallNote(note));
 
   const under = est.available >= 0;
-  const tone = under ? "text-mark-green" : "text-mark-pink";
   const nameOf = (id: number | null) => travelers.find((t) => t.id === id)?.name ?? "The trip";
 
   // how each freed/covered dollar should read — contribution, never debt
@@ -57,28 +56,67 @@ export function FinancesEstimator({
 
   return (
     <div>
-      {/* ---------- the bucket, booked plan only ---------- */}
+      {/* ---------- the bucket, booked plan only ----------
+          Leads with how much of the trip IS covered, not how much isn't — the
+          same honest number, framed as progress with one open piece (amber =
+          open question, never alarm-pink on page entry). */}
       <motion.section
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="overflow-hidden rounded-2xl border"
-        style={{
-          borderColor: under ? "var(--mark-green)" : "var(--mark-pink)",
-          background: under ? "rgba(77,160,107,0.10)" : "rgba(211,79,140,0.10)",
-        }}
+        className="overflow-hidden rounded-2xl border border-borderc bg-card"
       >
         <div className="p-5 md:p-6">
           <p className="text-xs uppercase tracking-widest text-ink-secondary">
-            {under ? "Left in the bucket" : "Short of the yellow pad"}
+            The trip, funded
           </p>
-          <div className={`font-display text-4xl font-semibold tabular-nums md:text-5xl ${tone}`}>
-            {fmtMoney(Math.abs(est.available))}
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <div className="font-display text-4xl font-semibold tabular-nums text-mark-green md:text-5xl">
+              {under ? "100%" : `${Math.round((est.bucketTotal / est.realTotal) * 100)}%`}
+            </div>
+            <div className="text-sm text-ink-secondary md:text-base">
+              of the {fmtMoney(est.realTotal)} trip is covered by the yellow pad
+            </div>
           </div>
-          <p className="mt-1 text-sm text-ink-secondary md:text-base">
-            The booked trip really costs{" "}
-            <span className="font-medium tabular-nums text-ink">{fmtMoney(est.realTotal)}</span>{" "}
-            against the {fmtMoney(est.bucketTotal)} everyone planned on the yellow pad
-            {under ? "." : " — pitch into the pot or trim if you want to close it."}
+          {/* covered vs the open piece */}
+          <div className="mt-3 flex h-3 overflow-hidden rounded-full bg-surface">
+            <motion.div
+              className="h-full bg-mark-green"
+              initial={{ width: 0 }}
+              animate={{
+                width: `${under ? 100 : Math.round((est.bucketTotal / est.realTotal) * 100)}%`,
+              }}
+              transition={{ type: "spring", stiffness: 60, damping: 20 }}
+            />
+            {!under && (
+              <div
+                className="h-full flex-1"
+                style={{
+                  background:
+                    "repeating-linear-gradient(45deg, rgba(184,137,49,0.45) 0 4px, rgba(184,137,49,0.15) 4px 8px)",
+                }}
+                title={`${fmtMoney(est.shortfall)} still open`}
+              />
+            )}
+          </div>
+          <p className="mt-2 text-sm text-ink-secondary md:text-base">
+            {under ? (
+              <>
+                Fully covered, with{" "}
+                <span className="font-medium tabular-nums text-mark-green">
+                  {fmtMoney(est.available)}
+                </span>{" "}
+                to spare.
+              </>
+            ) : (
+              <>
+                The hatched piece is the last{" "}
+                <span className="font-medium tabular-nums text-mark-amber">
+                  {fmtMoney(est.shortfall)}
+                </span>{" "}
+                — flights got real, so it&apos;s an open question, not a problem. Jot the plan
+                below.
+              </>
+            )}
           </p>
         </div>
 
@@ -134,14 +172,14 @@ export function FinancesEstimator({
 
         {!under && (
           <div className="border-t border-borderc/60 p-5 md:p-6">
-            <p className="text-sm font-medium text-mark-pink">
-              We&apos;re short {fmtMoney(est.shortfall)} — where&apos;s the rest coming from?
+            <p className="text-sm font-medium text-mark-amber">
+              The plan for the last {fmtMoney(est.shortfall)} — where should it come from?
             </p>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               onBlur={saveNote}
-              placeholder="Jot the plan — pitch into the pot, trim spending money, or let it ride…"
+              placeholder="Jot it down — pitch into the pot, trim spending money, or let it ride…"
               rows={2}
               className="mt-2 w-full rounded-xl border border-borderc bg-surface px-3 py-2 text-sm outline-none transition-colors focus:border-glow-pink/60"
             />
