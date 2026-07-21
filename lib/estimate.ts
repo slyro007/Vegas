@@ -56,6 +56,9 @@ export type Estimate = {
   shortfall: number;
   /** what the whole trip really costs on this plan */
   realTotal: number;
+  /** lines no scenario touches (Caesar, gifts, spending money, Wynn, the Luxor) —
+   *  identical on every plan, which is exactly why they decide nothing */
+  personalTotal: number;
   /** what flying adds minus what not driving releases (0 for the drive plans) */
   routeChange: number;
   /** real quotes beating the yellow pad */
@@ -162,6 +165,7 @@ export function estimateForScenario(
 
   const freed = perPerson.reduce((a, p) => a + p.left, 0);
   const available = freed - poolDraw;
+  const personalTotal = perPerson.reduce((a, p) => a + p.personal, 0);
 
   // route change: what this plan adds that nobody budgeted for, minus what it releases
   const releasedTotal = perPerson.reduce(
@@ -186,6 +190,7 @@ export function estimateForScenario(
     available,
     shortfall: Math.max(0, -available),
     realTotal: bucketTotal - available,
+    personalTotal,
     routeChange,
     dealSavings,
     savings: savings.sort((a, b) => b.cents - a.cents),

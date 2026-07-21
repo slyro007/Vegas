@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Fragment, useMemo } from "react";
+import { useMemo } from "react";
 import { scenarioAccent } from "@/lib/accents";
 import type { BudgetItem, Scenario, Traveler } from "@/lib/data";
 import { estimateForScenario } from "@/lib/estimate";
@@ -186,32 +186,84 @@ export function TrueCost({
         </dl>
       </div>
 
-      {/* ---------- (c) drive vs fly head-to-head ---------- */}
+      {/* ---------- (c) every plan, every dollar ---------- */}
       {drive && fly && (
         <div className="mt-4 rounded-2xl border border-borderc bg-card p-5">
           <h3 className="text-xs uppercase tracking-widest text-ink-muted">
-            Drive vs fly — what actually decides it
+            Every plan, every dollar
           </h3>
-          <div className="mt-4 grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-3 text-sm md:gap-x-8">
-            <div />
-            <div className="text-right text-xs uppercase tracking-wider text-mark-orange">
-              Driving
-            </div>
-            <div className="text-right text-xs uppercase tracking-wider text-mark-teal">Flying</div>
-
-            {(
-              [
-                ["Hotels", drive.est.hotels, fly.est.hotels],
-                ["Food", drive.est.food, fly.est.food],
-                ["Getting there", drive.est.gettingThere, fly.est.gettingThere],
-              ] as const
-            ).map(([label, d, f]) => (
-              <Fragment key={label}>
-                <div className="text-ink-secondary">{label}</div>
-                <div className="text-right tabular-nums">{fmtMoney(d)}</div>
-                <div className="text-right tabular-nums">{fmtMoney(f)}</div>
-              </Fragment>
-            ))}
+          <p className="mt-1 text-xs text-ink-muted">
+            Nothing left out — the rows add up to each plan&apos;s real total.
+          </p>
+          <div className="scroll-thin mt-4 overflow-x-auto">
+            <table className="w-full min-w-[30rem] text-sm">
+              <thead>
+                <tr>
+                  <th className="pb-2 text-left text-xs font-normal uppercase tracking-wider text-ink-muted">
+                    What we spend on
+                  </th>
+                  {rows.map(({ scenario }) => (
+                    <th
+                      key={scenario.id}
+                      className="pb-2 text-right text-xs font-normal uppercase tracking-wider"
+                      style={{ color: scenarioAccent(scenario.slug).mark }}
+                    >
+                      {scenario.name.replace(/^(Road Trip|Fly) · /, "")}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {(
+                  [
+                    ["Getting there", "gettingThere"],
+                    ["Hotels", "hotels"],
+                    ["Food", "food"],
+                  ] as const
+                ).map(([label, field]) => (
+                  <tr key={label} className="border-t border-borderc">
+                    <td className="py-2 text-ink-secondary">{label}</td>
+                    {rows.map(({ scenario, est }) => (
+                      <td key={scenario.id} className="py-2 text-right tabular-nums">
+                        {fmtMoney(est[field])}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+                <tr className="border-t border-borderc font-medium">
+                  <td className="py-2">Costs that change by plan</td>
+                  {rows.map(({ scenario, est }) => (
+                    <td key={scenario.id} className="py-2 text-right tabular-nums">
+                      {fmtMoney(est.gettingThere + est.hotels + est.food)}
+                    </td>
+                  ))}
+                </tr>
+                <tr className="border-t border-borderc">
+                  <td className="py-2 text-ink-secondary">
+                    Same either way
+                    <span className="block text-xs text-ink-muted">
+                      the Luxor, Wynn, Caesar, gifts, spending money
+                    </span>
+                  </td>
+                  {rows.map(({ scenario, est }) => (
+                    <td
+                      key={scenario.id}
+                      className="py-2 text-right tabular-nums text-ink-secondary"
+                    >
+                      {fmtMoney(est.personalTotal)}
+                    </td>
+                  ))}
+                </tr>
+                <tr className="border-t border-borderc-strong font-semibold">
+                  <td className="py-2.5">Real total</td>
+                  {rows.map(({ scenario, est }) => (
+                    <td key={scenario.id} className="py-2.5 text-right tabular-nums">
+                      {fmtMoney(est.realTotal)}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           <div className="mt-4 space-y-1.5 border-t border-borderc pt-3 text-sm">
@@ -223,7 +275,9 @@ export function TrueCost({
               ] as const
             ).map(([label, delta]) => (
               <div key={label} className="flex items-baseline justify-between gap-3">
-                <span className="text-ink-secondary">{label} difference</span>
+                <span className="text-ink-secondary">
+                  {label} — Forester vs flying
+                </span>
                 <span
                   className={`tabular-nums ${delta > 0 ? "text-mark-pink" : "text-mark-green"}`}
                 >
@@ -232,7 +286,7 @@ export function TrueCost({
               </div>
             ))}
             <div className="flex items-baseline justify-between gap-3 pt-1 font-medium">
-              <span>Driving really saves</span>
+              <span>Taking the Forester saves</span>
               <span className="tabular-nums text-mark-green">
                 {fmtMoney(fly.est.realTotal - drive.est.realTotal)}
               </span>
@@ -241,11 +295,11 @@ export function TrueCost({
 
           <p className="mt-4 text-xs text-ink-muted">
             <span className="text-ink-secondary">It&apos;s the transportation, not the trip.</span>{" "}
-            Hotels and food are close either way — flying costs a bit more on lodging (the second
-            Sedona night) and a bit less on food (no road-trip meals). Nearly the entire gap is
-            getting there: airfare, the rental, bags, ubers and fuel against a tank of gas. And
-            since both hotel columns use the same unbooked rates, if those rates move they move
-            together — the answer barely changes.
+            Hotels and food land within a couple hundred dollars of each other on all three plans —
+            flying costs a bit more on lodging (the Saturday Sedona rate) and a bit less on food (no
+            road-trip meals). Nearly the whole gap is getting there: $1,700 of airfare plus the
+            rental, bags, ubers and fuel, against gas and a car we already own. The rental SUV is
+            the same road trip with $650 of vehicle on top.
           </p>
         </div>
       )}

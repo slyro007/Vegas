@@ -21,12 +21,12 @@ export default async function ScenariosPage() {
       <Reveal>
         <p className="text-xs uppercase tracking-widest text-ink-muted">The Big Decision</p>
         <h1 className="mt-1 font-display text-3xl font-semibold md:text-5xl">
-          Drive, rent, fly — or split?
+          Drive it, rent it, or fly it?
         </h1>
         <p className="mt-3 max-w-2xl text-sm text-ink-secondary md:text-base">
           {locked
             ? "The call has been made — but everything's still here if the family wants to reopen it."
-            : "Five ways to get this family to Vegas — including the splits where the trio drives and Amma flies. Vote with your name, argue it out, then Lock This Plan when everyone's in. One vote per person."}
+            : "Three ways to get this family to Vegas: take the Forester, rent an SUV for the same road trip, or fly in for a red-rock weekend. Vote with your name, argue it out, then Lock This Plan when everyone's in. One vote per person."}
         </p>
       </Reveal>
 
