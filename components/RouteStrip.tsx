@@ -15,78 +15,93 @@ type Stop = {
 
 const STOPS: Stop[] = [
   {
-    key: "muir",
-    name: "Muir Lake",
-    sub: "TX · 5 AM Sat",
-    dates: "Fri Aug 7 – Sat Aug 8",
+    key: "austin",
+    name: "Austin",
+    sub: "Fly Out · 3:39 PM",
+    dates: "Fri Aug 7",
     x: 30,
     activities: [
-      "Pick up Amma Friday evening",
-      "Pack the cooler — Amma-safe",
-      "Wheels roll 5:00 AM Saturday",
+      "Booked — Delta DL2260, all four of us",
+      "One shared XL to the airport",
+      "Wheels down in Vegas 4:32 PM",
     ],
   },
   {
-    key: "flagstaff",
-    name: "Flagstaff",
-    sub: "AZ · Night 1",
-    dates: "Sat Aug 8",
-    x: 175,
+    key: "vegas-in",
+    name: "Vegas",
+    sub: "Fly-In Night",
+    dates: "Fri Aug 7",
+    x: 151,
     activities: [
-      "Super-late-night check-in after ~15 hours",
-      "Aiden by Best Western · 2 queens",
-      "Breakfast in town Sunday morning",
+      "Pick up the SUV at Harry Reid",
+      "BW Henderson on John's rate",
+      "Crash — big Saturday ahead",
     ],
   },
   {
-    key: "land",
-    name: "The Land",
-    sub: "Valle · Horses",
-    dates: "Sun Aug 9",
-    x: 320,
+    key: "valle",
+    name: "Valle",
+    sub: "AZ · Horses",
+    dates: "Sat Aug 8",
+    x: 271,
     activities: [
       "287 S Victoria Dr, Valle, AZ",
       "~4 hours of horses with Caesar's crew",
-      "Then the last leg into Vegas",
-    ],
-  },
-  {
-    key: "vegas",
-    name: "VEGAS",
-    sub: "NV · 5 Nights",
-    dates: "Sun Aug 9 – Fri Aug 14",
-    x: 465,
-    vegas: true,
-    activities: [
-      "BW Henderson → the Luxor All-Inclusive",
-      "Moapa Valley Monday · Old Vegas Tuesday",
-      "Wynn Buffet Wednesday — non-negotiable",
+      "Then on to Sedona for the night",
     ],
   },
   {
     key: "sedona",
     name: "Sedona",
-    sub: "AZ · Night 7",
-    dates: "Fri Aug 14",
-    x: 610,
+    sub: "AZ · 2 Nights",
+    dates: "Sat Aug 8 – Mon Aug 10",
+    x: 392,
     activities: [
-      "Slide Rock State Park",
-      "Downtown shops + red-rock dinner",
-      "Grocery restock for the haul home",
+      "Best Western Red Rock, John's rate",
+      "Slide Rock, the vortexes, downtown",
+      "A slow red-rock Sunday",
+    ],
+  },
+  {
+    key: "moapa",
+    name: "Moapa",
+    sub: "NV · On the Way",
+    dates: "Mon Aug 10",
+    x: 513,
+    activities: [
+      "Break the drive back in Shy's hometown",
+      "Then the last push into Henderson",
+    ],
+  },
+  {
+    key: "vegas",
+    name: "VEGAS",
+    sub: "NV · The Week",
+    dates: "Mon Aug 10 – Fri Aug 14",
+    x: 634,
+    vegas: true,
+    activities: [
+      "BW Henderson → the Luxor All-Inclusive",
+      "Old Vegas Tuesday · Wynn Buffet Wednesday",
+      "BeX at the Backstreet Boys, Sphere",
     ],
   },
   {
     key: "home",
     name: "Home",
-    sub: "TX · Sun AM",
-    dates: "Sat Aug 15 – Sun Aug 16",
+    sub: "Fly Back · 5:15 PM",
+    dates: "Fri Aug 14",
     x: 755,
-    activities: ["5 AM start out of Sedona", "Roll into Muir Lake super early Sunday"],
+    activities: [
+      "Booked — Delta DL1837, lands 10:05 PM",
+      "Drop the SUV at the airport first",
+      "Home in Austin by midnight",
+    ],
   },
 ];
 
 const ROUTE_PATH =
-  "M 30 40 C 90 20, 115 60, 175 40 S 260 20, 320 40 S 405 60, 465 40 S 550 20, 610 40 S 695 60, 755 40";
+  "M 30 40 C 70 20, 111 60, 151 40 S 231 20, 271 40 S 352 60, 392 40 S 473 20, 513 40 S 594 60, 634 40 S 715 20, 755 40";
 
 function SphereEgg() {
   const [burst, setBurst] = useState(0);
@@ -144,7 +159,7 @@ export function RouteStrip() {
           viewBox="0 0 785 96"
           className="h-24 w-[785px] min-w-full"
           role="img"
-          aria-label="Route: Muir Lake to Flagstaff to the land at Valle to Las Vegas to Sedona and back home. Hover or tap a stop for details."
+          aria-label="Route: fly Austin to Vegas, then Valle, Sedona, Moapa Valley, the Vegas week, and fly home. Hover or tap a stop for details."
         >
           <path d={ROUTE_PATH} fill="none" stroke="var(--border-strong)" strokeWidth="2" />
           <path

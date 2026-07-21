@@ -44,6 +44,7 @@ export function daysUntil(iso: string, from: Date = new Date()): number {
 }
 
 export const CATEGORY_META: Record<string, { label: string; cssVar: string }> = {
+  travel: { label: "Travel", cssVar: "var(--cat-travel)" },
   lodging: { label: "Lodging", cssVar: "var(--cat-lodging)" },
   food: { label: "Food", cssVar: "var(--cat-food)" },
   gas: { label: "Gas", cssVar: "var(--cat-gas)" },

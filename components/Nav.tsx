@@ -9,18 +9,17 @@ import { NAV_ICON } from "@/lib/icons";
 const LINKS = [
   { href: "/", label: "Home" },
   { href: "/itinerary", label: "Itinerary" },
-  { href: "/scenarios", label: "Decide" },
   { href: "/finances", label: "Finances" },
   { href: "/expenses", label: "Spend" },
   { href: "/lodging", label: "Lodging" },
   { href: "/lists", label: "Lists" },
 ];
 
-export function Nav({ showDecide = true }: { showDecide?: boolean }) {
+export function Nav() {
   const pathname = usePathname();
   if (pathname.startsWith("/sign-")) return null;
 
-  const links = showDecide ? LINKS : LINKS.filter((l) => l.href !== "/scenarios");
+  const links = LINKS;
 
   return (
     <>
