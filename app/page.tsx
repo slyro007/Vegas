@@ -77,7 +77,7 @@ export default async function Dashboard() {
       title: "Finances",
       desc: under
         ? `${fmtMoney(est.available)} left in the pot`
-        : `Short ${fmtMoney(est.shortfall)} · BeX covering the airfare`,
+        : `${fmtMoney(est.shortfall)} still to place · BeX covering the airfare`,
     },
     {
       href: "/expenses",
@@ -183,10 +183,11 @@ export default async function Dashboard() {
               sub: `of the ${fmtMoney(est.realTotal)} real trip`,
             },
             {
-              label: under ? "left in the pot" : "short by",
+              // amber, not pink: it's the open piece of the plan, not an alarm
+              label: under ? "left in the pot" : "still to place",
               value: Math.abs(est.available) / 100,
               prefix: "$",
-              tone: under ? "text-mark-green" : "text-mark-pink",
+              tone: under ? "text-mark-green" : "text-mark-amber",
               sub: `really ${fmtMoney(est.realTotal)} vs the ${fmtMoney(est.bucketTotal)} pad`,
             },
             {
