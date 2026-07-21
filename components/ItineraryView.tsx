@@ -22,16 +22,8 @@ const PLANS = [
     label: "Fly Plan",
     color: "var(--mark-teal)",
     blurb:
-      "All four fly in Friday afternoon and knock out the land + Sedona the first weekend — then a full, unhurried Vegas week before the Saturday evening flight home.",
+      "All four fly in Friday afternoon, horses on the land Saturday, then two slow nights in Sedona — Moapa Valley on the Monday drive back, a full Vegas week, and home Saturday evening.",
     dates: "Aug 7 – 15, 2026",
-  },
-  {
-    key: "hybrid" as const,
-    label: "Split Plan",
-    color: "var(--mark-purple)",
-    blurb:
-      "Shy, BeX & Pithya road-trip it while Amma flies in Sunday afternoon and home Friday evening — zero 15-hour hauls for her, full adventure for the trio.",
-    dates: "Aug 7 – 16, 2026",
   },
 ];
 
@@ -41,11 +33,6 @@ const VIEWS = [
 ];
 type ViewKey = (typeof VIEWS)[number]["key"];
 const VIEW_STORAGE_KEY = "itinerary-view";
-
-const FLY_VARIANTS = [
-  { key: "fly" as const, label: "Sedona · One Night" },
-  { key: "flyb" as const, label: "Sedona · The Weekend" },
-];
 
 function buildDays(events: ItineraryEvent[], filterKey: string): TimelineDay[] {
   const filtered = events.filter(
@@ -70,14 +57,11 @@ function buildDays(events: ItineraryEvent[], filterKey: string): TimelineDay[] {
 export function ItineraryView({
   events,
   defaultPlan = "drive",
-  defaultFlyVariant = "fly",
 }: {
   events: ItineraryEvent[];
   defaultPlan?: TimelineAccent;
-  defaultFlyVariant?: "fly" | "flyb";
 }) {
   const [plan, setPlan] = useState<TimelineAccent>(defaultPlan);
-  const [flyVariant, setFlyVariant] = useState<"fly" | "flyb">(defaultFlyVariant);
   const [view, setView] = useState<ViewKey>("timeline");
 
   // hydrate the saved view choice after mount (SSR-safe)
@@ -91,8 +75,7 @@ export function ItineraryView({
   };
 
   const meta = PLANS.find((p) => p.key === plan)!;
-  const filterKey = plan === "fly" ? flyVariant : plan;
-  const days = buildDays(events, filterKey);
+  const days = buildDays(events, plan);
 
   return (
     <div>
@@ -163,48 +146,14 @@ export function ItineraryView({
         </div>
       </div>
 
-      {/* fly-only sub-toggle: one Sedona night vs the whole weekend */}
-      {plan === "fly" && (
-        <div className="mt-3 inline-flex rounded-full border border-borderc bg-card p-1">
-          {FLY_VARIANTS.map((v) => {
-            const active = flyVariant === v.key;
-            return (
-              <button
-                key={v.key}
-                onClick={() => setFlyVariant(v.key)}
-                className={`relative rounded-full px-3 py-1.5 text-xs font-medium transition-colors md:text-sm ${
-                  active ? "text-ink" : "text-ink-muted hover:text-ink-secondary"
-                }`}
-                aria-pressed={active}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="fly-variant-pill"
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      background: "color-mix(in srgb, var(--mark-teal) 26%, transparent)",
-                      border: "1px solid var(--mark-teal)",
-                    }}
-                    transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                  />
-                )}
-                <span className="relative">{v.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       <motion.div
-        key={`${filterKey}-${view}`}
+        key={`${plan}-${view}`}
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 200, damping: 26 }}
       >
         <p className="mt-4 max-w-xl text-sm text-ink-secondary md:text-base">
-          {plan === "fly" && flyVariant === "flyb"
-            ? "Same Friday fly-in, but two nights in Sedona — a slow red-rock weekend — then Moapa Valley on the Monday drive back before settling into Vegas for the week."
-            : meta.blurb}
+          {meta.blurb}
         </p>
         <div className="mt-8">
           {view === "grid" ? (

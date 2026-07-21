@@ -15,22 +15,12 @@ export default async function ItineraryPage() {
 
   // default the view to whichever plan the family locked in
   const locked = scenarios.find((s) => s.id === settings.lockedScenarioId);
-  const slug = locked?.slug ?? "";
-  const defaultPlan = slug.startsWith("fly")
-    ? "fly"
-    : slug.startsWith("hybrid")
-      ? "hybrid"
-      : "drive";
-  const defaultFlyVariant = slug === "flyb" ? "flyb" : "fly";
+  const defaultPlan = locked?.slug.startsWith("fly") ? "fly" : "drive";
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 md:px-6 md:py-14">
       <Reveal>
-        <ItineraryView
-          events={events}
-          defaultPlan={defaultPlan}
-          defaultFlyVariant={defaultFlyVariant}
-        />
+        <ItineraryView events={events} defaultPlan={defaultPlan} />
       </Reveal>
     </div>
   );

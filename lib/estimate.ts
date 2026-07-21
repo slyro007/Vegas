@@ -55,14 +55,18 @@ export type Estimate = {
   /** real quotes beating the yellow pad */
   dealSavings: number;
   savings: SavingSource[];
-  /** cost split by hotels vs getting there — grouped by `key`, never by label */
+  /** cost split by hotels / food / getting there — grouped by `key`, never by label */
   hotels: number;
+  food: number;
   gettingThere: number;
   byConfidence: { quoted: number; rate: number; estimate: number };
   perPerson: PersonEstimate[];
 };
 
 const HOTEL_KEYS = new Set(["flagstaff", "sedona", "henderson"]);
+// road food + non-resort meals: real cost, but not transportation — keeping it out
+// of "getting there" is what makes the drive-vs-fly comparison honest
+const FOOD_KEYS = new Set(["road-food", "vegas-food-bex", "vegas-food-amma"]);
 
 /**
  * The bucket model.
@@ -152,7 +156,10 @@ export function estimateForScenario(
   const routeChange = poolDraw - releasedTotal;
   const dealSavings = savings.filter((s) => s.kind === "deal").reduce((a, s) => a + s.cents, 0);
 
-  const hotels = lines.filter((l) => l.key && HOTEL_KEYS.has(l.key)).reduce((a, l) => a + l.cents, 0);
+  const sumKeys = (keys: Set<string>) =>
+    lines.filter((l) => l.key && keys.has(l.key)).reduce((a, l) => a + l.cents, 0);
+  const hotels = sumKeys(HOTEL_KEYS);
+  const food = sumKeys(FOOD_KEYS);
   const byConfidence = { quoted: 0, rate: 0, estimate: 0 };
   for (const l of lines) byConfidence[l.confidence ?? "estimate"] += l.cents;
 
@@ -168,7 +175,8 @@ export function estimateForScenario(
     dealSavings,
     savings: savings.sort((a, b) => b.cents - a.cents),
     hotels,
-    gettingThere: lines.reduce((a, l) => a + l.cents, 0) - hotels,
+    food,
+    gettingThere: lines.reduce((a, l) => a + l.cents, 0) - hotels - food,
     byConfidence,
     perPerson,
   };
