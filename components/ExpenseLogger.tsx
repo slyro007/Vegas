@@ -220,7 +220,7 @@ export function ExpenseLogger({
         </AnimatePresence>
       </section>
 
-      {/* ---------- per-person + Crew totals: paid vs what they owe ---------- */}
+      {/* ---------- per-person + Crew totals: paid vs cost ---------- */}
       <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
         {[
           ...travelers.map((t) => ({
@@ -265,7 +265,7 @@ export function ExpenseLogger({
               <div className="text-xs uppercase tracking-wider text-ink-muted">Paid</div>
               <div className="mt-2 space-y-0.5 text-xs">
                 <div className="text-ink-secondary">
-                  Owes <span className="tabular-nums">{fmtMoney(c.owed)}</span>
+                  Cost <span className="tabular-nums">{fmtMoney(c.owed)}</span>
                 </div>
                 <div className={left <= 0 ? "text-mark-green" : "text-mark-amber"}>
                   {left <= 0 ? (
