@@ -95,8 +95,10 @@ async function seed() {
   ][] = [
     [pithya, "Flagstaff Hotel (Sat)", "lodging", 15000, 0, "flagstaff"],
     [pithya, "Caesar Ranch Adventure", "experience", 40000, 40000, null, "~4 hours of horses at Valle"],
-    [pithya, "BW Henderson (Sun–Wed)", "lodging", 50000, 16200, "henderson", "~$54/night on John's rate · 3 nights on the booked trip"],
-    [pithya, "Sedona Hotel (Fri)", "lodging", 25000, 34400, "sedona", "Sat $200 weekend rate + Sun $144"],
+    // the three Best Western stays, in itinerary order (see db/migrate-round24.ts)
+    [pithya, "BW Henderson — Fri Aug 7 (Fly-In Night)", "lodging", 0, 5400, null, "Land 4:32, drive over in the SUV · $54, John's rate"],
+    [pithya, "Sedona — Sat + Sun, Aug 8–9", "lodging", 25000, 34400, null, "Sat $200 weekend rate + Sun $144 · BW Red Rock, John's rate"],
+    [pithya, "BW Henderson — Mon + Tue, Aug 10–11", "lodging", 50000, 10800, null, "Home base for Old Vegas · $54/night, John's rate"],
     [pithya, "Spending Money", "misc", 25000, 25000, null],
     [bex, "Air Travel — Delta (Booked)", "travel", 0, 215200, "airfare", "Booked · H2UQO8 · flights $1,756.28 + trip protection $140.80 + taxes & fees $254.92 — BeX covered it"],
     [bex, "Luxor All-Inclusive (Booked)", "lodging", 160000, 81622, null, "Booked — $816.22 total: $391.10 paid on the 2941 card, $425.12 due at the resort · all-inclusive covers breakfast, lunch & dinner Wed–Fri · fully BeX's"],
