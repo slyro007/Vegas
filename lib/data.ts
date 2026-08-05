@@ -28,7 +28,7 @@ export async function getItinerary() {
   return db
     .select()
     .from(itineraryEvents)
-    .orderBy(asc(itineraryEvents.date), asc(itineraryEvents.sortOrder));
+    .orderBy(asc(itineraryEvents.date), asc(itineraryEvents.sortOrder), asc(itineraryEvents.id));
 }
 
 export async function getScenarios() {

@@ -17,6 +17,7 @@ import {
 } from "@/lib/data";
 import { daysUntil, fmtMoney } from "@/lib/format";
 import { NAV_ICON, PlanIcon } from "@/lib/icons";
+import { isVisibleEvent } from "@/lib/itinerary";
 
 export const dynamic = "force-dynamic";
 
@@ -63,9 +64,7 @@ export default async function Dashboard() {
 
   // itinerary pulse: today's first event once the trip is live, else wheels-up
   const todayIso = new Date().toISOString().slice(0, 10);
-  const todayEvent = events.find(
-    (e) => e.date === todayIso && (e.plan === "all" || e.plan.split(" ").includes("fly")),
-  );
+  const todayEvent = events.find((e) => e.date === todayIso && isVisibleEvent(e.plan));
   const itinerarySub = todayEvent
     ? `Today: ${todayEvent.title}${todayEvent.time ? ` · ${todayEvent.time}` : ""}`
     : "Wheels up Fri Aug 7 · 3:39 PM";

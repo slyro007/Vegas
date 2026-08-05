@@ -1,8 +1,9 @@
 "use client";
 
-import { MapPin } from "lucide-react";
-import { motion, useScroll, useSpring } from "motion/react";
-import { useRef } from "react";
+import { AnimatePresence, motion, useScroll, useSpring } from "motion/react";
+import { useRef, useTransition } from "react";
+import { EventCard, type ItineraryEditApi } from "@/components/EventCard";
+import { EventEditor } from "@/components/EventEditor";
 import type { ItineraryEvent } from "@/lib/data";
 import { fmtDayLong } from "@/lib/format";
 
@@ -40,12 +41,50 @@ const ACCENTS: Record<
   },
 };
 
+/** Edit-mode tail of a day: the dashed "+ Add Event" pill, or the add form once tapped. */
+function AddEventControl({
+  date,
+  theme,
+  edit,
+}: {
+  date: string;
+  theme: string;
+  edit: ItineraryEditApi;
+}) {
+  const [, startTransition] = useTransition();
+  const key = `new:${date}`;
+  if (edit.editorFor !== key) {
+    return (
+      <button
+        onClick={() => edit.openEditor(key)}
+        className="rounded-full border border-dashed border-borderc-strong px-3 py-1.5 text-xs text-ink-secondary transition-colors hover:border-glow-pink/50 hover:text-ink"
+      >
+        + Add Event
+      </button>
+    );
+  }
+  return (
+    <EventEditor
+      date={date}
+      defaultTheme={theme}
+      saveLabel="Add Event"
+      onSave={(draft) => {
+        edit.closeEditor();
+        startTransition(() => edit.add(draft));
+      }}
+      onCancel={edit.closeEditor}
+    />
+  );
+}
+
 export function Timeline({
   days,
   accent = "drive",
+  edit,
 }: {
   days: TimelineDay[];
   accent?: TimelineAccent;
+  edit?: ItineraryEditApi;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -110,47 +149,23 @@ export function Timeline({
               </motion.h2>
 
               <div className="mt-4 space-y-3">
-                {day.events.map((event, i) => (
-                  <motion.article
-                    key={event.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-60px" }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 160,
-                      damping: 22,
-                      delay: i * 0.08,
-                    }}
-                    className={`rounded-2xl border p-4 md:p-5 ${
-                      event.theme === "vegas" ? "card-vegas" : "card-desert"
-                    }`}
-                  >
-                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                      {event.time && (
-                        <span
-                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium uppercase tracking-wider ${
-                            event.theme === "vegas"
-                              ? "bg-mark-pink/20 text-glow-pink"
-                              : "bg-mark-orange/20 text-glow-sunset"
-                          }`}
-                        >
-                          {event.time}
-                        </span>
-                      )}
-                      <h3 className="font-medium md:text-lg">{event.title}</h3>
-                    </div>
-                    {event.description && (
-                      <p className="mt-1.5 text-sm text-ink-secondary">{event.description}</p>
-                    )}
-                    {event.location && (
-                      <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-muted">
-                        <MapPin className="h-4 w-4 shrink-0" aria-hidden />
-                        {event.location}
-                      </p>
-                    )}
-                  </motion.article>
-                ))}
+                {/* default initial so mount-time cards keep their whileInView reveal */}
+                <AnimatePresence>
+                  {day.events.map((event, i) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      index={i}
+                      isFirst={i === 0}
+                      isLast={i === day.events.length - 1}
+                      edit={edit}
+                    />
+                  ))}
+                </AnimatePresence>
+                {edit && day.events.length === 0 && (
+                  <p className="text-sm text-ink-muted">Nothing planned yet.</p>
+                )}
+                {edit && <AddEventControl date={day.date} theme={day.theme} edit={edit} />}
               </div>
             </section>
           );
