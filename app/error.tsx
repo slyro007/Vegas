@@ -1,13 +1,11 @@
 "use client";
 
-/** Route-level catch: a failed server action (dead wifi, expired session)
- *  lands here instead of Next's blank production error page. */
-export default function RouteError({
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+/** Route-level catch: a failed server action (dead wifi, expired session,
+ *  or a tab left open across a deploy) lands here instead of Next's blank
+ *  production error page. A full reload — not reset() — is the recovery:
+ *  after a deploy the tab's client code is stale, and only a reload picks
+ *  up the new build's server-action ids. */
+export default function RouteError() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col items-start px-4 py-16 md:px-6 md:py-24">
       <p className="text-xs uppercase tracking-widest text-ink-muted">Detour</p>
@@ -19,7 +17,7 @@ export default function RouteError({
         not have saved.
       </p>
       <button
-        onClick={reset}
+        onClick={() => window.location.reload()}
         className="mt-6 rounded-full bg-mark-pink px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
       >
         Try Again
