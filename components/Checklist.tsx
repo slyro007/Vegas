@@ -25,22 +25,26 @@ const FIELD =
 
 type ItemDraft = { label: string; assignee: string; note: string };
 
-/** A row opened for editing: its wording, who's on it, and the note underneath. */
+/** The one form for a row — adding a new one and editing an existing one both
+ *  land here, so a new row can carry who and the note from the start. Both of
+ *  those are optional; only the wording is required. */
 function ItemForm({
-  item,
+  initial,
+  saveLabel,
   pending,
   onSave,
   onCancel,
 }: {
-  item: ChecklistItem;
+  initial?: ChecklistItem;
+  saveLabel: string;
   pending: boolean;
   onSave: (draft: ItemDraft) => void;
   onCancel: () => void;
 }) {
   const [draft, setDraft] = useState<ItemDraft>({
-    label: item.label,
-    assignee: item.assignee ?? "",
-    note: item.note ?? "",
+    label: initial?.label ?? "",
+    assignee: initial?.assignee ?? "",
+    note: initial?.note ?? "",
   });
   const set = (patch: Partial<ItemDraft>) => setDraft((d) => ({ ...d, ...patch }));
   const canSave = !!draft.label.trim();
@@ -70,17 +74,17 @@ function ItemForm({
         aria-label="Item"
         className={`w-full ${FIELD}`}
       />
-      <div className="flex gap-2">
-        <div className="flex w-32 shrink-0 items-center gap-1.5 rounded-lg border border-borderc bg-surface px-2.5 transition-colors focus-within:border-glow-pink/60">
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex items-center gap-1.5 rounded-lg border border-borderc bg-surface px-2.5 transition-colors focus-within:border-glow-pink/60 sm:w-32 sm:shrink-0">
           <User className="h-3.5 w-3.5 shrink-0 text-ink-muted" aria-hidden />
           <input
             value={draft.assignee}
             onChange={(e) => set({ assignee: e.target.value })}
             onKeyDown={onLineKey}
             maxLength={60}
-            placeholder="Who"
+            placeholder="Who (optional)"
             aria-label="Assigned to"
-            className="min-w-0 flex-1 bg-transparent py-1.5 text-sm outline-none"
+            className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none sm:py-1.5"
           />
         </div>
         <input
@@ -93,20 +97,20 @@ function ItemForm({
           className={`min-w-0 flex-1 ${FIELD}`}
         />
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <span className="flex-1" />
         <button
           onClick={onCancel}
-          className="text-xs text-ink-muted transition-colors hover:text-ink"
+          className="rounded-full px-3 py-2 text-xs text-ink-muted transition-colors hover:text-ink"
         >
           Cancel
         </button>
         <button
           onClick={submit}
           disabled={pending || !canSave}
-          className="rounded-full bg-mark-pink px-3.5 py-1.5 text-sm font-medium text-white transition-opacity disabled:opacity-50"
+          className="rounded-full bg-mark-pink px-4 py-2 text-sm font-medium text-white transition-opacity disabled:opacity-50"
         >
-          Save
+          {saveLabel}
         </button>
       </div>
     </div>
@@ -144,7 +148,8 @@ function CheckRow({ item }: { item: ChecklistItem }) {
     return (
       <motion.li layout className="py-2.5">
         <ItemForm
-          item={item}
+          initial={item}
+          saveLabel="Save"
           pending={pending}
           onSave={save}
           onCancel={() => setEditing(false)}
@@ -160,8 +165,9 @@ function CheckRow({ item }: { item: ChecklistItem }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ type: "spring", stiffness: 300, damping: 28 }}
-      className="group flex items-start gap-3 py-2.5"
+      className="group flex items-start gap-1 py-2.5"
     >
+      {/* the box stays 20px; the button around it is a 40px thumb target */}
       <button
         disabled={pending}
         onClick={() =>
@@ -170,34 +176,38 @@ function CheckRow({ item }: { item: ChecklistItem }) {
             await toggleChecklistItem(item.id, !done);
           })
         }
-        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors ${
-          done
-            ? "border-mark-green bg-mark-green/20"
-            : "border-borderc-strong hover:border-glow-pink/60"
-        }`}
+        className="-my-1.5 -ml-2.5 flex h-10 w-10 shrink-0 items-center justify-center"
         aria-label={done ? `Mark "${item.label}" not done` : `Mark "${item.label}" done`}
       >
-        {done && (
-          <motion.svg
-            viewBox="0 0 16 16"
-            className="h-3.5 w-3.5"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 20 }}
-          >
-            <motion.path
-              d="M3 8.5 L6.5 12 L13 4.5"
-              fill="none"
-              stroke="var(--mark-green)"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-            />
-          </motion.svg>
-        )}
+        <span
+          className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${
+            done
+              ? "border-mark-green bg-mark-green/20"
+              : "border-borderc-strong group-hover:border-glow-pink/60"
+          }`}
+        >
+          {done && (
+            <motion.svg
+              viewBox="0 0 16 16"
+              className="h-3.5 w-3.5"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 20 }}
+            >
+              <motion.path
+                d="M3 8.5 L6.5 12 L13 4.5"
+                fill="none"
+                stroke="var(--mark-green)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+              />
+            </motion.svg>
+          )}
+        </span>
       </button>
       <div className="min-w-0 flex-1">
         <span
@@ -219,10 +229,11 @@ function CheckRow({ item }: { item: ChecklistItem }) {
           </span>
         )}
       </div>
+      {/* thumb-sized targets, and legible without hover — the trip runs on phones */}
       <button
         ref={pencilRef}
         onClick={() => setEditing(true)}
-        className="mt-0.5 flex text-ink-muted/40 transition-colors group-hover:text-ink-muted hover:!text-ink"
+        className="-my-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-ink-muted/70 transition-colors hover:text-ink"
         title="Edit"
         aria-label={`Edit ${item.label}`}
       >
@@ -230,7 +241,7 @@ function CheckRow({ item }: { item: ChecklistItem }) {
       </button>
       <button
         onClick={() => startTransition(() => deleteChecklistItem(item.id))}
-        className="mt-0.5 flex text-ink-muted/40 transition-colors group-hover:text-ink-muted hover:!text-mark-pink"
+        className="-my-1.5 -mr-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-ink-muted/70 transition-colors hover:text-mark-pink"
         title="Delete"
         aria-label={`Delete ${item.label}`}
       >
@@ -337,7 +348,9 @@ function ListForm({
 
 export function Checklist({ lists, items }: { lists: ChecklistMeta[]; items: ChecklistItem[] }) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
+  const [adding, setAdding] = useState(false);
+  // bumped after each add so the form remounts empty and stays open for the next one
+  const [addSeq, setAddSeq] = useState(0);
   const [mode, setMode] = useState<"idle" | "new" | "edit">("idle");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -350,14 +363,18 @@ export function Checklist({ lists, items }: { lists: ChecklistMeta[]; items: Che
   const openList = (key: string) => {
     setActiveKey(key);
     setMode("idle");
+    setAdding(false);
     setConfirmDelete(false);
   };
 
-  const submitItem = () => {
-    const label = draft.trim();
+  const addItem = (d: ItemDraft) => {
+    const label = d.label.trim();
     if (!label || !active) return;
-    setDraft("");
-    startTransition(() => addChecklistItem(active.key, label));
+    // clamp exactly like the server action so the row never shows text it truncates
+    const assignee = d.assignee.trim().slice(0, 60) || null;
+    const note = d.note.trim().slice(0, 200) || null;
+    setAddSeq((n) => n + 1); // clears the form but leaves it open — lists get built in runs
+    startTransition(() => addChecklistItem(active.key, label, { assignee, note }));
   };
 
   const createList = (d: ListDraft) => {
@@ -395,8 +412,8 @@ export function Checklist({ lists, items }: { lists: ChecklistMeta[]; items: Che
 
   return (
     <div>
-      {/* tabs */}
-      <div className="scroll-thin flex gap-2 overflow-x-auto pb-1">
+      {/* tabs — two columns, so nothing hides off the side of a phone */}
+      <div className="grid grid-cols-2 gap-2">
         {lists.map((list) => {
           const listItems = items.filter((i) => i.list === list.key);
           const done = listItems.filter((i) => i.done).length;
@@ -406,7 +423,8 @@ export function Checklist({ lists, items }: { lists: ChecklistMeta[]; items: Che
             <button
               key={list.key}
               onClick={() => openList(list.key)}
-              className={`relative shrink-0 rounded-full border px-4 py-2 text-sm transition-colors ${
+              aria-pressed={isActive}
+              className={`relative min-w-0 rounded-xl border px-2.5 py-2.5 text-left text-[13px] transition-colors sm:px-3 sm:text-sm ${
                 isActive
                   ? "border-borderc-strong text-ink"
                   : "border-borderc text-ink-muted hover:text-ink-secondary"
@@ -415,14 +433,14 @@ export function Checklist({ lists, items }: { lists: ChecklistMeta[]; items: Che
               {isActive && (
                 <motion.span
                   layoutId="list-tab"
-                  className="absolute inset-0 rounded-full bg-card"
+                  className="absolute inset-0 rounded-xl bg-card"
                   transition={{ type: "spring", stiffness: 400, damping: 32 }}
                 />
               )}
-              <span className="relative flex items-center gap-1.5">
-                <Icon className="h-[1.15rem] w-[1.15rem]" aria-hidden />
-                {list.label}
-                <span className="ml-0.5 text-xs text-ink-muted">
+              <span className="relative flex items-center gap-1 sm:gap-1.5">
+                <Icon className="h-4 w-4 shrink-0 sm:h-[1.15rem] sm:w-[1.15rem]" aria-hidden />
+                <span className="min-w-0 flex-1 truncate">{list.label}</span>
+                <span className="shrink-0 text-[11px] text-ink-muted sm:text-xs">
                   {done}/{listItems.length}
                 </span>
               </span>
@@ -432,14 +450,14 @@ export function Checklist({ lists, items }: { lists: ChecklistMeta[]; items: Che
         <button
           onClick={() => setMode(mode === "new" ? "idle" : "new")}
           aria-expanded={mode === "new"}
-          className={`flex shrink-0 items-center gap-1.5 rounded-full border border-dashed px-4 py-2 text-sm transition-colors ${
+          className={`flex min-w-0 items-center gap-1.5 rounded-xl border border-dashed px-2.5 py-2.5 text-left text-[13px] transition-colors sm:px-3 sm:text-sm ${
             mode === "new"
               ? "border-glow-pink/60 text-glow-pink"
               : "border-borderc-strong text-ink-muted hover:text-ink-secondary"
           }`}
         >
-          <ListPlus className="h-[1.15rem] w-[1.15rem]" aria-hidden />
-          New list
+          <ListPlus className="h-4 w-4 shrink-0 sm:h-[1.15rem] sm:w-[1.15rem]" aria-hidden />
+          <span className="truncate">New list</span>
         </button>
       </div>
 
@@ -531,23 +549,26 @@ export function Checklist({ lists, items }: { lists: ChecklistMeta[]; items: Che
             </AnimatePresence>
           </ul>
 
-          <div className="mt-3 flex gap-2">
-            <input
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submitItem()}
-              placeholder={`Add to ${active.label}…`}
-              aria-label={`Add to ${active.label}`}
-              className="min-w-0 flex-1 rounded-xl border border-borderc bg-surface px-3 py-2 text-sm outline-none transition-colors focus:border-glow-pink/60"
-            />
+          {/* a new row gets the same three fields editing one does */}
+          {adding ? (
+            <div className="mt-3">
+              <ItemForm
+                key={`add-${active.key}-${addSeq}`}
+                saveLabel="Add"
+                pending={pending}
+                onSave={addItem}
+                onCancel={() => setAdding(false)}
+              />
+            </div>
+          ) : (
             <button
-              onClick={submitItem}
-              disabled={pending || !draft.trim()}
-              className="rounded-xl bg-mark-pink px-4 py-2 text-sm font-medium text-white transition-opacity disabled:opacity-50"
+              onClick={() => setAdding(true)}
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-borderc-strong px-4 py-2.5 text-sm text-ink-muted transition-colors hover:border-glow-pink/50 hover:text-ink"
             >
-              Add
+              <Plus className="h-4 w-4 shrink-0" aria-hidden />
+              Add to {active.label}
             </button>
-          </div>
+          )}
         </div>
       ) : (
         mode !== "new" && (

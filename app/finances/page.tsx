@@ -32,8 +32,8 @@ export default async function FinancesPage() {
         <p className="text-xs uppercase tracking-widest text-ink-muted">the money</p>
         <h1 className="mt-1 font-display text-3xl font-semibold md:text-5xl">Trip Finances</h1>
         <p className="mt-3 max-w-2xl text-sm text-ink-secondary md:text-base">
-          The trip is <span className="font-medium text-ink">booked</span> — flights confirmed,
-          Friday to Friday. Here&apos;s what it really costs, who covers each piece, and what&apos;s
+          The trip is <span className="font-medium text-ink">booked</span>{" "}
+          — flights confirmed, Friday to Friday. Here&apos;s what it really costs, who covers each piece, and what&apos;s
           been paid so far. Log a payment on the{" "}
           <Link href="/expenses" className="text-glow-pink hover:underline">
             Spend page

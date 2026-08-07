@@ -230,9 +230,9 @@ export function ItineraryView({ events }: { events: ItineraryEvent[] }) {
         </p>
         <div className="mt-8">
           {view === "grid" ? (
-            <DayGrid days={days} accent="fly" />
+            <DayGrid days={days} />
           ) : (
-            <Timeline days={days} accent="fly" edit={editing ? editApi : undefined} />
+            <Timeline days={days} edit={editing ? editApi : undefined} />
           )}
         </div>
       </motion.div>

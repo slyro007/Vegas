@@ -1,4 +1,4 @@
-import { Clock, Lock } from "lucide-react";
+import { Clock, Lock, Plane } from "lucide-react";
 import Link from "next/link";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { Countdown } from "@/components/Countdown";
@@ -11,29 +11,21 @@ import {
   getExpenses,
   getItinerary,
   getLodging,
-  getScenarios,
-  getTravelers,
-  getTripSettings,
 } from "@/lib/data";
 import { daysUntil, fmtMoney } from "@/lib/format";
-import { NAV_ICON, PlanIcon } from "@/lib/icons";
+import { NAV_ICON } from "@/lib/icons";
 import { isVisibleEvent } from "@/lib/itinerary";
 
 export const dynamic = "force-dynamic";
 
 export default async function Dashboard() {
-  const [travelers, items, lodging, scenarios, settings, expenses, checklist, events] =
-    await Promise.all([
-      getTravelers(),
-      getBudgetItems(),
-      getLodging(),
-      getScenarios(),
-      getTripSettings(),
-      getExpenses(),
-      getChecklistItems(),
-      getItinerary(),
-    ]);
-  const lockedScenario = scenarios.find((s) => s.id === settings.lockedScenarioId) ?? null;
+  const [items, lodging, expenses, checklist, events] = await Promise.all([
+    getBudgetItems(),
+    getLodging(),
+    getExpenses(),
+    getChecklistItems(),
+    getItinerary(),
+  ]);
 
   // the booked-trip ledger — active lines only, same numbers Finances shows
   const activeItems = items.filter((i) => i.plannedCents > 0);
@@ -219,7 +211,7 @@ export default async function Dashboard() {
 
         {/* ---------- booked + deadline callouts ---------- */}
         <section className="grid gap-3 md:grid-cols-2 md:gap-4">
-          {lockedScenario && (
+          {tripTotal > 0 && (
             <Reveal>
               <Link
                 href="/finances"
@@ -229,12 +221,12 @@ export default async function Dashboard() {
                   <Lock className="h-3.5 w-3.5" aria-hidden /> Booked
                 </div>
                 <div className="mt-2 flex items-center gap-2 font-display text-xl md:text-2xl">
-                  <PlanIcon plan={lockedScenario.slug} className="h-5 w-5 shrink-0" />
-                  {lockedScenario.name} ·{" "}
-                  {fmtMoney(lockedScenario.costLines.reduce((s, l) => s + l.cents, 0))}
+                  <Plane className="h-5 w-5 shrink-0" aria-hidden />
+                  Flights + the Week · {fmtMoney(tripTotal)}
                 </div>
                 <div className="mt-2 text-sm text-ink-secondary">
-                  Delta H2UQO8, Friday to Friday — Finances has every dollar.{" "}
+                  Delta H2UQO8, Friday to Friday — {fmtMoney(paidSoFar)} paid,{" "}
+                  {fmtMoney(leftToPay)} to go.{" "}
                   <span className="text-glow-pink group-hover:underline">See It →</span>
                 </div>
               </Link>

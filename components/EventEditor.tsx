@@ -61,7 +61,12 @@ export function EventEditor({
     if (canSave && !pending) onSave(draft);
   };
   const onLineKey = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") submit();
+    if (e.key === "Enter") {
+      // saving closes the editor and hands focus to its pencil. Without this the
+      // keydown's default action then lands on that button and reopens it.
+      e.preventDefault();
+      submit();
+    }
     if (e.key === "Escape") onCancel();
   };
 

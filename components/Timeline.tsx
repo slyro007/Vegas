@@ -14,31 +14,12 @@ export type TimelineDay = {
   events: ItineraryEvent[];
 };
 
-export type TimelineAccent = "drive" | "fly" | "hybrid";
-
-/* desert orange for the drive, jet-stream teal for the fly, twilight purple for the split */
-const ACCENTS: Record<
-  TimelineAccent,
-  { rail: string; railShadow: string; node: string; nodeShadow: string }
-> = {
-  drive: {
-    rail: "linear-gradient(to bottom, var(--glow-sunset) 0%, var(--glow-sunset) 20%, var(--glow-pink) 45%, var(--glow-pink) 72%, var(--glow-sunset) 100%)",
-    railShadow: "0 0 8px rgba(240, 129, 63, 0.5)",
-    node: "border-glow-sunset bg-card text-glow-sunset",
-    nodeShadow: "0 0 10px rgba(240, 129, 63, 0.35)",
-  },
-  fly: {
-    rail: "linear-gradient(to bottom, var(--glow-teal) 0%, var(--glow-teal) 25%, var(--glow-pink) 50%, var(--glow-pink) 75%, var(--glow-teal) 100%)",
-    railShadow: "0 0 8px rgba(46, 230, 246, 0.5)",
-    node: "border-glow-teal bg-card text-glow-teal",
-    nodeShadow: "0 0 10px rgba(46, 230, 246, 0.35)",
-  },
-  hybrid: {
-    rail: "linear-gradient(to bottom, var(--glow-purple) 0%, var(--glow-purple) 25%, var(--glow-pink) 50%, var(--glow-pink) 75%, var(--glow-purple) 100%)",
-    railShadow: "0 0 8px rgba(167, 139, 250, 0.5)",
-    node: "border-glow-purple bg-card text-glow-purple",
-    nodeShadow: "0 0 10px rgba(167, 139, 250, 0.35)",
-  },
+/* jet-stream teal — we fly. The drive and hybrid rails retired with the road trip. */
+const TONE = {
+  rail: "linear-gradient(to bottom, var(--glow-teal) 0%, var(--glow-teal) 25%, var(--glow-pink) 50%, var(--glow-pink) 75%, var(--glow-teal) 100%)",
+  railShadow: "0 0 8px rgba(46, 230, 246, 0.5)",
+  node: "border-glow-teal bg-card text-glow-teal",
+  nodeShadow: "0 0 10px rgba(46, 230, 246, 0.35)",
 };
 
 /** Edit-mode tail of a day: the dashed "+ Add Event" pill, or the add form once tapped. */
@@ -79,11 +60,9 @@ function AddEventControl({
 
 export function Timeline({
   days,
-  accent = "drive",
   edit,
 }: {
   days: TimelineDay[];
-  accent?: TimelineAccent;
   edit?: ItineraryEditApi;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -92,7 +71,7 @@ export function Timeline({
     offset: ["start 0.7", "end 0.9"],
   });
   const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 28 });
-  const tone = ACCENTS[accent];
+  const tone = TONE;
 
   return (
     <div ref={ref} className="relative">

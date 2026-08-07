@@ -65,21 +65,23 @@ export function FinancesEstimator({
           />
         </div>
 
-        <div className="mt-3 grid grid-cols-3 gap-3 text-center">
+        <div className="mt-3 grid grid-cols-3 gap-2 text-center sm:gap-3">
           <div>
-            <div className="font-display text-xl font-semibold tabular-nums text-mark-green md:text-2xl">
+            <div className="font-display text-lg font-semibold tabular-nums text-mark-green sm:text-xl md:text-2xl">
               {fmtMoney(paid)}
             </div>
             <div className="text-xs uppercase tracking-wider text-ink-muted">Paid</div>
           </div>
           <div>
-            <div className="font-display text-xl font-semibold tabular-nums text-mark-amber md:text-2xl">
+            <div className="font-display text-lg font-semibold tabular-nums text-mark-amber sm:text-xl md:text-2xl">
               {fmtMoney(remaining)}
             </div>
             <div className="text-xs uppercase tracking-wider text-ink-muted">Left to Pay</div>
           </div>
           <div>
-            <div className="font-display text-xl font-semibold tabular-nums md:text-2xl">{pct}%</div>
+            <div className="font-display text-lg font-semibold tabular-nums sm:text-xl md:text-2xl">
+              {pct}%
+            </div>
             <div className="text-xs uppercase tracking-wider text-ink-muted">Covered</div>
           </div>
         </div>

@@ -3,23 +3,11 @@
 import { MapPin } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import type { TimelineAccent, TimelineDay } from "@/components/Timeline";
+import type { TimelineDay } from "@/components/Timeline";
 import { fmtDayLong, parseDay } from "@/lib/format";
 
-const ACCENT_TEXT: Record<TimelineAccent, string> = {
-  drive: "text-glow-sunset",
-  fly: "text-glow-teal",
-  hybrid: "text-glow-purple",
-};
-
 /** The whole trip on one screen: compact day cards, tap one to unfold the details. */
-export function DayGrid({
-  days,
-  accent = "drive",
-}: {
-  days: TimelineDay[];
-  accent?: TimelineAccent;
-}) {
+export function DayGrid({ days }: { days: TimelineDay[] }) {
   // Days expand independently — closing a day someone opened above the one you
   // tapped shifts the whole grid and yanks the page (worst when zoomed in).
   const [openDates, setOpenDates] = useState<Set<string>>(() => new Set());
@@ -51,7 +39,7 @@ export function DayGrid({
             <motion.div layout="position" className="flex items-baseline gap-2">
               <span
                 className={`font-display text-2xl font-semibold tabular-nums ${
-                  vegas ? "text-glow-pink" : ACCENT_TEXT[accent]
+                  vegas ? "text-glow-pink" : "text-glow-teal"
                 }`}
               >
                 {day.dayNumber}

@@ -340,7 +340,7 @@ export function ExpenseLogger({
                           </span>
                           <button
                             onClick={() => startTransition(() => deleteExpense(e.id))}
-                            className="flex text-ink-muted/40 transition-colors group-hover:text-ink-muted hover:!text-mark-pink"
+                            className="-my-1.5 -mr-1.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-ink-muted/70 transition-colors hover:text-mark-pink"
                             title="Delete entry"
                             aria-label="Delete expense entry"
                           >

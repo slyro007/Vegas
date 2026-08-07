@@ -62,15 +62,28 @@ export async function toggleChecklistItem(id: number, done: boolean) {
   revalidatePath("/lists");
 }
 
-export async function addChecklistItem(list: string, label: string) {
+/** A new row carries the same three fields editing one does — who and the note
+ *  are both optional, and empty means null rather than an empty string. */
+export async function addChecklistItem(
+  list: string,
+  label: string,
+  extra?: { assignee?: string | null; note?: string | null },
+) {
   await requireActor();
   const trimmed = label.trim().slice(0, 200);
   if (!trimmed) return;
   // an item belongs to a real list — a stale tab can't strand rows under a dead key
   const [target] = await db.select().from(checklists).where(eq(checklists.key, list));
   if (!target) return;
-  await db.insert(checklistItems).values({ list, label: trimmed, sortOrder: 999 });
+  await db.insert(checklistItems).values({
+    list,
+    label: trimmed,
+    assignee: extra?.assignee?.trim().slice(0, 60) || null,
+    note: extra?.note?.trim().slice(0, 200) || null,
+    sortOrder: 999,
+  });
   revalidatePath("/lists");
+  revalidatePath("/"); // the homepage counts open to-dos
 }
 
 export async function updateChecklistItem(

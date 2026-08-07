@@ -39,7 +39,7 @@ function MoneyCell({
           setDraft(cents !== null ? (cents / 100).toString() : "");
           setEditing(true);
         }}
-        className={`rounded px-1.5 py-0.5 tabular-nums transition-colors hover:bg-surface ${className}`}
+        className={`-mx-1 rounded px-2 py-1.5 tabular-nums transition-colors hover:bg-surface ${className}`}
         title="Tap to edit"
       >
         {cents !== null ? fmtMoney(cents) : (placeholder ?? "—")}
@@ -66,7 +66,7 @@ function MoneyCell({
         if (e.key === "Enter") commit();
         if (e.key === "Escape") setEditing(false);
       }}
-      className="w-20 rounded border border-borderc-strong bg-surface px-1.5 py-0.5 text-right tabular-nums outline-none focus:border-glow-pink/60"
+      className="-mx-1 w-24 rounded border border-borderc-strong bg-surface px-2 py-1.5 text-right tabular-nums outline-none focus:border-glow-pink/60"
     />
   );
 }
@@ -144,12 +144,18 @@ export function BudgetBoard({
   travelers: Traveler[];
   items: BudgetItem[];
 }) {
+  // The Crew leads: the rental, bags, Ubers and fuel are what the trip is actually
+  // spending on day to day, and burying them last left them looking missing.
   const columns: Column[] = [
-    ...travelers.map((t) => ({ key: `t${t.id}`, name: t.name, color: t.color, travelerId: t.id })),
     { key: "crew", name: "The Crew", color: "var(--glow-purple)", travelerId: null },
+    ...travelers.map((t) => ({ key: `t${t.id}`, name: t.name, color: t.color, travelerId: t.id })),
   ];
 
-  const [openKeys, setOpenKeys] = useState<Set<string>>(() => new Set([columns[0]?.key]));
+  // shared costs and the biggest payer both open on arrival — nothing that has
+  // money moving through it should need a tap to be found
+  const [openKeys, setOpenKeys] = useState<Set<string>>(
+    () => new Set([columns[0]?.key, columns[1]?.key].filter(Boolean)),
+  );
   const toggleOpen = (key: string) =>
     setOpenKeys((prev) => {
       const next = new Set(prev);
@@ -290,10 +296,10 @@ export function BudgetBoard({
                                   setConfirmDelete(null);
                                   startTransition(() => deleteBudgetItem(item.id));
                                 }}
-                                className={`flex shrink-0 items-center text-xs transition-colors ${
+                                className={`-my-1.5 -mr-1.5 flex min-h-9 min-w-9 shrink-0 items-center justify-center rounded-lg px-1.5 text-xs transition-colors ${
                                   confirmDelete === item.id
                                     ? "font-semibold text-mark-pink"
-                                    : "text-ink-muted/50 hover:text-mark-pink"
+                                    : "text-ink-muted/70 hover:text-mark-pink"
                                 }`}
                                 title={
                                   confirmDelete === item.id
