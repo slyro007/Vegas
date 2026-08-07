@@ -13,9 +13,17 @@ import { checklistItems, checklists } from "./schema";
  * page looks identical the moment it goes live and the family can add their own.
  *
  * Any list key already sitting in checklist_items but not named here gets a row
- * too — nothing gets stranded. Idempotent: safe to re-run.
+ * too — nothing gets stranded. Idempotent: safe to re-run, which is why `build`
+ * runs it — a deploy brings its own schema.
  */
-const sql = neon(process.env.DATABASE_URL!);
+if (!process.env.DATABASE_URL) {
+  // a build with no database configured (a preview without the env var) still
+  // ships; the migration runs on the next build that can reach one
+  console.log("Round 27 migration skipped — no DATABASE_URL.");
+  process.exit(0);
+}
+
+const sql = neon(process.env.DATABASE_URL);
 const db = drizzle(sql);
 
 const BUILT_IN = [
