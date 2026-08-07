@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "db:migrate": "tsx db/migrate-round27.ts && tsx db/migrate-round28.ts",
+    "db:migrate": "tsx db/migrate-round27.ts && tsx db/migrate-round28.ts && tsx db/migrate-round29.ts && tsx db/migrate-round30.ts",
+    "db:verify": "tsx db/verify-round29.ts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

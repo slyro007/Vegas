@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { BudgetBoard } from "@/components/BudgetBoard";
-import type { BudgetItem, Traveler } from "@/lib/data";
+import type { BudgetItem, Expense, Traveler } from "@/lib/data";
 import { fmtMoney } from "@/lib/format";
 import { TravelerAvatar } from "@/lib/icons";
 
@@ -16,16 +16,20 @@ import { TravelerAvatar } from "@/lib/icons";
 export function FinancesEstimator({
   travelers,
   items,
+  expenses,
 }: {
   travelers: Traveler[];
   items: BudgetItem[];
+  expenses: Expense[];
 }) {
   const [showPad, setShowPad] = useState(false);
 
   const active = items.filter((i) => i.plannedCents > 0);
   const total = active.reduce((s, i) => s + i.plannedCents, 0);
-  const paid = active.reduce((s, i) => s + (i.actualCents ?? 0), 0);
+  // straight off the log, same as the homepage — the one number every page agrees on
+  const paid = expenses.reduce((s, e) => s + e.amountCents, 0);
   const remaining = total - paid;
+  const over = remaining < 0;
   const pct = total ? Math.round((paid / total) * 100) : 0;
 
   // OG yellow-pad budget, preserved on every line's yellowPadCents
@@ -60,7 +64,7 @@ export function FinancesEstimator({
           <motion.div
             className="h-full bg-mark-green"
             initial={{ width: 0 }}
-            animate={{ width: `${pct}%` }}
+            animate={{ width: `${Math.min(100, pct)}%` }}
             transition={{ type: "spring", stiffness: 60, damping: 20 }}
           />
         </div>
@@ -73,10 +77,16 @@ export function FinancesEstimator({
             <div className="text-xs uppercase tracking-wider text-ink-muted">Paid</div>
           </div>
           <div>
-            <div className="font-display text-lg font-semibold tabular-nums text-mark-amber sm:text-xl md:text-2xl">
-              {fmtMoney(remaining)}
+            <div
+              className={`font-display text-lg font-semibold tabular-nums sm:text-xl md:text-2xl ${
+                over ? "text-mark-pink" : "text-mark-amber"
+              }`}
+            >
+              {fmtMoney(Math.abs(remaining))}
             </div>
-            <div className="text-xs uppercase tracking-wider text-ink-muted">Left to Pay</div>
+            <div className="text-xs uppercase tracking-wider text-ink-muted">
+              {over ? "Over Budget" : "Left to Pay"}
+            </div>
           </div>
           <div>
             <div className="font-display text-lg font-semibold tabular-nums sm:text-xl md:text-2xl">
@@ -92,11 +102,10 @@ export function FinancesEstimator({
         <h2 className="font-display text-xl font-semibold md:text-2xl">Who covers what</h2>
         <p className="mb-4 mt-1 text-sm text-ink-secondary">
           Each person&apos;s own costs, plus the shared ones under{" "}
-          <span className="font-medium text-ink">The Crew</span>. Tap a line to fix its cost, or log
-          real payments on the{" "}
-          <span className="font-medium text-ink">Spend</span> page.
+          <span className="font-medium text-ink">The Crew</span> — and what each of us has actually
+          put in, wherever the money went. Tap a Cost to fix it, or a Paid to log who paid.
         </p>
-        <BudgetBoard travelers={travelers} items={items} />
+        <BudgetBoard travelers={travelers} items={items} expenses={expenses} />
       </div>
 
       {/* ---------- the yellow pad, tucked away for reference ---------- */}

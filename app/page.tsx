@@ -37,7 +37,7 @@ export default async function Dashboard() {
   // The SUV rides on its pre-trip checklist row — label coupling noted in db/seed.ts.
   const unbookedStays = lodging.filter((l) => l.bookingStatus !== "booked");
   const suvItem = checklist.find(
-    (c) => c.list === "pre-trip" && c.label.startsWith("Book the Midsize SUV"),
+    (c) => c.list === "pre-trip" && c.label.startsWith("Book the Rental SUV"),
   );
   const leftToBook = unbookedStays.length + (suvItem && !suvItem.done ? 1 : 0);
   const bookables = checklist.filter(
@@ -179,11 +179,13 @@ export default async function Dashboard() {
               sub: `of the ${fmtMoney(tripTotal)} booked trip`,
             },
             {
-              label: "left to pay",
-              value: leftToPay / 100,
+              label: leftToPay < 0 ? "over budget" : "left to pay",
+              value: Math.abs(leftToPay) / 100,
               prefix: "$",
-              tone: "text-mark-amber",
-              sub: `${Math.round((paidSoFar / tripTotal) * 100)}% covered so far`,
+              tone: leftToPay < 0 ? "text-mark-pink" : "text-mark-amber",
+              sub: tripTotal
+                ? `${Math.round((paidSoFar / tripTotal) * 100)}% covered so far`
+                : "nothing budgeted yet",
             },
             {
               label: "to-dos open",

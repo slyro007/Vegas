@@ -102,8 +102,8 @@ async function seed() {
     [pithya, "Sedona — Sat + Sun, Aug 8–9", "lodging", 25000, 34400, null, "Sat $200 weekend rate + Sun $144 · BW Red Rock, John's rate"],
     [pithya, "BW Henderson — Mon + Tue, Aug 10–11", "lodging", 50000, 10800, null, "Home base for Old Vegas · $54/night, John's rate"],
     [pithya, "Spending Money", "misc", 35000, 25000, null],
-    [bex, "Air Travel — Delta (Booked)", "travel", 0, 215200, "airfare", "Booked · H2UQO8 · flights $1,756.28 + trip protection $140.80 + taxes & fees $254.92 — BeX covered it"],
-    [bex, "Luxor All-Inclusive (Booked)", "lodging", 160000, 81622, null, "Booked — $816.22 total: $391.10 paid on the 2941 card, $425.12 due at the resort · all-inclusive covers breakfast, lunch & dinner Wed–Fri · fully BeX's"],
+    [bex, "Air Travel — Delta", "travel", 0, 215200, "airfare", "H2UQO8 · flights $1,756.28 + trip protection $140.80 + taxes & fees $254.92 — BeX covered it"],
+    [bex, "Luxor All-Inclusive", "lodging", 160000, 81622, null, "$816.22 total: $391.10 paid on the 2941 card, $425.12 due at the resort · all-inclusive covers breakfast, lunch & dinner Wed–Fri · fully BeX's"],
     [bex, "Wynn Buffet (All Four)", "food", 40000, 40000, null, "~$100 a head — BeX covers everyone"],
     [bex, "Non-Resort Food — BeX's Share", "food", 75000, 93750, "vegas-food-bex"],
     [bex, "Spending Money", "misc", 50000, 25000, null],
@@ -130,19 +130,25 @@ async function seed() {
 
   // owner-less shared costs — "The Crew" — anyone can pay toward them on Spend
   await db.insert(budgetItems).values([
-    { travelerId: null, label: "Rental SUV — Fri–Fri, Airport Pickup", category: "travel", yellowPadCents: 0, plannedCents: 65865, shared: true, notes: "Midsize luxury SUV, quoted — grab it at Harry Reid on landing, drop it before the flight home. Not booked yet." },
+    { travelerId: null, label: "Rental SUV — Fri–Fri, Airport Pickup", category: "travel", yellowPadCents: 0, plannedCents: 65865, shared: true, notes: "Premium Elite SUV — Escalade-class. Grab it at Harry Reid on landing, drop it before the flight home." },
     { travelerId: null, label: "Checked Bags — 3 at $90", category: "travel", yellowPadCents: 0, plannedCents: 27000, shared: true, notes: "Three checked bags on Delta, ~$90 each." },
     { travelerId: null, label: "Austin Airport Uber — Both Ways", category: "travel", yellowPadCents: 0, plannedCents: 30000, shared: true, notes: "One shared XL home→airport and airport→home. Buffered over ~$100 each way." },
     { travelerId: null, label: "Arizona Driving Fuel", category: "gas", yellowPadCents: 0, plannedCents: 40000, shared: true, notes: "Gas for the SUV: Valle, Sedona, and the Moapa drive back." },
+    { travelerId: null, label: "Car Rental Fuel", category: "gas", yellowPadCents: 0, plannedCents: 25000, shared: true, notes: "Filling the SUV up over the week — separate from the Arizona driving gas." },
   ]);
 
   console.log("Seeding lodging…");
+  // Each stay points at the budget line that owns its price — the Lodging page
+  // reads cost and payments through the link, so it can't drift from Finances.
+  const lodgingLines = await db.select().from(budgetItems);
+  const lineFor = (label: string) => lodgingLines.find((l) => l.label === label)?.id ?? null;
   await db.insert(lodging).values([
     {
       name: "Best Western Henderson",
       location: "Henderson, NV",
       checkIn: "2026-08-07",
       checkOut: "2026-08-08",
+      budgetItemId: lineFor("BW Henderson — Fri Aug 7 (Fly-In Night)"),
       plannedCents: 5400,
       bookingStatus: "planned",
       theme: "vegas",
@@ -153,6 +159,7 @@ async function seed() {
       location: "Sedona, AZ",
       checkIn: "2026-08-08",
       checkOut: "2026-08-10",
+      budgetItemId: lineFor("Sedona — Sat + Sun, Aug 8–9"),
       plannedCents: 34400,
       bookingStatus: "planned",
       theme: "desert",
@@ -163,6 +170,7 @@ async function seed() {
       location: "Henderson, NV",
       checkIn: "2026-08-10",
       checkOut: "2026-08-12",
+      budgetItemId: lineFor("BW Henderson — Mon + Tue, Aug 10–11"),
       plannedCents: 10800,
       bookingStatus: "planned",
       theme: "vegas",
@@ -173,6 +181,7 @@ async function seed() {
       location: "Las Vegas Strip",
       checkIn: "2026-08-12",
       checkOut: "2026-08-14",
+      budgetItemId: lineFor("Luxor All-Inclusive"),
       plannedCents: 81622,
       bookingStatus: "booked",
       cancelBy: "2026-08-09",
@@ -365,7 +374,7 @@ async function seed() {
     // THE trip — booked (H2UQO8): fly in Friday, Valle + a Sedona weekend, Moapa on the
     // Monday drive back, the Vegas week, fly home Friday. SUV is Fri–Fri, airport pickup.
     { date: "2026-08-07", sortOrder: 0, time: "3:39 PM", title: "Fly AUS → LAS", description: "Booked — Delta DL2260, all four of us. Wheels down 4:32 PM.", location: "Austin-Bergstrom → Harry Reid Intl", theme: "vegas", plan: "fly" },
-    { date: "2026-08-07", sortOrder: 1, time: "5:00 PM", title: "Pick Up the Rental SUV", description: "Midsize luxury SUV at Harry Reid, Fri–Fri — loaded and rolling by 6.", location: "Harry Reid Intl, Las Vegas", theme: "vegas", plan: "fly" },
+    { date: "2026-08-07", sortOrder: 1, time: "5:00 PM", title: "Pick Up the Rental SUV", description: "Premium Elite SUV at Harry Reid, Fri–Fri — loaded and rolling by 6.", location: "Harry Reid Intl, Las Vegas", theme: "vegas", plan: "fly" },
     { date: "2026-08-07", sortOrder: 2, time: "6:00 PM", title: "Drive to Henderson + Crash", description: "Twenty minutes to Best Western Henderson on John's rate — settle in, rest up.", location: "Henderson, NV", theme: "vegas", plan: "fly" },
     { date: "2026-08-08", sortOrder: 0, time: "9:00 AM", title: "Check Out of Henderson", description: "Pack the SUV and point it at Arizona — Valle first, then Sedona.", location: "Henderson, NV", theme: "vegas", plan: "fly" },
     { date: "2026-08-08", sortOrder: 1, time: "12:30 PM", title: "Valle — Horses with Caesar", description: "~3.5 hours out to Valle — ride and hang with Caesar's crew.", location: "287 S Victoria Dr, Valle, AZ", theme: "desert", plan: "fly" },
@@ -622,8 +631,8 @@ async function seed() {
     // Pre-trip — the trip is booked; what's left is confirming and packing
     { list: "pre-trip", sortOrder: 0, label: "Delta Check-In Opens Thu Aug 6 (H2UQO8)", note: "24 hours before the 3:39 PM flight" },
     // NOTE: the homepage "left to book" tile matches this row by label prefix
-    // ("Book the Midsize SUV") — keep the prefix if rewording (app/page.tsx)
-    { list: "pre-trip", sortOrder: 1, label: "Book the Midsize SUV — Fri–Fri, Airport Pickup" },
+    // ("Book the Rental SUV") — keep the prefix if rewording (app/page.tsx)
+    { list: "pre-trip", sortOrder: 1, label: "Book the Rental SUV — Fri–Fri, Airport Pickup" },
     { list: "pre-trip", sortOrder: 2, label: "Confirm Caesar Meetup at Valle (Sat Aug 8)", assignee: "Pithya" },
     { list: "pre-trip", sortOrder: 3, label: "Booked: Luxor All-Inclusive", assignee: "BeX", done: true, note: "$391.10 paid · $425.12 due at check-in · free cancellation until Aug 9" },
     { list: "pre-trip", sortOrder: 7, label: "Pay the Luxor Balance at Check-In — $425.12", assignee: "BeX", note: "Wed Aug 12, at the desk — the rest of the $816.22" },

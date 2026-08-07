@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FinancesEstimator } from "@/components/FinancesEstimator";
 import { Reveal } from "@/components/Reveal";
-import { getBudgetItems, getTravelers } from "@/lib/data";
+import { getBudgetItems, getExpenses, getTravelers } from "@/lib/data";
 import { CATEGORY_META, fmtMoney } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -9,12 +9,24 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Finances · Vegas 2026" };
 
 export default async function FinancesPage() {
-  const [travelers, items] = await Promise.all([getTravelers(), getBudgetItems()]);
+  const [travelers, items, expenses] = await Promise.all([
+    getTravelers(),
+    getBudgetItems(),
+    getExpenses(),
+  ]);
 
-  // ordered by who covers the most — BeX leads
+  // Biggest wallet first. Someone who hasn't set a budget yet is ranked by what
+  // their lines add up to instead, so they don't sink to the bottom for it, and
+  // spending breaks ties — the order re-sorts itself as the numbers move.
   const costFor = (id: number) =>
     items.filter((i) => i.travelerId === id).reduce((s, i) => s + i.plannedCents, 0);
-  const orderedTravelers = [...travelers].sort((a, b) => costFor(b.id) - costFor(a.id));
+  const spentBy = (id: number) =>
+    expenses.filter((e) => e.travelerId === id).reduce((s, e) => s + e.amountCents, 0);
+  const standing = (t: (typeof travelers)[number]) =>
+    t.budgetTotalCents > 0 ? t.budgetTotalCents : costFor(t.id);
+  const orderedTravelers = [...travelers].sort(
+    (a, b) => standing(b) - standing(a) || spentBy(b.id) - spentBy(a.id),
+  );
 
   const byCategory = Object.entries(CATEGORY_META)
     .map(([key, meta]) => ({
@@ -44,7 +56,7 @@ export default async function FinancesPage() {
 
       {/* the booked plan: shortfall · money moves · per-person board */}
       <Reveal className="mt-8" delay={0.05}>
-        <FinancesEstimator travelers={orderedTravelers} items={items} />
+        <FinancesEstimator travelers={orderedTravelers} items={items} expenses={expenses} />
       </Reveal>
 
       {/* category breakdown */}
@@ -76,9 +88,10 @@ export default async function FinancesPage() {
       </Reveal>
 
       <p className="mt-6 text-xs text-ink-muted">
-        Tap any Cost to adjust it. Paid amounts come from the Spend page — every logged payment
-        rolls straight into these totals. The Crew card holds the shared costs (the rental, bags,
-        Ubers, fuel) that anyone can chip in on.
+        Tap any Cost to adjust it, or tap a Paid to log who paid it. Every payment comes from the
+        Spend page, so it counts twice over: toward the line it covers, and toward the person who
+        put the money in. The Crew card holds the shared costs (the rental, bags, Ubers, fuel) that
+        anyone can chip in on.
       </p>
     </div>
   );

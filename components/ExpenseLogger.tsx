@@ -3,7 +3,7 @@
 import { Receipt, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
-import { addExpense, deleteExpense } from "@/app/actions";
+import { addExpense, addExpenseWithNewLine, deleteExpense } from "@/app/actions";
 import type { BudgetItem, Expense, Traveler } from "@/lib/data";
 import { CATEGORY_META, fmtDay, fmtMoney } from "@/lib/format";
 import { TravelerAvatar } from "@/lib/icons";
@@ -70,8 +70,14 @@ export function ExpenseLogger({
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [pending, startTransition] = useTransition();
+  // a spend nobody budgeted for: the line gets born here, from the payment itself
+  const [newLine, setNewLine] = useState(false);
+  const [newLabel, setNewLabel] = useState("");
+  const [newCategory, setNewCategory] = useState("misc");
+  const [newOwnerIsCrew, setNewOwnerIsCrew] = useState(true);
 
   const travelerById = new Map(travelers.map((t) => [t.id, t]));
+  const payer = travelerId === null ? null : travelerById.get(travelerId);
   const itemById = new Map(budgetItems.map((i) => [i.id, i]));
   // active lines only — dormant $0 lines aren't spendable
   const active = budgetItems.filter((i) => i.plannedCents > 0);
@@ -93,14 +99,39 @@ export function ExpenseLogger({
   }
 
   const amountCents = parseDollars(amount);
-  const canLog = travelerId !== null && budgetItemId !== null && amountCents !== null && !pending;
+  const hasTarget = budgetItemId !== null || (newLine && newLabel.trim() !== "");
+  const canLog = travelerId !== null && hasTarget && amountCents !== null && !pending;
+
+  const pickLine = (id: number) => {
+    setBudgetItemId(budgetItemId === id ? null : id);
+    setNewLine(false);
+  };
 
   const submit = () => {
-    if (!canLog || travelerId === null || budgetItemId === null || amountCents === null) return;
+    if (!canLog || travelerId === null || amountCents === null) return;
+    const label = newLabel.trim();
+    const ownerIsCrew = newOwnerIsCrew;
+    const category = newCategory;
+    const makeLine = newLine && label !== "";
     setAmount("");
     setNote("");
     setBudgetItemId(null);
-    startTransition(() => addExpense(travelerId, budgetItemId, amountCents, note));
+    setNewLine(false);
+    setNewLabel("");
+    setNewCategory("misc");
+    setNewOwnerIsCrew(true);
+    startTransition(async () => {
+      if (makeLine) {
+        await addExpenseWithNewLine(
+          travelerId,
+          { ownerTravelerId: ownerIsCrew ? null : travelerId, label, category },
+          amountCents,
+          note,
+        );
+      } else if (budgetItemId !== null) {
+        await addExpense(travelerId, budgetItemId, amountCents, note);
+      }
+    });
   };
 
   return (
@@ -120,6 +151,7 @@ export function ExpenseLogger({
                 onClick={() => {
                   setTravelerId(active ? null : t.id);
                   setBudgetItemId(null);
+                  setNewLine(false);
                 }}
                 className="flex items-center gap-1.5 rounded-full border py-1.5 pl-1.5 pr-4 text-sm font-medium transition-colors"
                 style={{
@@ -154,7 +186,7 @@ export function ExpenseLogger({
                     line={line}
                     active={budgetItemId === line.id}
                     logged={loggedByItem.get(line.id) ?? 0}
-                    onPick={() => setBudgetItemId(budgetItemId === line.id ? null : line.id)}
+                    onPick={() => pickLine(line.id)}
                   />
                 ))}
                 {myLines.length === 0 && (
@@ -177,13 +209,80 @@ export function ExpenseLogger({
                         line={line}
                         active={budgetItemId === line.id}
                         logged={loggedByItem.get(line.id) ?? 0}
-                        onPick={() =>
-                          setBudgetItemId(budgetItemId === line.id ? null : line.id)
-                        }
+                        onPick={() => pickLine(line.id)}
                       />
                     ))}
                   </div>
                 </>
+              )}
+
+              {/* nothing in the budget fits? make the line out of the spend itself */}
+              {!newLine ? (
+                <button
+                  onClick={() => {
+                    setNewLine(true);
+                    setBudgetItemId(null);
+                  }}
+                  className="mt-3 rounded-full border border-dashed border-borderc-strong px-3 py-1.5 text-xs text-ink-secondary transition-colors hover:border-glow-pink/50 hover:text-ink"
+                >
+                  + Not in the budget?
+                </button>
+              ) : (
+                <div className="mt-3 rounded-xl border border-dashed border-borderc-strong p-3">
+                  <p className="text-sm text-ink-secondary">
+                    New cost — it joins the budget at whatever you spent.
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <input
+                      autoFocus
+                      value={newLabel}
+                      onChange={(e) => setNewLabel(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && submit()}
+                      placeholder="What was it? — e.g. Airport snacks"
+                      className="w-full min-w-0 rounded border border-borderc bg-surface px-2 py-1.5 text-sm outline-none focus:border-glow-pink/60 sm:w-auto sm:flex-1"
+                    />
+                    <select
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      aria-label="Category"
+                      className="rounded border border-borderc bg-surface px-2 py-1.5 text-sm outline-none"
+                    >
+                      {Object.entries(CATEGORY_META).map(([key, meta]) => (
+                        <option key={key} value={key}>
+                          {meta.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => {
+                        setNewLine(false);
+                        setNewLabel("");
+                      }}
+                      className="px-1 text-xs text-ink-muted hover:text-ink"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-ink-muted">Whose cost?</span>
+                    {[
+                      { crew: true, label: "Shared · The Crew" },
+                      { crew: false, label: `Just ${payer?.name ?? "mine"}` },
+                    ].map((opt) => (
+                      <button
+                        key={opt.label}
+                        onClick={() => setNewOwnerIsCrew(opt.crew)}
+                        className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                          newOwnerIsCrew === opt.crew
+                            ? "border-glow-pink/60 bg-mark-pink/10 text-ink"
+                            : "border-borderc text-ink-secondary hover:border-borderc-strong"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
 
               <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -220,30 +319,37 @@ export function ExpenseLogger({
         </AnimatePresence>
       </section>
 
-      {/* ---------- per-person + Crew totals: paid vs cost ---------- */}
+      {/* ---------- per-person + Crew totals ---------- */}
+      {/* Two different things, never subtracted from each other: what someone put
+          in (money they fronted, anywhere) and what their own lines cost. */}
       <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
         {[
-          ...travelers.map((t) => ({
-            key: `t${t.id}`,
-            name: t.name,
-            color: t.color,
-            owed: active
-              .filter((i) => i.travelerId === t.id)
-              .reduce((s, i) => s + i.plannedCents, 0),
-            paid: loggedByTraveler.get(t.id) ?? 0,
-          })),
-          {
-            key: "crew",
-            name: "The Crew",
-            color: "var(--glow-purple)",
-            owed: active.filter((i) => i.travelerId === null).reduce((s, i) => s + i.plannedCents, 0),
-            // shared lines are paid by whoever logs them; sum the lines' actuals
-            paid: active
-              .filter((i) => i.travelerId === null)
-              .reduce((s, i) => s + (loggedByItem.get(i.id) ?? 0), 0),
-          },
+          ...travelers.map((t) => {
+            const mine = active.filter((i) => i.travelerId === t.id);
+            return {
+              key: `t${t.id}`,
+              name: t.name,
+              color: t.color,
+              owed: mine.reduce((s, i) => s + i.plannedCents, 0),
+              covered: mine.reduce((s, i) => s + (loggedByItem.get(i.id) ?? 0), 0),
+              paid: loggedByTraveler.get(t.id) ?? 0,
+            };
+          }),
+          (() => {
+            const shared = active.filter((i) => i.travelerId === null);
+            const crewCovered = shared.reduce((s, i) => s + (loggedByItem.get(i.id) ?? 0), 0);
+            return {
+              key: "crew",
+              name: "The Crew",
+              color: "var(--glow-purple)",
+              owed: shared.reduce((s, i) => s + i.plannedCents, 0),
+              covered: crewCovered,
+              // the Crew has no wallet — what it "paid" is what others chipped in
+              paid: crewCovered,
+            };
+          })(),
         ].map((c) => {
-          const left = c.owed - c.paid;
+          const left = c.owed - c.covered;
           return (
             <div key={c.key} className="rounded-2xl border border-borderc bg-card p-4">
               <div className="flex items-center gap-1.5 text-sm text-ink-secondary">
@@ -262,17 +368,22 @@ export function ExpenseLogger({
               <div className="mt-1 font-display text-xl font-semibold tabular-nums">
                 {fmtMoney(c.paid)}
               </div>
-              <div className="text-xs uppercase tracking-wider text-ink-muted">Paid</div>
+              <div className="text-xs uppercase tracking-wider text-ink-muted">
+                {c.key === "crew" ? "Chipped In" : "Put In"}
+              </div>
               <div className="mt-2 space-y-0.5 text-xs">
                 <div className="text-ink-secondary">
-                  Cost <span className="tabular-nums">{fmtMoney(c.owed)}</span>
+                  {c.key === "crew" ? "Shared costs" : "Own costs"}{" "}
+                  <span className="tabular-nums">{fmtMoney(c.owed)}</span>
                 </div>
                 <div className={left <= 0 ? "text-mark-green" : "text-mark-amber"}>
-                  {left <= 0 ? (
-                    "Settled"
+                  {c.owed === 0 ? (
+                    "No costs yet"
+                  ) : left <= 0 ? (
+                    "Covered"
                   ) : (
                     <>
-                      <span className="tabular-nums">{fmtMoney(left)}</span> left
+                      <span className="tabular-nums">{fmtMoney(left)}</span> uncovered
                     </>
                   )}
                 </div>

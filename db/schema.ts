@@ -49,7 +49,15 @@ export const lodging = pgTable("lodging", {
   location: text("location").notNull(),
   checkIn: date("check_in").notNull(),
   checkOut: date("check_out").notNull(),
+  // What a stay costs lives on its budget line, never here — two editable prices
+  // for one hotel is how the two pages drifted apart. This is the link; the
+  // Lodging page reads cost and payments through it.
+  budgetItemId: integer("budget_item_id").references(() => budgetItems.id, {
+    onDelete: "set null",
+  }),
+  // the original estimate, kept only as the "projected" reference on the card
   plannedCents: integer("planned_cents").notNull().default(0),
+  // retired in round 30 — the linked budget line holds the booked price now
   actualCents: integer("actual_cents"),
   // planned | booked
   bookingStatus: text("booking_status").notNull().default("planned"),

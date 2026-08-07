@@ -4,7 +4,7 @@ import { Check, Clock, MapPin } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState, useTransition } from "react";
 import { updateLodgingBooking } from "@/app/actions";
-import type { LodgingStay } from "@/lib/data";
+import type { BudgetItem, LodgingStay } from "@/lib/data";
 import { daysUntil, fmtDay, fmtMoney, nightsBetween } from "@/lib/format";
 
 function parseDollars(input: string): number | null {
@@ -15,7 +15,18 @@ function parseDollars(input: string): number | null {
   return Math.round(value * 100);
 }
 
-export function LodgingCard({ stay, index }: { stay: LodgingStay; index: number }) {
+export function LodgingCard({
+  stay,
+  line,
+  paidCents,
+  index,
+}: {
+  stay: LodgingStay;
+  /** the budget line that owns this stay's price — null if it isn't on the board */
+  line: BudgetItem | null;
+  paidCents: number;
+  index: number;
+}) {
   const [pending, startTransition] = useTransition();
   const [formOpen, setFormOpen] = useState(false);
   const [priceDraft, setPriceDraft] = useState("");
@@ -25,10 +36,13 @@ export function LodgingCard({ stay, index }: { stay: LodgingStay; index: number 
   const cancelDays = stay.cancelBy ? daysUntil(stay.cancelBy) : null;
   const vegas = stay.theme === "vegas";
   const booked = stay.bookingStatus === "booked";
-  const saved = stay.actualCents !== null ? stay.plannedCents - stay.actualCents : null;
+  const cost = line?.plannedCents ?? stay.plannedCents;
+  // the original guess is only worth showing once the real price differs from it
+  const saved = booked && cost !== stay.plannedCents ? stay.plannedCents - cost : null;
+  const due = Math.max(0, cost - paidCents);
 
   const openForm = () => {
-    setPriceDraft(((stay.actualCents ?? stay.plannedCents) / 100).toString());
+    setPriceDraft((cost / 100).toString());
     setConfDraft(stay.confirmationNumber ?? "");
     setFormOpen(true);
   };
@@ -39,18 +53,17 @@ export function LodgingCard({ stay, index }: { stay: LodgingStay; index: number 
     startTransition(() =>
       updateLodgingBooking(stay.id, {
         bookingStatus: "booked",
-        ...(cents !== null ? { actualCents: cents } : {}),
+        ...(cents !== null ? { priceCents: cents } : {}),
         confirmationNumber: confDraft,
       }),
     );
   };
 
-  // un-booking wipes the actual — nothing is really spent anymore, back to projected
+  // un-booking is a travel fact, not a money one — the price stays on the budget
+  // line, where payments already logged against it still point
   const unbook = () => {
     setFormOpen(false);
-    startTransition(() =>
-      updateLodgingBooking(stay.id, { bookingStatus: "planned", actualCents: null }),
-    );
+    startTransition(() => updateLodgingBooking(stay.id, { bookingStatus: "planned" }));
   };
 
   return (
@@ -136,31 +149,43 @@ export function LodgingCard({ stay, index }: { stay: LodgingStay; index: number 
       </AnimatePresence>
 
       <div className="mt-4 flex flex-wrap items-end gap-x-6 gap-y-2">
-        <div>
-          <div className="text-[11px] uppercase tracking-widest text-ink-muted">Projected</div>
-          <div
-            className={`font-display tabular-nums ${
-              stay.actualCents !== null
-                ? "text-lg text-ink-secondary line-through decoration-ink-muted/50"
-                : "text-2xl font-semibold"
-            }`}
-          >
-            {fmtMoney(stay.plannedCents)}
+        {saved !== null && saved !== 0 && (
+          <div>
+            <div className="text-[11px] uppercase tracking-widest text-ink-muted">Projected</div>
+            <div className="font-display text-lg tabular-nums text-ink-secondary line-through decoration-ink-muted/50">
+              {fmtMoney(stay.plannedCents)}
+            </div>
           </div>
+        )}
+        <div>
+          <div className="text-[11px] uppercase tracking-widest text-ink-muted">
+            {booked ? "Booked At" : "Projected"}
+          </div>
+          <div className="font-display text-2xl font-semibold tabular-nums">{fmtMoney(cost)}</div>
         </div>
-        {stay.actualCents !== null && (
+        {paidCents > 0 && (
           <div>
             <div className="text-[11px] uppercase tracking-widest text-ink-muted">
-              Booked At
+              {due > 0 ? "Paid So Far" : "Paid"}
             </div>
-            <div className="font-display text-2xl font-semibold tabular-nums">
-              {fmtMoney(stay.actualCents)}
+            <div className="font-display text-2xl font-semibold tabular-nums text-mark-green">
+              {fmtMoney(paidCents)}
             </div>
+          </div>
+        )}
+        {paidCents > 0 && due > 0 && (
+          <div className="rounded-full bg-mark-amber/15 px-2.5 py-1 text-xs font-medium text-glow-gold">
+            {fmtMoney(due)} still due
           </div>
         )}
         {saved !== null && saved > 0 && (
           <div className="rounded-full bg-mark-green/15 px-2.5 py-1 text-xs font-medium text-mark-green">
             Saves {fmtMoney(saved)}
+          </div>
+        )}
+        {saved !== null && saved < 0 && (
+          <div className="rounded-full bg-mark-pink/15 px-2.5 py-1 text-xs font-medium text-mark-pink">
+            {fmtMoney(-saved)} over the estimate
           </div>
         )}
         {booked && stay.confirmationNumber && (
@@ -190,6 +215,11 @@ export function LodgingCard({ stay, index }: { stay: LodgingStay; index: number 
       )}
 
       {stay.notes && <p className="mt-3 text-xs text-ink-muted">{stay.notes}</p>}
+      {line === null && (
+        <p className="mt-2 text-xs text-mark-amber">
+          Not on the Finances board yet — add a line for it there and this price will follow it.
+        </p>
+      )}
     </motion.article>
   );
 }

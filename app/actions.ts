@@ -1,6 +1,6 @@
 "use server";
 
-import { asc, eq, max, sum } from "drizzle-orm";
+import { asc, eq, max, sql, sum } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/client";
 import {
@@ -10,20 +10,31 @@ import {
   expenses,
   itineraryEvents,
   lodging,
+  travelers,
   tripSettings,
 } from "@/db/schema";
 import { DEFAULT_CHECKLIST_ICON, isChecklistIcon } from "@/lib/checklistIcons";
+import { CATEGORY_META } from "@/lib/format";
 import { requireActor } from "@/lib/identity";
 import { isVisibleEvent } from "@/lib/itinerary";
 
-/** A budget line with logged expenses always shows their sum as its actual. */
+/** Every page derives its money from the expense log, so `actualCents` is only a
+ *  cache of it. One statement, not select-then-update: two people logging at once
+ *  would otherwise race, and the later write could carry the older sum. */
 async function recomputeActual(budgetItemId: number) {
-  const [row] = await db
-    .select({ total: sum(expenses.amountCents) })
-    .from(expenses)
-    .where(eq(expenses.budgetItemId, budgetItemId));
-  const total = row?.total == null ? null : Number(row.total);
-  await db.update(budgetItems).set({ actualCents: total }).where(eq(budgetItems.id, budgetItemId));
+  await db
+    .update(budgetItems)
+    .set({
+      actualCents: sql`(select sum(amount_cents)::int from expenses where budget_item_id = ${budgetItemId})`,
+    })
+    .where(eq(budgetItems.id, budgetItemId));
+}
+
+/** Every money page reads the log, so all three revalidate together. */
+function revalidateMoney() {
+  revalidatePath("/expenses");
+  revalidatePath("/finances");
+  revalidatePath("/");
 }
 
 export async function addExpense(
@@ -42,24 +53,72 @@ export async function addExpense(
     note: note?.trim().slice(0, 200) || null,
   });
   await recomputeActual(budgetItemId);
-  revalidatePath("/expenses");
-  revalidatePath("/finances");
-  revalidatePath("/");
+  revalidateMoney();
+}
+
+/**
+ * A spend nobody budgeted for: the line is born from the payment itself, costed
+ * at what was actually spent so the budget grows to match reality.
+ *
+ * The line has to exist before the expense can point at it, and neon-http has no
+ * transactions — so a failure on the expense rolls the line back by hand, leaving
+ * nothing half-made and making a retry safe.
+ */
+export async function addExpenseWithNewLine(
+  payerTravelerId: number,
+  line: { ownerTravelerId: number | null; label: string; category: string },
+  amountCents: number,
+  note?: string,
+) {
+  await requireActor();
+  const amount = Math.round(amountCents);
+  if (!Number.isFinite(amount) || amount <= 0) return;
+  const label = line.label.trim().slice(0, 200);
+  if (!label) return;
+
+  const [created] = await db
+    .insert(budgetItems)
+    .values({
+      travelerId: line.ownerTravelerId,
+      label,
+      category: line.category in CATEGORY_META ? line.category : "misc",
+      // never on the yellow pad — this cost didn't exist when we planned
+      yellowPadCents: 0,
+      // must be the amount, not 0: every card filters on plannedCents > 0, so a
+      // free line would hide its own payment from the board
+      plannedCents: amount,
+      shared: line.ownerTravelerId === null,
+    })
+    .returning({ id: budgetItems.id });
+
+  try {
+    await db.insert(expenses).values({
+      travelerId: payerTravelerId,
+      budgetItemId: created.id,
+      amountCents: amount,
+      note: note?.trim().slice(0, 200) || null,
+    });
+  } catch (err) {
+    await db.delete(budgetItems).where(eq(budgetItems.id, created.id));
+    throw err;
+  }
+
+  await recomputeActual(created.id);
+  revalidateMoney();
 }
 
 export async function deleteExpense(id: number) {
   await requireActor();
   const [gone] = await db.delete(expenses).where(eq(expenses.id, id)).returning();
   if (gone) await recomputeActual(gone.budgetItemId);
-  revalidatePath("/expenses");
-  revalidatePath("/finances");
-  revalidatePath("/");
+  revalidateMoney();
 }
 
 export async function toggleChecklistItem(id: number, done: boolean) {
   await requireActor();
   await db.update(checklistItems).set({ done }).where(eq(checklistItems.id, id));
   revalidatePath("/lists");
+  revalidatePath("/"); // the homepage counts open to-dos and what's left to book
 }
 
 /** A new row carries the same three fields editing one does — who and the note
@@ -108,6 +167,7 @@ export async function deleteChecklistItem(id: number) {
   await requireActor();
   await db.delete(checklistItems).where(eq(checklistItems.id, id));
   revalidatePath("/lists");
+  revalidatePath("/"); // the homepage counts open to-dos
 }
 
 const LIST_LABEL_MAX = 60;
@@ -182,74 +242,106 @@ export async function deleteChecklist(id: number) {
   revalidatePath("/"); // the homepage tiles read pre-trip rows
 }
 
+/** Paid isn't in the patch: it's the expense log's to write, via recomputeActual. */
 export async function updateBudgetItem(
   id: number,
-  patch: { label?: string; plannedCents?: number; actualCents?: number | null },
+  patch: { label?: string; category?: string; plannedCents?: number },
 ) {
   await requireActor();
   const set: Record<string, unknown> = {};
-  if (patch.label !== undefined) set.label = patch.label.trim().slice(0, 200);
-  if (patch.plannedCents !== undefined) set.plannedCents = Math.max(0, Math.round(patch.plannedCents));
-  if (patch.actualCents !== undefined) {
-    set.actualCents = patch.actualCents === null ? null : Math.max(0, Math.round(patch.actualCents));
+  if (patch.label !== undefined) {
+    const label = patch.label.trim().slice(0, 200);
+    if (label) set.label = label; // label is NOT NULL — an emptied field stays unchanged
+  }
+  if (patch.category !== undefined && patch.category in CATEGORY_META) {
+    set.category = patch.category;
+  }
+  if (patch.plannedCents !== undefined) {
+    const planned = Math.max(0, Math.round(patch.plannedCents));
+    // Releasing a line to $0 makes it dormant — every board filters on
+    // plannedCents > 0 — which would hide payments the totals still count.
+    // Asked of the log, not of actualCents: a stale cache would fail this open.
+    if (planned === 0) {
+      const [paid] = await db
+        .select({ total: sum(expenses.amountCents) })
+        .from(expenses)
+        .where(eq(expenses.budgetItemId, id));
+      if (paid?.total != null && Number(paid.total) > 0) return;
+    }
+    set.plannedCents = planned;
   }
   if (Object.keys(set).length === 0) return;
   await db.update(budgetItems).set(set).where(eq(budgetItems.id, id));
-  revalidatePath("/finances");
-  revalidatePath("/");
+  revalidateMoney(); // the Spend page picker reads these labels and costs too
 }
 
+/** travelerId null puts the line in the shared "The Crew" column. */
 export async function addBudgetItem(
-  travelerId: number,
+  travelerId: number | null,
   label: string,
   category: string,
   plannedCents: number,
-  actualCents: number | null = null,
 ) {
   await requireActor();
   const trimmed = label.trim().slice(0, 200);
   if (!trimmed) return;
-  const allowed = ["travel", "lodging", "food", "gas", "experience", "gifts", "misc"];
   const planned = Math.max(0, Math.round(plannedCents));
   await db.insert(budgetItems).values({
     travelerId,
     label: trimmed,
-    category: allowed.includes(category) ? category : "misc",
+    category: category in CATEGORY_META ? category : "misc",
     // a new line's yellow-pad baseline is whatever it's first planned at
     yellowPadCents: planned,
     plannedCents: planned,
-    actualCents: actualCents === null ? null : Math.max(0, Math.round(actualCents)),
+    shared: travelerId === null,
   });
-  revalidatePath("/finances");
-  revalidatePath("/");
+  revalidateMoney();
 }
 
 export async function deleteBudgetItem(id: number) {
   await requireActor();
   await db.delete(budgetItems).where(eq(budgetItems.id, id));
-  revalidatePath("/finances");
-  revalidatePath("/");
+  revalidateMoney();
 }
 
+/** What one person has to spend on the trip — the ceiling their lines sit under. */
+export async function updateTravelerBudget(travelerId: number, cents: number) {
+  await requireActor();
+  const budget = Math.max(0, Math.round(cents));
+  if (!Number.isFinite(budget)) return;
+  await db
+    .update(travelers)
+    .set({ budgetTotalCents: budget })
+    .where(eq(travelers.id, travelerId));
+  revalidatePath("/finances");
+}
+
+/**
+ * Booking a stay records two different kinds of fact. The travel ones — booked
+ * or not, the confirmation number — belong to the stay. The price belongs to its
+ * budget line, the same one Finances and the expense log read, so the two pages
+ * can't tell different stories about the same hotel.
+ */
 export async function updateLodgingBooking(
   id: number,
   patch: {
     bookingStatus: "planned" | "booked";
-    actualCents?: number | null;
+    priceCents?: number;
     confirmationNumber?: string | null;
   },
 ) {
   await requireActor();
   const set: Record<string, unknown> = { bookingStatus: patch.bookingStatus };
-  if (patch.actualCents !== undefined) {
-    set.actualCents = patch.actualCents === null ? null : Math.max(0, Math.round(patch.actualCents));
-  }
   if (patch.confirmationNumber !== undefined) {
     set.confirmationNumber = patch.confirmationNumber?.trim().slice(0, 60) || null;
   }
-  await db.update(lodging).set(set).where(eq(lodging.id, id));
+  const [stay] = await db.update(lodging).set(set).where(eq(lodging.id, id)).returning();
+
+  if (patch.priceCents !== undefined && stay?.budgetItemId != null) {
+    await updateBudgetItem(stay.budgetItemId, { plannedCents: patch.priceCents });
+  }
   revalidatePath("/lodging");
-  revalidatePath("/");
+  revalidateMoney();
 }
 
 export async function updateShortfallNote(note: string) {
