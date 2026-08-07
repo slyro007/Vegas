@@ -2,7 +2,7 @@
 
 import { ListPlus, Pencil, Plus, User, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useOptimistic, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import {
   addChecklist,
   addChecklistItem,
@@ -10,6 +10,7 @@ import {
   deleteChecklistItem,
   toggleChecklistItem,
   updateChecklist,
+  updateChecklistItem,
 } from "@/app/actions";
 import {
   CHECKLIST_ICONS,
@@ -22,9 +23,135 @@ import type { ChecklistItem, ChecklistMeta } from "@/lib/data";
 const FIELD =
   "rounded-lg border border-borderc bg-surface px-2.5 py-1.5 text-sm outline-none transition-colors focus:border-glow-pink/60";
 
+type ItemDraft = { label: string; assignee: string; note: string };
+
+/** A row opened for editing: its wording, who's on it, and the note underneath. */
+function ItemForm({
+  item,
+  pending,
+  onSave,
+  onCancel,
+}: {
+  item: ChecklistItem;
+  pending: boolean;
+  onSave: (draft: ItemDraft) => void;
+  onCancel: () => void;
+}) {
+  const [draft, setDraft] = useState<ItemDraft>({
+    label: item.label,
+    assignee: item.assignee ?? "",
+    note: item.note ?? "",
+  });
+  const set = (patch: Partial<ItemDraft>) => setDraft((d) => ({ ...d, ...patch }));
+  const canSave = !!draft.label.trim();
+
+  const submit = () => {
+    if (canSave && !pending) onSave(draft);
+  };
+  const onLineKey = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      // saving closes the row and hands focus to its pencil. Without this the
+      // keydown's default action then lands on that button and reopens the editor.
+      e.preventDefault();
+      submit();
+    }
+    if (e.key === "Escape") onCancel();
+  };
+
+  return (
+    <div className="w-full space-y-2 rounded-xl border border-dashed border-borderc-strong p-3">
+      <input
+        autoFocus
+        value={draft.label}
+        onChange={(e) => set({ label: e.target.value })}
+        onKeyDown={onLineKey}
+        maxLength={200}
+        placeholder="What needs doing…"
+        aria-label="Item"
+        className={`w-full ${FIELD}`}
+      />
+      <div className="flex gap-2">
+        <div className="flex w-32 shrink-0 items-center gap-1.5 rounded-lg border border-borderc bg-surface px-2.5 transition-colors focus-within:border-glow-pink/60">
+          <User className="h-3.5 w-3.5 shrink-0 text-ink-muted" aria-hidden />
+          <input
+            value={draft.assignee}
+            onChange={(e) => set({ assignee: e.target.value })}
+            onKeyDown={onLineKey}
+            maxLength={60}
+            placeholder="Who"
+            aria-label="Assigned to"
+            className="min-w-0 flex-1 bg-transparent py-1.5 text-sm outline-none"
+          />
+        </div>
+        <input
+          value={draft.note}
+          onChange={(e) => set({ note: e.target.value })}
+          onKeyDown={onLineKey}
+          maxLength={200}
+          placeholder="Note (optional)"
+          aria-label="Note"
+          className={`min-w-0 flex-1 ${FIELD}`}
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="flex-1" />
+        <button
+          onClick={onCancel}
+          className="text-xs text-ink-muted transition-colors hover:text-ink"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={submit}
+          disabled={pending || !canSave}
+          className="rounded-full bg-mark-pink px-3.5 py-1.5 text-sm font-medium text-white transition-opacity disabled:opacity-50"
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function CheckRow({ item }: { item: ChecklistItem }) {
   const [pending, startTransition] = useTransition();
   const [done, setDone] = useOptimistic(item.done);
+  const [editing, setEditing] = useState(false);
+
+  // hand focus back to the pencil when the editor closes (Escape/Cancel/Save)
+  const pencilRef = useRef<HTMLButtonElement>(null);
+  const wasEditing = useRef(false);
+  useEffect(() => {
+    if (wasEditing.current && !editing) pencilRef.current?.focus();
+    wasEditing.current = editing;
+  }, [editing]);
+
+  const save = (draft: ItemDraft) => {
+    const patch: { label?: string; assignee?: string | null; note?: string | null } = {};
+    // clamp exactly like the server action so the row never shows text it truncates
+    const label = draft.label.trim().slice(0, 200);
+    if (label && label !== item.label) patch.label = label;
+    const assignee = draft.assignee.trim().slice(0, 60) || null;
+    if (assignee !== item.assignee) patch.assignee = assignee;
+    const note = draft.note.trim().slice(0, 200) || null;
+    if (note !== item.note) patch.note = note;
+    setEditing(false);
+    if (Object.keys(patch).length === 0) return;
+    startTransition(() => updateChecklistItem(item.id, patch));
+  };
+
+  if (editing) {
+    return (
+      <motion.li layout className="py-2.5">
+        <ItemForm
+          item={item}
+          pending={pending}
+          onSave={save}
+          onCancel={() => setEditing(false)}
+        />
+      </motion.li>
+    );
+  }
 
   return (
     <motion.li
@@ -92,6 +219,15 @@ function CheckRow({ item }: { item: ChecklistItem }) {
           </span>
         )}
       </div>
+      <button
+        ref={pencilRef}
+        onClick={() => setEditing(true)}
+        className="mt-0.5 flex text-ink-muted/40 transition-colors group-hover:text-ink-muted hover:!text-ink"
+        title="Edit"
+        aria-label={`Edit ${item.label}`}
+      >
+        <Pencil className="h-4 w-4" />
+      </button>
       <button
         onClick={() => startTransition(() => deleteChecklistItem(item.id))}
         className="mt-0.5 flex text-ink-muted/40 transition-colors group-hover:text-ink-muted hover:!text-mark-pink"

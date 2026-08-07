@@ -73,6 +73,24 @@ export async function addChecklistItem(list: string, label: string) {
   revalidatePath("/lists");
 }
 
+export async function updateChecklistItem(
+  id: number,
+  patch: { label?: string; assignee?: string | null; note?: string | null },
+) {
+  await requireActor();
+  const set: Record<string, unknown> = {};
+  if (patch.label !== undefined) {
+    const label = patch.label.trim().slice(0, 200);
+    if (label) set.label = label; // label is NOT NULL — an emptied field stays unchanged
+  }
+  if (patch.assignee !== undefined) set.assignee = patch.assignee?.trim().slice(0, 60) || null;
+  if (patch.note !== undefined) set.note = patch.note?.trim().slice(0, 200) || null;
+  if (Object.keys(set).length === 0) return;
+  await db.update(checklistItems).set(set).where(eq(checklistItems.id, id));
+  revalidatePath("/lists");
+  revalidatePath("/"); // the homepage's booking tiles match on pre-trip labels
+}
+
 export async function deleteChecklistItem(id: number) {
   await requireActor();
   await db.delete(checklistItems).where(eq(checklistItems.id, id));
