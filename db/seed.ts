@@ -12,6 +12,7 @@ import { drizzle } from "drizzle-orm/neon-http";
 import {
   budgetItems,
   checklistItems,
+  checklists,
   type CostLine,
   expenses,
   itineraryEvents,
@@ -32,6 +33,7 @@ async function seed() {
   await db.delete(expenses);
   await db.delete(budgetItems);
   await db.delete(checklistItems);
+  await db.delete(checklists);
   await db.delete(itineraryEvents);
   await db.delete(lodging);
   await db.delete(scenarios);
@@ -585,6 +587,37 @@ async function seed() {
 
 
   console.log("Seeding checklists…");
+  // the lists the trip starts with — the family adds their own from /lists
+  await db.insert(checklists).values([
+    {
+      key: "pre-trip",
+      label: "Pre-trip",
+      icon: "ClipboardList",
+      blurb: "Everything that has to happen before Aug 7.",
+      sortOrder: 0,
+    },
+    {
+      key: "groceries",
+      label: "Grocery run",
+      icon: "Snowflake",
+      blurb: "Amma-safe groceries, first stop once we have the SUV.",
+      sortOrder: 1,
+    },
+    {
+      key: "sedona-restock",
+      label: "Sedona restock",
+      icon: "Mountain",
+      blurb: "Before the Monday drive back — groceries and a full tank.",
+      sortOrder: 2,
+    },
+    {
+      key: "packing",
+      label: "Packing",
+      icon: "Backpack",
+      blurb: "Swimsuits for Slide Rock, jeans for the horses.",
+      sortOrder: 3,
+    },
+  ]);
   await db.insert(checklistItems).values([
     // Pre-trip — the trip is booked; what's left is confirming and packing
     { list: "pre-trip", sortOrder: 0, label: "Delta Check-In Opens Thu Aug 6 (H2UQO8)", note: "24 hours before the 3:39 PM flight" },

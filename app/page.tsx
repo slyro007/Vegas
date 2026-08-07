@@ -7,7 +7,7 @@ import { RouteStrip } from "@/components/RouteStrip";
 import { Stars } from "@/components/Stars";
 import {
   getBudgetItems,
-  getChecklist,
+  getChecklistItems,
   getExpenses,
   getItinerary,
   getLodging,
@@ -30,7 +30,7 @@ export default async function Dashboard() {
       getScenarios(),
       getTripSettings(),
       getExpenses(),
-      getChecklist(),
+      getChecklistItems(),
       getItinerary(),
     ]);
   const lockedScenario = scenarios.find((s) => s.id === settings.lockedScenarioId) ?? null;

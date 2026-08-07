@@ -150,9 +150,25 @@ export const votes = pgTable(
   (t) => [uniqueIndex("votes_traveler_unique").on(t.travelerId)],
 );
 
+/**
+ * The lists on /lists. Seeded with the four the trip started with; the family
+ * adds their own from the page. `key` is the stable slug `checklist_items.list`
+ * points at — renaming a list never moves its items (and keeps the homepage's
+ * "pre-trip" coupling intact).
+ */
+export const checklists = pgTable("checklists", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  label: text("label").notNull(),
+  blurb: text("blurb"),
+  // a Lucide icon name from CHECKLIST_ICONS (lib/checklistIcons.ts)
+  icon: text("icon").notNull().default("ClipboardList"),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
 export const checklistItems = pgTable("checklist_items", {
   id: serial("id").primaryKey(),
-  // pre-trip | groceries | sedona-restock | packing
+  // the `key` of the checklists row this belongs to
   list: text("list").notNull(),
   label: text("label").notNull(),
   done: boolean("done").notNull().default(false),

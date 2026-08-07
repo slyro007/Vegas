@@ -6,11 +6,13 @@ import { db } from "@/db/client";
 import {
   budgetItems,
   checklistItems,
+  checklists,
   expenses,
   itineraryEvents,
   lodging,
   tripSettings,
 } from "@/db/schema";
+import { DEFAULT_CHECKLIST_ICON, isChecklistIcon } from "@/lib/checklistIcons";
 import { requireActor } from "@/lib/identity";
 import { isVisibleEvent } from "@/lib/itinerary";
 
@@ -64,6 +66,9 @@ export async function addChecklistItem(list: string, label: string) {
   await requireActor();
   const trimmed = label.trim().slice(0, 200);
   if (!trimmed) return;
+  // an item belongs to a real list — a stale tab can't strand rows under a dead key
+  const [target] = await db.select().from(checklists).where(eq(checklists.key, list));
+  if (!target) return;
   await db.insert(checklistItems).values({ list, label: trimmed, sortOrder: 999 });
   revalidatePath("/lists");
 }
@@ -72,6 +77,78 @@ export async function deleteChecklistItem(id: number) {
   await requireActor();
   await db.delete(checklistItems).where(eq(checklistItems.id, id));
   revalidatePath("/lists");
+}
+
+const LIST_LABEL_MAX = 60;
+const LIST_BLURB_MAX = 200;
+const LIST_KEY_MAX = 40;
+
+/** The stable slug a new list's items point at; the label stays free to rename. */
+function listKey(label: string) {
+  const base = label
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, LIST_KEY_MAX)
+    .replace(/-+$/, "");
+  return base || "list";
+}
+
+/** Creates a list and returns its key so the page can jump straight to it. */
+export async function addChecklist(label: string, icon?: string, blurb?: string) {
+  await requireActor();
+  const trimmed = label.trim().slice(0, LIST_LABEL_MAX);
+  if (!trimmed) return null;
+
+  const existing = await db.select().from(checklists);
+  const taken = new Set(existing.map((l) => l.key));
+  const base = listKey(trimmed);
+  let key = base;
+  for (let n = 2; taken.has(key) && n <= 99; n++) {
+    key = `${base.slice(0, LIST_KEY_MAX - 3).replace(/-+$/, "")}-${n}`;
+  }
+  if (taken.has(key)) return null; // 99 lists named the same thing: enough
+
+  await db.insert(checklists).values({
+    key,
+    label: trimmed,
+    blurb: blurb?.trim().slice(0, LIST_BLURB_MAX) || null,
+    icon: icon && isChecklistIcon(icon) ? icon : DEFAULT_CHECKLIST_ICON,
+    sortOrder: existing.reduce((top, l) => Math.max(top, l.sortOrder), -1) + 1,
+  });
+  revalidatePath("/lists");
+  return key;
+}
+
+export async function updateChecklist(
+  id: number,
+  patch: { label?: string; blurb?: string | null; icon?: string },
+) {
+  await requireActor();
+  const set: Record<string, unknown> = {};
+  if (patch.label !== undefined) {
+    const label = patch.label.trim().slice(0, LIST_LABEL_MAX);
+    if (label) set.label = label; // label is NOT NULL — an emptied field stays unchanged
+  }
+  if (patch.blurb !== undefined) set.blurb = patch.blurb?.trim().slice(0, LIST_BLURB_MAX) || null;
+  if (patch.icon !== undefined && isChecklistIcon(patch.icon)) set.icon = patch.icon;
+  if (Object.keys(set).length === 0) return;
+  await db.update(checklists).set(set).where(eq(checklists.id, id));
+  revalidatePath("/lists");
+}
+
+/** Deleting a list takes its items with it. Items go first so a failure between
+ *  the two (neon-http has no transactions) leaves an empty list rather than rows
+ *  orphaned behind a key nothing renders. */
+export async function deleteChecklist(id: number) {
+  await requireActor();
+  const [list] = await db.select().from(checklists).where(eq(checklists.id, id));
+  if (!list) return;
+  await db.delete(checklistItems).where(eq(checklistItems.list, list.key));
+  await db.delete(checklists).where(eq(checklists.id, id));
+  revalidatePath("/lists");
+  revalidatePath("/"); // the homepage tiles read pre-trip rows
 }
 
 export async function updateBudgetItem(

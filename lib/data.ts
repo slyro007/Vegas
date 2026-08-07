@@ -3,6 +3,7 @@ import { db } from "@/db/client";
 import {
   budgetItems,
   checklistItems,
+  checklists,
   expenses,
   itineraryEvents,
   lodging,
@@ -39,7 +40,12 @@ export async function getVotes() {
   return db.select().from(votes);
 }
 
-export async function getChecklist() {
+/** The lists themselves — the tabs on /lists, in the family's own order. */
+export async function getChecklists() {
+  return db.select().from(checklists).orderBy(asc(checklists.sortOrder), asc(checklists.id));
+}
+
+export async function getChecklistItems() {
   return db
     .select()
     .from(checklistItems)
@@ -66,4 +72,5 @@ export type LodgingStay = Awaited<ReturnType<typeof getLodging>>[number];
 export type ItineraryEvent = Awaited<ReturnType<typeof getItinerary>>[number];
 export type Scenario = Awaited<ReturnType<typeof getScenarios>>[number];
 export type Vote = Awaited<ReturnType<typeof getVotes>>[number];
-export type ChecklistItem = Awaited<ReturnType<typeof getChecklist>>[number];
+export type ChecklistItem = Awaited<ReturnType<typeof getChecklistItems>>[number];
+export type ChecklistMeta = Awaited<ReturnType<typeof getChecklists>>[number];
