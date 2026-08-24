@@ -4,6 +4,7 @@ export const FAMILY_EMAILS = [
   "solomonrebecca@gmail.com", // Bex
   "shyannejohnsoncano@gmail.com", // Shy
   "kamakshi63@gmail.com", // Amma
+  "solomonts@gmail.com",
 ];
 
 export function isFamilyEmail(email: string): boolean {
